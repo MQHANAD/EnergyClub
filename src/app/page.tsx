@@ -64,9 +64,9 @@ export default async function HomePage() {
         </p>
       ),
       images: [
-        "/ev3/p1.JPG",
+        "/ev3/p1.png",
         "/ev3/P3.svg",
-        "/ev3/p5.JPG",
+        "/ev3/p5.png",
       ],
     },
   ];
