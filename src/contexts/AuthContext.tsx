@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User,
-  signInWithPopup,
+  signInWithPopup,  // استخدم البوب اب بدل الريدايركت
   signOut,
   onAuthStateChanged,
   updateProfile
@@ -40,9 +40,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
@@ -54,11 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createOrUpdateUserProfile = async (firebaseUser: User): Promise<UserProfile> => {
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userSnap = await getDoc(userRef);
-
     const now = new Date();
 
     if (userSnap.exists()) {
-      // Update last login
       await updateDoc(userRef, {
         lastLogin: now,
         displayName: firebaseUser.displayName || userSnap.data().displayName,
@@ -75,13 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: existingData.role || 'user',
         createdAt: existingData.createdAt?.toDate() || now,
         lastLogin: now,
-        preferences: existingData.preferences || {
-          emailNotifications: true,
-          eventReminders: true
-        }
+        preferences: existingData.preferences || { emailNotifications: true, eventReminders: true }
       };
     } else {
-      // Create new user profile
       const newUserProfile: UserProfile = {
         id: firebaseUser.uid,
         email: firebaseUser.email || '',
@@ -90,28 +82,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: 'user',
         createdAt: now,
         lastLogin: now,
-        preferences: {
-          emailNotifications: true,
-          eventReminders: true
-        }
+        preferences: { emailNotifications: true, eventReminders: true }
       };
 
-      await setDoc(userRef, {
-        ...newUserProfile,
-        createdAt: now,
-        lastLogin: now
-      });
-
+      await setDoc(userRef, { ...newUserProfile, createdAt: now, lastLogin: now });
       return newUserProfile;
     }
   };
 
   const signInWithGoogle = async () => {
     try {
+      // يجب استدعاؤه مباشرة من onClick أو حدث المستخدم
       const result = await signInWithPopup(auth, googleProvider);
-      // User profile will be handled by the onAuthStateChanged listener
+      const firebaseUser = result.user;
+      setUser(firebaseUser);
+      const profile = await createOrUpdateUserProfile(firebaseUser);
+      setUserProfile(profile);
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error signing in with Google (popup):', error);
       throw error;
     }
   };
@@ -129,19 +117,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user || !userProfile) return;
-
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, updates);
-
       setUserProfile(prev => prev ? { ...prev, ...updates } : null);
 
-      // Update Firebase Auth profile if display name or photo URL changed
       if (updates.displayName || updates.photoURL) {
-        await updateProfile(user, {
-          displayName: updates.displayName,
-          photoURL: updates.photoURL
-        });
+        await updateProfile(user, { displayName: updates.displayName, photoURL: updates.photoURL });
       }
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -156,9 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const profile = await createOrUpdateUserProfile(firebaseUser);
           setUserProfile(profile);
-        } catch (error) {
-          console.error('Error loading user profile:', error);
-          // Still set the user even if profile loading fails
+        } catch {
           setUserProfile(null);
         }
       } else {
@@ -182,9 +162,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isOrganizer: userProfile?.role === 'organizer' || userProfile?.role === 'admin'
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

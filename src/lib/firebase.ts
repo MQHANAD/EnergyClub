@@ -1,8 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
+
 
 // firebase.ts
 
@@ -24,40 +24,30 @@ const firebaseConfig = {
   ...(sanitizedBucket ? { storageBucket: sanitizedBucket } : {}),
 };
 
+console.log('Firebase config loaded:', {
+  apiKey: firebaseConfig.apiKey ? '***' : 'MISSING',
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  messagingSenderId: firebaseConfig.messagingSenderId,
+  appId: firebaseConfig.appId,
+  storageBucket: firebaseConfig.storageBucket,
+});
+
 let appCheckInited = false;
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize App Check (browser-only) - Temporarily disabled for testing
-if (typeof window !== 'undefined' && !appCheckInited && process.env.NODE_ENV === 'production') {
-  const v3Key = process.env.NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY?.toString().trim();
-  const debugEnv = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN;
 
-  // Ensure App Check debug token is set before any initializeAppCheck call
-  if (typeof debugEnv === 'string' && debugEnv.length) {
-    const g = globalThis as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string | boolean };
-    g.FIREBASE_APPCHECK_DEBUG_TOKEN = (debugEnv === 'true' ? true : debugEnv);
-  }
-
-  if (v3Key) {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(v3Key),
-      isTokenAutoRefreshEnabled: true,
-    });
-    appCheckInited = true;
-  } else if (typeof debugEnv === 'string' && debugEnv) {
-    const fallbackV3Key = v3Key || 'unused';
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(fallbackV3Key),
-      isTokenAutoRefreshEnabled: true,
-    });
-    appCheckInited = true;
-  }
-}
 // Note: App Check disabled in development for testing - should be re-enabled for production
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+
+// Set persistence to local storage for auth state persistence
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error('Error setting auth persistence:', error);
+});
+
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
 export const storage = getStorage(app);

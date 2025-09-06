@@ -17,7 +17,9 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   React.useEffect(() => {
+    console.log('Login page: user =', user, 'loading =', loading);
     if (user && !loading) {
+      console.log('Login page: Redirecting to /events');
       router.push('/events');
     }
   }, [user, loading, router]);
