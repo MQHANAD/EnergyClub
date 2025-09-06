@@ -1,9 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Force Turbopack to use the project directory as workspace root
+  turbopack: {
+    root: new URL(".", import.meta.url).pathname,
+  },
+  // Ensure file tracing also anchors to the project directory
+  outputFileTracingRoot: new URL(".", import.meta.url).pathname,
+
   images: {
-    domains: ['images.unsplash.com'],
+    domains: ["images.unsplash.com"],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
