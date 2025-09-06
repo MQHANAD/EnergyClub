@@ -170,7 +170,7 @@ export default function EventsPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1 flex space-x-4">
-                          {/* الصورة */}
+                          
                           <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
                             {event.imageUrl ? (
                               <img
@@ -189,7 +189,7 @@ export default function EventsPage() {
                               />
                             )}
                           </div>
-                          {/* العنوان والوصف */}
+                          
                           <div className="flex-1">
                             <CardTitle className="text-lg mb-2 truncate">{event.title}</CardTitle>
                             <CardDescription className="line-clamp-2 truncate">
