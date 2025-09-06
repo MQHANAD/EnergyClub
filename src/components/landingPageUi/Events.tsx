@@ -87,10 +87,10 @@ export default function Events({
 
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-wrap gap-4 justify-center items-center">
-                <a href="/events" target="_blank" className="rounded-xl px-6 py-3 font-semibold text-white" style={{ backgroundColor: accent }}>
+                <Link href="/events" className="rounded-xl px-6 py-3 font-semibold text-white" style={{ backgroundColor: accent }}>
                     {t("events.ctaRegister")}
-                </a>
-                <Link href="/register" target="_blank" className="rounded-xl px-6 py-3 font-semibold text-white" style={{ backgroundColor: primary }}>
+                </Link>
+                <Link href="/register" className="rounded-xl px-6 py-3 font-semibold text-white" style={{ backgroundColor: primary }}>
                     {t("events.ctaJoin")}
                 </Link>
             </div>
