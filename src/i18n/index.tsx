@@ -115,14 +115,14 @@ const messages: Record<Lang, MessageTree> = {
       applications: "Applications",
     },
     login: {
-      title: "Energy Club",
+      title: "Energy Hub",
       subtitle: "Sign in to access events and manage your registrations",
       signInTitle: "Sign In",
       signInDesc: "Use your Google account to access the platform",
       signInWithGoogle: "Sign in with Google",
       signingIn: "Signing in...",
       loading: "Loading...",
-      help: "Need help? Contact the energy club administrators.",
+      help: "Need help? Contact the energy Hub administrators.",
       tos: "By signing in, you agree to our terms of service and privacy policy.",
     },
     eventsPage: {
