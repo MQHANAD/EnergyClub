@@ -96,7 +96,7 @@ export default function Footer({ primary = "#114DAF", accent = "#f8cd5c" }) {
               className="hover:text-gray-900 font-medium text-[#25818a]"
             >
               Muhannad Alduraywish
-            </a>and <a
+            </a> and <a
               href="https://omaralshahrani.great-site.net/"
               target="_blank"
               rel="noopener noreferrer"
