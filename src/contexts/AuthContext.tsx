@@ -6,7 +6,8 @@ import {
   signInWithRedirect,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  getRedirectResult
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
@@ -108,7 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      const result = await signInWithRedirect(auth, googleProvider);
+       await signInWithRedirect(auth, googleProvider);
+      const result = await getRedirectResult(auth);
       // User profile will be handled by the onAuthStateChanged listener
     } catch (error) {
       console.error('Error signing in with Google:', error);
