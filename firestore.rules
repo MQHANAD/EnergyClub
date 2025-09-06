@@ -1,0 +1,243 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOrganizer() {
+      return isAuthenticated() &&
+              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'organizer' ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // Rate limiting functions
+    function isRateLimited(collection) {
+      // Safe check: only rate-limit if a rate-limit doc exists
+      let rlPath = /databases/$(database)/documents/ratelimits/$(request.auth.uid + '_' + collection);
+      return exists(rlPath) && request.time < get(rlPath).data.expiresAt;
+    }
+
+    function updateRateLimit(collection, maxRequests, windowSeconds) {
+      let rateLimitDoc = get(/databases/$(database)/documents/ratelimits/$(request.auth.uid + '_' + collection));
+      let currentTime = request.time;
+      let resetTime = currentTime + duration.value(windowSeconds, 's');
+
+      return {
+        data: {
+          count: rateLimitDoc.data.count + 1,
+          expiresAt: rateLimitDoc.data.expiresAt,
+          resetTime: rateLimitDoc.data.resetTime
+        },
+        condition: rateLimitDoc.data.count < maxRequests && currentTime < rateLimitDoc.data.expiresAt
+      };
+    }
+
+    // Input validation functions
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isValidString(str, minLength, maxLength) {
+      return str is string && str.size() >= minLength && str.size() <= maxLength;
+    }
+
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp && timestamp > timestamp.date(2020, 1, 1);
+    }
+
+    function isValidRole(role) {
+      return role in ['user', 'organizer', 'admin'];
+    }
+
+    function isValidRegistrationStatus(status) {
+      return status in ['confirmed', 'waitlist', 'cancelled'];
+    }
+
+    function isValidEventStatus(status) {
+      return status in ['active', 'cancelled', 'completed'];
+    }
+
+    function sanitizeString(str) {
+      return str.replace(/[<>\"']/g, '');
+    }
+
+    // Users collection
+    match /users/{userId} {
+       // Users can read and write their own profile
+       allow read, write: if isOwner(userId) &&
+                             // Rate limiting: max 10 writes per minute
+                             !isRateLimited('users') &&
+                             // Input validation
+                             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['email']) ||
+                              isValidEmail(request.resource.data.email)) &&
+                             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName']) ||
+                              isValidString(request.resource.data.displayName, 1, 100)) &&
+                             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
+                              isValidRole(request.resource.data.role)) &&
+                             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt']) ||
+                              isValidTimestamp(request.resource.data.createdAt)) &&
+                             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastLogin']) ||
+                              isValidTimestamp(request.resource.data.lastLogin));
+
+       // Admins can read all user profiles
+       allow read: if isAdmin();
+
+       // Organizers can read user profiles for events they organize
+       allow read: if isOrganizer();
+
+       // Rate limiting document for tracking user write limits
+       match /ratelimits/{rateLimitId} {
+         allow read, write: if isAuthenticated() && rateLimitId == request.auth.uid + '_users';
+       }
+     }
+
+    // Top-level ratelimits collection for client-managed rate limit docs
+    match /ratelimits/{rateLimitId} {
+      // Allow each user to manage only their own rate-limit docs: "<uid>_<suffix>"
+      allow read, write: if isAuthenticated() &&
+                         rateLimitId.matches('^' + request.auth.uid + '_.*$');
+    }
+
+    // Events collection
+    match /events/{eventId} {
+       // Anyone can read active events
+       allow read: if resource.data.status == 'active';
+
+       // Authenticated users can read all events
+       allow read: if isAuthenticated();
+
+       // Only organizers and admins can create events with validation
+       allow create: if isOrganizer() &&
+                       // Rate limiting: max 5 event creations per hour
+                       !isRateLimited('events_create') &&
+                       // Input validation
+                       isValidString(request.resource.data.title, 1, 200) &&
+                       isValidString(request.resource.data.description, 1, 2000) &&
+                       isValidTimestamp(request.resource.data.date) &&
+                       isValidString(request.resource.data.location, 1, 200) &&
+                       request.resource.data.maxAttendees is int &&
+                       request.resource.data.maxAttendees > 0 &&
+                       request.resource.data.maxAttendees <= 1000 &&
+                       isValidEventStatus(request.resource.data.status) &&
+                       request.resource.data.tags is list &&
+                       request.resource.data.tags.size() <= 10 &&
+                       (!request.resource.data.keys().hasAny(['imageUrl']) ||
+                        isValidString(request.resource.data.imageUrl, 1, 500));
+
+       // Only the organizer or admin can update/delete their events
+       allow update, delete: if isOrganizer() &&
+                               (resource.data.organizerId == request.auth.uid || isAdmin()) &&
+                               // Rate limiting: max 20 updates per hour
+                               !isRateLimited('events_update') &&
+                               // Input validation for updates
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['title']) ||
+                                isValidString(request.resource.data.title, 1, 200)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['description']) ||
+                                isValidString(request.resource.data.description, 1, 2000)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['date']) ||
+                                isValidTimestamp(request.resource.data.date)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['location']) ||
+                                isValidString(request.resource.data.location, 1, 200)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['maxAttendees']) ||
+                                (request.resource.data.maxAttendees is int &&
+                                 request.resource.data.maxAttendees > 0 &&
+                                 request.resource.data.maxAttendees <= 1000)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) ||
+                                isValidEventStatus(request.resource.data.status)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['tags']) ||
+                                (request.resource.data.tags is list &&
+                                 request.resource.data.tags.size() <= 10)) &&
+                               (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['imageUrl']) ||
+                                isValidString(request.resource.data.imageUrl, 1, 500));
+     }
+
+    // Registrations collection
+    match /registrations/{registrationId} {
+       // Users can read their own registrations
+       allow read: if isOwner(resource.data.userId);
+
+       // Event organizers can read registrations for their events
+       allow read: if isOrganizer() &&
+                      exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
+                      get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.organizerId == request.auth.uid;
+
+       // Admins can read all registrations
+       allow read: if isAdmin();
+
+       // Authenticated users can create registrations for themselves with validation
+       allow create: if isAuthenticated() &&
+                       request.auth.uid == request.resource.data.userId &&
+                       // Rate limiting: max 10 registrations per hour
+                       !isRateLimited('registrations_create') &&
+                       // Input validation
+                       exists(/databases/$(database)/documents/events/$(request.resource.data.eventId)) &&
+                       get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.status == 'active' &&
+                       isValidString(request.resource.data.userName, 1, 100) &&
+                       isValidEmail(request.resource.data.userEmail) &&
+                       isValidTimestamp(request.resource.data.registrationTime) &&
+                       isValidRegistrationStatus(request.resource.data.status) &&
+                       (!request.resource.data.keys().hasAny(['reason']) ||
+                        isValidString(request.resource.data.reason, 0, 500)) &&
+                       (!request.resource.data.keys().hasAny(['notes']) ||
+                        isValidString(request.resource.data.notes, 0, 1000));
+
+       // Users can update their own registrations (cancel) with validation
+       allow update: if isOwner(resource.data.userId) &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+                       request.resource.data.status == 'cancelled' &&
+                       isValidRegistrationStatus(request.resource.data.status);
+
+       // Organizers can update registrations for their events with validation
+       allow update: if isOrganizer() &&
+                       exists(/databases/$(database)/documents/events/$(resource.data.eventId)) &&
+                       get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.organizerId == request.auth.uid &&
+                       // Rate limiting: max 50 updates per hour
+                       !isRateLimited('registrations_update') &&
+                       // Input validation
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) ||
+                        isValidRegistrationStatus(request.resource.data.status)) &&
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['notes']) ||
+                        isValidString(request.resource.data.notes, 0, 1000)) &&
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['attendance']) ||
+                        request.resource.data.attendance is bool);
+
+       // Admins can update any registration with validation
+       allow update: if isAdmin() &&
+                       // Input validation
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) ||
+                        isValidRegistrationStatus(request.resource.data.status)) &&
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['notes']) ||
+                        isValidString(request.resource.data.notes, 0, 1000)) &&
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['attendance']) ||
+                        request.resource.data.attendance is bool);
+
+       // Only admins can delete registrations
+       allow delete: if isAdmin();
+     }
+
+    // Subcollections
+    match /{document=**}/registrations/{registrationId} {
+      // Inherit rules from parent collection
+      allow read, write: if false; // Explicitly deny direct access to subcollections
+    }
+
+    match /{document=**}/users/{userId} {
+      // Inherit rules from parent collection
+      allow read, write: if false; // Explicitly deny direct access to subcollections
+    }
+  }
+}
