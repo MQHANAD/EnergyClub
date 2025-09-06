@@ -67,7 +67,7 @@ const [dropdownOpen, setDropdownOpen] = useState(false);
             <div className="flex items-center">
               <Link href="/" className="flex-shrink-0">
                 <Image
-                  src="/logo.png"
+                  src="/logo.PNG"
                   alt={t('nav.logoAlt')}
                   width={90}
                   height={90}
