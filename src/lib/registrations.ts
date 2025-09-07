@@ -23,15 +23,7 @@ import type { ApplicationInput, Program } from '@/lib/registrationSchemas';
 import { programLabelFor } from '@/lib/registrationSchemas';
 import type { Application } from '@/types';
 
-// ===== Auth Helper =====
-export async function ensureAuth(): Promise<NonNullable<typeof auth.currentUser>> {
-  if (auth.currentUser) return auth.currentUser;
-  const cred = await signInAnonymously(auth);
-  if (!cred.user) {
-    throw new Error('Failed to sign in anonymously. Please try again.');
-  }
-  return cred.user;
-}
+
 
 // ===== Types =====
 
@@ -46,7 +38,7 @@ export interface UpdateUrlsInput {
 // ===== Firestore Operations =====
 
 export async function createApplication(data: CreateApplicationInput): Promise<string> {
-  const user = await ensureAuth();
+  
 
   const base = {
     program: data.program,
@@ -73,8 +65,6 @@ export async function createApplication(data: CreateApplicationInput): Promise<s
     cvUrl: null as string | null,
     designFileUrl: null as string | null,
     status: 'pending' as const,
-    createdBy: user.uid,
-    createdByType: user.isAnonymous ? 'anonymous' : 'authenticated',
     submittedAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
     decidedAt: null as Timestamp | null,
