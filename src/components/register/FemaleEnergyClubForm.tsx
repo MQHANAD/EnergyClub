@@ -21,7 +21,6 @@ import FormSummary, { FormSummaryData } from '@/components/register/FormSummary'
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, AlertTriangle, User, Users, FileText, Send, Eye } from 'lucide-react';
 import {
-  ensureAuth,
   createApplication,
   uploadCv,
   uploadDesign,
@@ -250,7 +249,7 @@ export default function FemaleEnergyClubForm() {
     setShowPreview(false); // Hide preview after starting submission
     try {
       // Ensure signed in (anonymous allowed)
-      await ensureAuth();
+
 
       // Temporary diagnostics
       console.debug('[submit]', {
