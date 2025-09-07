@@ -18,11 +18,9 @@ import {
   uploadBytes,
   UploadMetadata,
 } from 'firebase/storage';
-import { signInAnonymously } from 'firebase/auth';
 import type { ApplicationInput, Program } from '@/lib/registrationSchemas';
 import { programLabelFor } from '@/lib/registrationSchemas';
 import type { Application } from '@/types';
-
 
 
 // ===== Types =====
