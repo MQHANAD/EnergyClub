@@ -81,6 +81,8 @@ export interface Application {
   designLink: string | null;
   cvUrl: string | null;
   designFileUrl: string | null;
+  cvPath?: string | null;
+  designFilePath?: string | null;
   status: 'pending' | 'accepted' | 'rejected';
   createdBy: string;
   createdByType: 'anonymous' | 'authenticated';

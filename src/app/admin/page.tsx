@@ -14,7 +14,8 @@ import { useI18n, getLocale } from '@/i18n/index';
 import Input from '@/components/ui/input';
 
 export default function AdminDashboard() {
-  const { user, userProfile, isOrganizer, loading: authLoading } = useAuth();
+  const { user, userProfile, isOrganizer, isAdmin, loading: authLoading } = useAuth();
+  const canAccess = Boolean(isOrganizer || isAdmin);
   const router = useRouter();
   const { t, lang } = useI18n();
 
@@ -57,11 +58,11 @@ export default function AdminDashboard() {
     if (!authLoading) {
       if (!user) {
         router.push('/login');
-      } else if (!isOrganizer) {
+      } else if (!canAccess) {
         router.push('/');
       }
     }
-  }, [user, isOrganizer, authLoading, router]);
+  }, [user, isOrganizer, isAdmin, authLoading, router]);
 
   const loadEvents = async () => {
     try {
@@ -90,10 +91,10 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (user && isOrganizer) {
+    if (user && canAccess) {
       loadEvents();
     }
-  }, [user, isOrganizer]);
+  }, [user, isOrganizer, isAdmin]);
 
   // Debounce registrations search query
   useEffect(() => {
@@ -193,7 +194,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user || !isOrganizer) {
+  if (!user || !canAccess) {
     return null; // Will redirect in useEffect
   }
 

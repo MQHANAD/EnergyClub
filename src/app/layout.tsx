@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Energy Club Web Platform",
   description: "Discover and register for Energy club events",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default async function RootLayout({

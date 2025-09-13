@@ -55,8 +55,8 @@ service cloud.firestore {
       return str is string && str.size() >= minLength && str.size() <= maxLength;
     }
 
-    function isValidTimestamp(timestamp) {
-      return timestamp is timestamp && timestamp > timestamp.date(2020, 1, 1);
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts > timestamp.date(2020, 1, 1);
     }
 
     function isValidRole(role) {
@@ -71,9 +71,6 @@ service cloud.firestore {
       return status in ['active', 'cancelled', 'completed'];
     }
 
-    function sanitizeString(str) {
-      return str.replace(/[<>\"']/g, '');
-    }
 
     // Users collection
     match /users/{userId} {
@@ -114,11 +111,8 @@ service cloud.firestore {
 
     // Events collection
     match /events/{eventId} {
-       // Anyone can read active events
-       allow read: if resource.data.status == 'active';
-
-       // Authenticated users can read all events
-       allow read: if isAuthenticated();
+       // Public read for events (both get and list)
+       allow read, list: if true;
 
        // Only organizers and admins can create events with validation
        allow create: if isOrganizer() &&
@@ -228,6 +222,12 @@ service cloud.firestore {
        // Only admins can delete registrations
        allow delete: if isAdmin();
      }
+    // Applications collection
+    match /applications/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Subcollections
 
     // Subcollections
     match /{document=**}/registrations/{registrationId} {

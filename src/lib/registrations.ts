@@ -6,6 +6,7 @@ import {
   Timestamp,
   updateDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   orderBy,
@@ -15,9 +16,10 @@ import {
 import {
   getDownloadURL,
   ref as storageRef,
-  uploadBytes,
+  uploadBytesResumable,
   UploadMetadata,
 } from 'firebase/storage';
+import { signInAnonymously, setPersistence, inMemoryPersistence } from 'firebase/auth';
 import type { ApplicationInput, Program } from '@/lib/registrationSchemas';
 import { programLabelFor } from '@/lib/registrationSchemas';
 import type { Application } from '@/types';
@@ -31,12 +33,14 @@ export interface UpdateUrlsInput {
   cvUrl?: string;
   designFileUrl?: string;
   designLink?: string;
+  cvPath?: string;
+  designFilePath?: string;
 }
 
 // ===== Firestore Operations =====
 
 export async function createApplication(data: CreateApplicationInput): Promise<string> {
-  
+
 
   const base = {
     program: data.program,
@@ -62,12 +66,16 @@ export async function createApplication(data: CreateApplicationInput): Promise<s
     designLink: data.designLink?.toString().trim() || null,
     cvUrl: null as string | null,
     designFileUrl: null as string | null,
+    cvPath: null as string | null,
+    designFilePath: null as string | null,
     status: 'pending' as const,
     submittedAt: serverTimestamp() as Timestamp,
     updatedAt: serverTimestamp() as Timestamp,
     decidedAt: null as Timestamp | null,
     decidedBy: null as string | null,
     adminNotes: null as string | null,
+    createdBy: auth.currentUser?.uid || null,
+    createdByType: (auth.currentUser?.isAnonymous ? 'anonymous' : 'authenticated') as 'anonymous' | 'authenticated',
   };
 
   const col = collection(db, 'applications');
@@ -79,21 +87,96 @@ export async function updateApplicationUrls(
   applicationId: string,
   updates: UpdateUrlsInput
 ): Promise<void> {
-  const payload: Record<string, unknown> = {
-    updatedAt: serverTimestamp(),
-  };
+  console.log(`[updateApplicationUrls] Starting update for application ${applicationId}`, {
+    updates,
+    authUser: auth.currentUser?.uid,
+    isAnonymous: auth.currentUser?.isAnonymous,
+    authToken: auth.currentUser ? 'present' : 'null'
+  });
 
-  if (typeof updates.cvUrl === 'string') payload.cvUrl = updates.cvUrl;
-  if (typeof updates.designFileUrl === 'string') payload.designFileUrl = updates.designFileUrl;
-  if (updates.designLink === undefined) {
-    // no-op
-  } else if (updates.designLink === null) {
-    payload.designLink = null;
-  } else {
-    payload.designLink = updates.designLink;
+  return retryWithBackoff(async () => {
+    const payload: Record<string, unknown> = {
+      updatedAt: serverTimestamp(),
+    };
+
+    if (typeof updates.cvUrl === 'string') payload.cvUrl = updates.cvUrl;
+    if (typeof updates.designFileUrl === 'string') payload.designFileUrl = updates.designFileUrl;
+    if (typeof updates.cvPath === 'string') payload.cvPath = updates.cvPath;
+    if (typeof updates.designFilePath === 'string') payload.designFilePath = updates.designFilePath;
+    if (updates.designLink === undefined) {
+      // no-op
+    } else if (updates.designLink === null) {
+      payload.designLink = null;
+    } else {
+      payload.designLink = updates.designLink;
+    }
+
+    console.log(`[updateApplicationUrls] Attempting updateDoc with payload:`, payload);
+
+    try {
+      await updateDoc(doc(db, 'applications', applicationId), payload);
+      console.log(`[updateApplicationUrls] Successfully updated document ${applicationId}`);
+    } catch (error) {
+      console.error(`[updateApplicationUrls] updateDoc failed for ${applicationId}:`, error);
+      throw error;
+    }
+  }, 3, 1000, `updateApplicationUrls(${applicationId})`);
+}
+
+/**
+ * Validate that URLs were successfully saved to Firestore
+ */
+export async function validateApplicationUrls(
+  applicationId: string,
+  expectedUrls: { cvUrl?: string; designFileUrl?: string; designLink?: string }
+): Promise<{ isValid: boolean; missingUrls: string[]; errors: string[] }> {
+  try {
+    const docRef = doc(db, 'applications', applicationId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return {
+        isValid: false,
+        missingUrls: ['document'],
+        errors: ['Application document not found']
+      };
+    }
+
+    const data = docSnap.data();
+    const missingUrls: string[] = [];
+    const errors: string[] = [];
+
+    // Check CV URL
+    if (expectedUrls.cvUrl && data?.cvUrl !== expectedUrls.cvUrl) {
+      missingUrls.push('cvUrl');
+      errors.push(`CV URL not saved correctly. Expected: ${expectedUrls.cvUrl}, Found: ${data?.cvUrl}`);
+    }
+
+    // Check design file URL
+    if (expectedUrls.designFileUrl && data?.designFileUrl !== expectedUrls.designFileUrl) {
+      missingUrls.push('designFileUrl');
+      errors.push(`Design file URL not saved correctly. Expected: ${expectedUrls.designFileUrl}, Found: ${data?.designFileUrl}`);
+    }
+
+    // Check design link
+    if (expectedUrls.designLink !== undefined && data?.designLink !== expectedUrls.designLink) {
+      missingUrls.push('designLink');
+      errors.push(`Design link not saved correctly. Expected: ${expectedUrls.designLink}, Found: ${data?.designLink}`);
+    }
+
+    return {
+      isValid: missingUrls.length === 0,
+      missingUrls,
+      errors
+    };
+  } catch (error: any) {
+    const classified = classifyError(error);
+    return {
+      isValid: false,
+      missingUrls: ['validation'],
+      errors: [`Failed to validate URLs: ${classified.message}`]
+    };
   }
-
-  await updateDoc(doc(db, 'applications', applicationId), payload);
 }
 
 // ===== Storage Uploads =====
@@ -134,7 +217,195 @@ function extFromNameOrType(file: File, fallback: string): string {
   return fallback;
 }
 
-export async function uploadCv(applicationId: string, file: File): Promise<string> {
+/**
+ * Build a deterministic Storage path for this application file.
+ * Always matches the same naming used by uploadCv/uploadDesign.
+ */
+export function buildStoragePath(applicationId: string, file: File, kind: 'cv' | 'design'): string {
+  const ext = extFromNameOrType(file, 'pdf');
+  const safeKind = kind === 'cv' ? 'cv' : 'design';
+  return `applications/${applicationId}/${safeKind}.${ext}`;
+}
+
+/**
+ * Optional progress callback type (0-100)
+ */
+export type ProgressCallback = (percent: number) => void;
+
+/**
+ * Error classification utilities for upload operations
+ */
+export enum ErrorType {
+  RECOVERABLE = 'recoverable',
+  CRITICAL = 'critical',
+  NETWORK = 'network',
+  AUTH = 'auth',
+  AD_BLOCK = 'ad_block',
+  PERMISSION = 'permission',
+  UNKNOWN = 'unknown'
+}
+
+export interface ClassifiedError {
+  type: ErrorType;
+  originalError: any;
+  message: string;
+  isRetryable: boolean;
+  userMessage: string;
+}
+
+/**
+ * Classify an error based on its message and properties
+ */
+function classifyError(error: any): ClassifiedError {
+  const message = String(error?.message || error || '');
+  const code = error?.code || '';
+
+  // Ad-block errors
+  if (/ERR_BLOCKED_BY_CLIENT/i.test(message) || /blocked by client/i.test(message)) {
+    return {
+      type: ErrorType.AD_BLOCK,
+      originalError: error,
+      message,
+      isRetryable: false, // Ad-block is not recoverable via retry
+      userMessage: 'File upload was blocked by browser extensions. Please disable ad-blockers and try again.'
+    };
+  }
+
+  // Network errors
+  if (/network/i.test(message) || /timeout/i.test(message) || /connection/i.test(message) ||
+      code === 'unavailable' || code === 'deadline-exceeded') {
+    return {
+      type: ErrorType.NETWORK,
+      originalError: error,
+      message,
+      isRetryable: true,
+      userMessage: 'Network connection issue. Please check your internet connection and try again.'
+    };
+  }
+
+  // Authentication errors
+  if (/auth/i.test(message) || /permission/i.test(message) || /unauthorized/i.test(message) ||
+      code === 'permission-denied' || code === 'unauthenticated') {
+    return {
+      type: ErrorType.AUTH,
+      originalError: error,
+      message,
+      isRetryable: true,
+      userMessage: 'Authentication issue. Please refresh the page and try again.'
+    };
+  }
+
+  // File size/type validation errors
+  if (/size/i.test(message) || /type/i.test(message) || /invalid/i.test(message)) {
+    return {
+      type: ErrorType.CRITICAL,
+      originalError: error,
+      message,
+      isRetryable: false,
+      userMessage: message
+    };
+  }
+
+  // Default to recoverable for unknown errors
+  return {
+    type: ErrorType.UNKNOWN,
+    originalError: error,
+    message,
+    isRetryable: true,
+    userMessage: 'An unexpected error occurred. Please try again.'
+  };
+}
+
+/**
+ * Generic retry function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+  operationName: string = 'operation'
+): Promise<T> {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+      const classified = classifyError(error);
+
+      console.warn(`${operationName} attempt ${attempt}/${maxRetries} failed:`, {
+        error: classified.message,
+        type: classified.type,
+        retryable: classified.isRetryable
+      });
+
+      // Don't retry if error is not retryable or this is the last attempt
+      if (!classified.isRetryable || attempt === maxRetries) {
+        throw classified;
+      }
+
+      // Exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
+      console.log(`${operationName} retrying in ${Math.round(delay)}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw classifyError(lastError);
+}
+
+/**
+ * Retry getDownloadURL with exponential backoff to handle various network issues.
+ */
+async function getDownloadURLWithRetry(ref: any, maxRetries: number = 3): Promise<string> {
+  return retryWithBackoff(
+    () => getDownloadURL(ref),
+    maxRetries,
+    1000,
+    'getDownloadURL'
+  );
+}
+
+/**
+ * Upload via Firebase Storage resumable uploads with metadata, optional progress, and retry logic.
+ * Returns the public download URL upon completion.
+ */
+async function uploadResumableWithProgress(
+  path: string,
+  file: File,
+  metadata: UploadMetadata,
+  onProgress?: ProgressCallback
+): Promise<string> {
+  return retryWithBackoff(async () => {
+    const ref = storageRef(storage, path);
+    const task = uploadBytesResumable(ref, file, metadata);
+
+    await new Promise<void>((resolve, reject) => {
+      task.on(
+        'state_changed',
+        (snapshot) => {
+          if (onProgress) {
+            const percent = snapshot.totalBytes
+              ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+              : 0;
+            onProgress(percent);
+          }
+        },
+        (error) => reject(error),
+        () => resolve()
+      );
+    });
+
+    return await getDownloadURLWithRetry(ref);
+  }, 3, 1000, `upload(${path})`);
+}
+
+export async function uploadCv(
+  applicationId: string,
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<string> {
   if (!(file instanceof File)) {
     throw new Error('Invalid CV file.');
   }
@@ -144,13 +415,15 @@ export async function uploadCv(applicationId: string, file: File): Promise<strin
   }
   const ext = extFromNameOrType(file, 'pdf');
   const path = `applications/${applicationId}/cv.${ext}`;
-  const ref = storageRef(storage, path);
   const metadata: UploadMetadata = { contentType: file.type || 'application/octet-stream' };
-  await uploadBytes(ref, file, metadata);
-  return await getDownloadURL(ref);
+  return await uploadResumableWithProgress(path, file, metadata, onProgress);
 }
 
-export async function uploadDesign(applicationId: string, file: File): Promise<string> {
+export async function uploadDesign(
+  applicationId: string,
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<string> {
   if (!(file instanceof File)) {
     throw new Error('Invalid design file.');
   }
@@ -160,10 +433,8 @@ export async function uploadDesign(applicationId: string, file: File): Promise<s
   }
   const ext = extFromNameOrType(file, 'pdf');
   const path = `applications/${applicationId}/design.${ext}`;
-  const ref = storageRef(storage, path);
   const metadata: UploadMetadata = { contentType: file.type || 'application/octet-stream' };
-  await uploadBytes(ref, file, metadata);
-  return await getDownloadURL(ref);
+  return await uploadResumableWithProgress(path, file, metadata, onProgress);
 }
 
 // ===== High-level Submit Flow (optional helper) =====
@@ -216,6 +487,8 @@ export async function listApplications(): Promise<Application[]> {
       designLink: (data?.designLink as string | null) ?? null,
       cvUrl: (data?.cvUrl as string | null) ?? null,
       designFileUrl: (data?.designFileUrl as string | null) ?? null,
+      cvPath: (data?.cvPath as string | null) ?? null,
+      designFilePath: (data?.designFilePath as string | null) ?? null,
       status: (data?.status as Application['status']) ?? 'pending',
       createdBy: (data?.createdBy as string) ?? '',
       createdByType: (data?.createdByType as Application['createdByType']) ?? 'anonymous',

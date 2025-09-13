@@ -24,7 +24,13 @@ import {
   uploadCv,
   uploadDesign,
   updateApplicationUrls,
+  buildStoragePath,
+  validateApplicationUrls,
+  ErrorType,
+  ClassifiedError,
 } from '@/lib/registrations';
+import { auth } from '@/lib/firebase';
+import { signInAnonymously, signOut, setPersistence, inMemoryPersistence } from 'firebase/auth';
 
 type FormValues = z.infer<typeof EnergyWeekSchema>;
 
@@ -123,6 +129,7 @@ export default function EnergyWeekForm() {
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showPreview, setShowPreview] = useState<boolean>(false);
   
   // Watch all form values for progress calculation
@@ -211,30 +218,174 @@ export default function EnergyWeekForm() {
   const doUploadsAndPatch = useCallback(
     async (applicationId: string) => {
       setUploading(true);
+      setUploadProgress(0);
       setUploadError(null);
+
+      console.log(`[doUploadsAndPatch] Starting upload process for application ${applicationId}`);
+
       try {
         const v = getValues();
         let cvUrl: string | undefined;
         let designFileUrl: string | undefined;
+        const uploadResults: { type: string; success: boolean; error?: ClassifiedError }[] = [];
+
         const cvFile = v.cvFile as unknown as File | undefined;
         const designFile = v.designFile as unknown as File | undefined;
         const designLink = (v.designLink as string | undefined)?.trim() || undefined;
 
-        if (cvFile) {
-          cvUrl = await uploadCv(applicationId, cvFile);
+        // Build storage paths for fallback
+        const cvPath = cvFile ? buildStoragePath(applicationId, cvFile, 'cv') : undefined;
+        const designPath = designFile ? buildStoragePath(applicationId, designFile, 'design') : undefined;
+
+        console.log(`[doUploadsAndPatch] Files to upload: CV=${!!cvFile}, Design=${!!designFile}, DesignLink=${!!designLink}`);
+
+        // Phase 1: Seed file paths early for data integrity
+        try {
+          console.log(`[doUploadsAndPatch] Phase 1: Seeding file paths`);
+          if (!auth.currentUser) {
+            await setPersistence(auth, inMemoryPersistence);
+            await signInAnonymously(auth);
+            console.log(`[doUploadsAndPatch] Authenticated anonymously for path seeding`);
+          }
+
+          await updateApplicationUrls(applicationId, {
+            cvPath,
+            designFilePath: designPath,
+            designLink: !designFile && designLink ? designLink : undefined,
+          });
+          console.log(`[doUploadsAndPatch] File paths seeded successfully`);
+        } catch (seedErr: any) {
+          const classified = seedErr.type ? seedErr : { type: ErrorType.UNKNOWN, message: String(seedErr?.message || seedErr) };
+          console.warn(`[doUploadsAndPatch] Path seeding failed:`, classified);
+
+          if (classified.type === ErrorType.CRITICAL) {
+            throw new Error(`Failed to initialize application data: ${classified.message}`);
+          }
+          // Continue for recoverable errors
         }
+
+        // Phase 2: Upload files with progress tracking
+        console.log(`[doUploadsAndPatch] Phase 2: Starting file uploads`);
+        const cvSize = cvFile?.size ?? 0;
+        const designSize = designFile?.size ?? 0;
+        const totalBytes = Math.max(cvSize + designSize, 1);
+        let cvPct = 0;
+        let designPct = 0;
+
+        const updateProgress = () => {
+          const combined = Math.round(
+            (((cvPct / 100) * cvSize) + ((designPct / 100) * designSize)) / totalBytes * 100
+          );
+          setUploadProgress(combined);
+        };
+
+        const uploadPromises = [];
+
+        if (cvFile) {
+          const cvUpload = uploadCv(applicationId, cvFile, (p) => {
+            cvPct = p;
+            updateProgress();
+          }).then(url => {
+            cvUrl = url;
+            uploadResults.push({ type: 'CV', success: true });
+            console.log(`[doUploadsAndPatch] CV upload successful: ${url}`);
+            return url;
+          }).catch(error => {
+            const classified = error.type ? error : { type: ErrorType.UNKNOWN, message: String(error?.message || error) };
+            uploadResults.push({ type: 'CV', success: false, error: classified });
+            console.error(`[doUploadsAndPatch] CV upload failed:`, classified);
+
+            if (classified.type === ErrorType.CRITICAL) {
+              throw classified;
+            }
+            return undefined;
+          });
+          uploadPromises.push(cvUpload);
+        }
+
         if (designFile) {
-          designFileUrl = await uploadDesign(applicationId, designFile);
+          const designUpload = uploadDesign(applicationId, designFile, (p) => {
+            designPct = p;
+            updateProgress();
+          }).then(url => {
+            designFileUrl = url;
+            uploadResults.push({ type: 'Design', success: true });
+            console.log(`[doUploadsAndPatch] Design upload successful: ${url}`);
+            return url;
+          }).catch(error => {
+            const classified = error.type ? error : { type: ErrorType.UNKNOWN, message: String(error?.message || error) };
+            uploadResults.push({ type: 'Design', success: false, error: classified });
+            console.error(`[doUploadsAndPatch] Design upload failed:`, classified);
+
+            if (classified.type === ErrorType.CRITICAL) {
+              throw classified;
+            }
+            return undefined;
+          });
+          uploadPromises.push(designUpload);
+        }
+
+        await Promise.allSettled(uploadPromises);
+        setUploadProgress(100);
+
+        // Phase 3: Update Firestore with URLs
+        console.log(`[doUploadsAndPatch] Phase 3: Updating Firestore with URLs`);
+        if (!auth.currentUser) {
+          await setPersistence(auth, inMemoryPersistence);
+          await signInAnonymously(auth);
+          console.log(`[doUploadsAndPatch] Re-authenticated for URL patching`);
         }
 
         await updateApplicationUrls(applicationId, {
           cvUrl,
           designFileUrl,
+          cvPath: cvUrl ? undefined : cvPath,
+          designFilePath: designFileUrl ? undefined : designPath,
           designLink: !designFile && designLink ? designLink : undefined,
         });
-      } catch (e: any) {
-        setUploadError(e?.message || 'Failed to upload files. Please try again.');
-        throw e;
+        console.log(`[doUploadsAndPatch] Firestore URLs updated successfully`);
+
+        // Phase 4: Validate that URLs were saved correctly
+        console.log(`[doUploadsAndPatch] Phase 4: Validating saved URLs`);
+        const validation = await validateApplicationUrls(applicationId, {
+          cvUrl,
+          designFileUrl,
+          designLink: !designFile && designLink ? designLink : undefined
+        });
+
+        if (!validation.isValid) {
+          console.warn(`[doUploadsAndPatch] URL validation failed:`, validation.errors);
+          const errorMsg = `Files uploaded but not properly saved. ${validation.errors.join('. ')} Please contact support with application ID: ${applicationId}`;
+          setUploadError(errorMsg);
+          return; // Don't throw, allow partial success
+        }
+
+        console.log(`[doUploadsAndPatch] All phases completed successfully`);
+
+        // Check for any upload failures and provide appropriate user feedback
+        const failedUploads = uploadResults.filter(r => !r.success);
+        if (failedUploads.length > 0) {
+          const errorMessages = failedUploads.map(r => {
+            const error = r.error!;
+            return `${r.type}: ${error.userMessage}`;
+          });
+          setUploadError(`Some uploads failed: ${errorMessages.join('; ')}`);
+        }
+
+      } catch (error: any) {
+        const classified = error.type ? error : { type: ErrorType.UNKNOWN, message: String(error?.message || error) };
+        console.error(`[doUploadsAndPatch] Critical error:`, classified);
+
+        let userMessage = classified.userMessage;
+        if (classified.type === ErrorType.CRITICAL) {
+          userMessage = `Upload failed: ${classified.userMessage}`;
+        } else if (classified.type === ErrorType.NETWORK) {
+          userMessage = 'Network issues prevented file upload. Please check your connection and try again.';
+        } else if (classified.type === ErrorType.AUTH) {
+          userMessage = 'Authentication issues occurred. Please refresh the page and try again.';
+        }
+
+        setUploadError(userMessage);
       } finally {
         setUploading(false);
       }
@@ -242,14 +393,25 @@ export default function EnergyWeekForm() {
     [getValues]
   );
 
-  const onSubmit = async (values: FormValues) => {
+  const handleFormSubmit = async (values: FormValues) => {
     setSubmitError(null);
     setUploadError(null);
     setCreatedId(null);
     setSuccessId(null);
     setShowPreview(false); // Hide preview after starting submission
-    try {
 
+    let didAnon = false;
+    let finishedOk = false;
+    let createdIdLocal: string | null = null;
+
+    try {
+      // Make anonymous auth ephemeral for this session only
+      await setPersistence(auth, inMemoryPersistence);
+
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+        didAnon = true;
+      }
 
       // Temporary diagnostics
       console.debug('[submit]', {
@@ -263,13 +425,19 @@ export default function EnergyWeekForm() {
       // Prepare payload without files
       const { cvFile, designFile, ...rest } = values as unknown as ApplicationEnergyWeek;
       const applicationId = await createApplication(rest as unknown as ApplicationEnergyWeek);
+      createdIdLocal = applicationId;
       setCreatedId(applicationId);
 
-      // Upload files (if any) and patch URLs
-      await doUploadsAndPatch(applicationId);
+      // Upload files (if any) and patch URLs BEFORE sign-out
+      if (values.cvFile || values.designFile) {
+        await doUploadsAndPatch(applicationId);
+      }
 
+      // Set success while still authenticated
       setSuccessId(applicationId);
-      // Reset form state
+      finishedOk = true;
+
+      // Reset form state (no network)
       reset({
         program: 'energy_week_2',
         fullName: '',
@@ -290,10 +458,28 @@ export default function EnergyWeekForm() {
       } as unknown as FormValues);
     } catch (e: any) {
       // If error occurred before doc creation, show submitError
-      if (!createdId) {
+      if (!createdIdLocal) {
         setSubmitError(e?.message || 'Submission failed. Please try again.');
       }
       // Else uploadError already set by doUploadsAndPatch
+    } finally {
+      // Guarantee sign-out of ephemeral anonymous session only after successful completion
+      if (finishedOk && (auth.currentUser?.isAnonymous || didAnon)) {
+        try {
+          await signOut(auth);
+        } catch (e) {
+          console.warn('signOut failed', e);
+        }
+      }
+    }
+  };
+
+  // Submit from summary view without relying on react-hook-form handleSubmit wrapper
+  const submitFromSummary = async () => {
+    try {
+      await handleFormSubmit(getValues() as FormValues);
+    } catch (e) {
+      // errors are already handled/logged inside handleFormSubmit/doUploadsAndPatch
     }
   };
 
@@ -435,7 +621,7 @@ export default function EnergyWeekForm() {
         <FormSummary
           data={summaryData}
           onEdit={() => setShowPreview(false)}
-          onSubmit={() => handleSubmit(onSubmit)()}
+          onSubmit={submitFromSummary}
           isSubmitting={isSubmitting || uploading}
           programTitle="Energy Week 2"
         />
@@ -584,6 +770,12 @@ export default function EnergyWeekForm() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {uploading && (
+          <div className="mb-3 rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800" aria-live="polite">
+            Uploading attachments ({uploadProgress}%)… Please wait and do not close this tab.
+          </div>
         )}
 
         {/* Enhanced Submit Bar */}

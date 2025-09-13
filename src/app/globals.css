@@ -13,30 +13,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #171717;
-  }
-
-  /* Override form elements to maintain light mode */
-  input, textarea, select {
-    background-color: #ffffff !important;
-    color: #171717 !important;
-    border-color: #cccccc !important;
-  }
-
-  input[type="checkbox"], input[type="radio"] {
-    background-color: #ffffff !important;
-    border-color: #cccccc !important;
-  }
-
-  button {
-    background-color: #ffffff !important;
-    color: #171717 !important;
-    border-color: #cccccc !important;
-  }
-}
 
 body {
   background: var(--background);

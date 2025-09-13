@@ -11,7 +11,8 @@ import { useI18n } from '@/i18n/index';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function Navigation() {
-  const { user, userProfile, logout, loading, isOrganizer } = useAuth();
+  const { user, userProfile, logout, loading, isOrganizer, isAdmin } = useAuth();
+  const canSeeAdmin = Boolean(isOrganizer || isAdmin);
   const router = useRouter();
   const { t } = useI18n();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -83,7 +84,7 @@ const [dropdownOpen, setDropdownOpen] = useState(false);
                 >
                   {t('nav.events')}
                 </Link>
-                {isOrganizer && (
+                {canSeeAdmin && (
                   <Link
                     href="/admin"
                     className="text-[#f8cd5c] hover:opacity-80 text-xl px-3 py-2 rounded-md"
@@ -91,7 +92,7 @@ const [dropdownOpen, setDropdownOpen] = useState(false);
                     {t('nav.admin')}
                   </Link>
                 )}
-                {isOrganizer && (
+                {canSeeAdmin && (
                   <Link
                     href="/admin/applications"
                     className="text-[#f8cd5c] hover:opacity-80 text-xl px-3 py-2 rounded-md"
@@ -179,7 +180,7 @@ const [dropdownOpen, setDropdownOpen] = useState(false);
             >
               {t('nav.events')}
             </Link>
-            {isOrganizer && (
+            {canSeeAdmin && (
               <Link
                 href="/admin"
                 className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
@@ -187,7 +188,7 @@ const [dropdownOpen, setDropdownOpen] = useState(false);
                 {t('nav.admin')}
               </Link>
             )}
-            {isOrganizer && (
+            {canSeeAdmin && (
               <Link
                 href="/admin/applications"
                 className="text-gray-600 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"

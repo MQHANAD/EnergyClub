@@ -6,7 +6,10 @@ import {
   signInWithPopup,  // استخدم البوب اب بدل الريدايركت
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  signInAnonymously as firebaseSignInAnonymously,
+  linkWithCredential,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
@@ -30,10 +33,12 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInAnonymously: () => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   isAdmin: boolean;
   isOrganizer: boolean;
+  isAnonymous: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,21 +60,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const now = new Date();
 
     if (userSnap.exists()) {
-      await updateDoc(userRef, {
-        lastLogin: now,
-        displayName: firebaseUser.displayName || userSnap.data().displayName,
-        photoURL: firebaseUser.photoURL || userSnap.data().photoURL,
-        email: firebaseUser.email || userSnap.data().email
-      });
-
       const existingData = userSnap.data();
+      try {
+        await updateDoc(userRef, {
+          lastLogin: now,
+          displayName: firebaseUser.displayName || existingData.displayName,
+          photoURL: firebaseUser.photoURL || existingData.photoURL,
+          email: firebaseUser.email || existingData.email
+        });
+      } catch (err) {
+        console.warn('User profile updateDoc failed; proceeding with read-only data', err);
+      }
+
+      const normalizedRole = (String(existingData.role || 'user').toLowerCase() as UserProfile['role']);
+
       return {
         id: firebaseUser.uid,
-        email: existingData.email,
-        displayName: existingData.displayName,
-        photoURL: existingData.photoURL,
-        role: existingData.role || 'user',
-        createdAt: existingData.createdAt?.toDate() || now,
+        email: existingData.email || firebaseUser.email || '',
+        displayName: existingData.displayName || firebaseUser.displayName || '',
+        photoURL: existingData.photoURL || firebaseUser.photoURL || undefined,
+        role: normalizedRole,
+        createdAt: (existingData.createdAt?.toDate ? existingData.createdAt.toDate() : now),
         lastLogin: now,
         preferences: existingData.preferences || { emailNotifications: true, eventReminders: true }
       };
@@ -85,21 +96,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         preferences: { emailNotifications: true, eventReminders: true }
       };
 
-      await setDoc(userRef, { ...newUserProfile, createdAt: now, lastLogin: now });
+      try {
+        await setDoc(userRef, { ...newUserProfile, createdAt: now, lastLogin: now });
+      } catch (err) {
+        console.warn('User profile setDoc failed; returning local profile only', err);
+      }
       return newUserProfile;
+    }
+  };
+
+  const signInAnonymously = async () => {
+    try {
+      const result = await firebaseSignInAnonymously(auth);
+      const firebaseUser = result.user;
+      setUser(firebaseUser);
+
+      // Do not create or persist userProfile for anonymous sessions
+      if (firebaseUser.isAnonymous) {
+        setUserProfile(null);
+      } else {
+        const profile = await createOrUpdateUserProfile(firebaseUser);
+        setUserProfile(profile);
+      }
+    } catch (error) {
+      console.error('Error signing in anonymously:', error);
+      throw error;
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      // يجب استدعاؤه مباشرة من onClick أو حدث المستخدم
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
-      setUser(firebaseUser);
-      const profile = await createOrUpdateUserProfile(firebaseUser);
-      setUserProfile(profile);
-    } catch (error) {
+      // Check if there's an anonymous user that needs to be linked
+      if (auth.currentUser?.isAnonymous) {
+        // Link anonymous user with Google credential
+        const result = await signInWithPopup(auth, googleProvider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        if (credential) {
+          await linkWithCredential(auth.currentUser, credential);
+          const firebaseUser = result.user;
+          setUser(firebaseUser);
+          const profile = await createOrUpdateUserProfile(firebaseUser);
+          setUserProfile(profile);
+        }
+      } else {
+        // Normal Google sign-in
+        const result = await signInWithPopup(auth, googleProvider);
+        const firebaseUser = result.user;
+        setUser(firebaseUser);
+        const profile = await createOrUpdateUserProfile(firebaseUser);
+        setUserProfile(profile);
+      }
+    } catch (error: any) {
       console.error('Error signing in with Google (popup):', error);
+      // Handle specific error cases
+      if (error.code === 'auth/credential-already-in-use') {
+        console.warn('Google account already linked to another user');
+      }
       throw error;
     }
   };
@@ -117,11 +169,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user || !userProfile) return;
+
+    // Never mutate Firebase Auth profile for anonymous sessions
+    if (user.isAnonymous) {
+      console.warn('Skipping Auth profile updates for anonymous user');
+      return;
+    }
+
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, updates);
       setUserProfile(prev => prev ? { ...prev, ...updates } : null);
 
+      // Only update Firebase Auth displayName/photo for non-anonymous users
       if (updates.displayName || updates.photoURL) {
         await updateProfile(user, { displayName: updates.displayName, photoURL: updates.photoURL });
       }
@@ -135,11 +195,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        try {
-          const profile = await createOrUpdateUserProfile(firebaseUser);
-          setUserProfile(profile);
-        } catch {
+
+        if (firebaseUser.isAnonymous) {
+          // Never create/update Firestore profile for ephemeral anonymous sessions
           setUserProfile(null);
+        } else {
+          try {
+            const profile = await createOrUpdateUserProfile(firebaseUser);
+            setUserProfile(profile);
+          } catch (err) {
+            console.warn('Failed to update user profile; attempting read-only fetch', err);
+            try {
+              const ref = doc(db, 'users', firebaseUser.uid);
+              const snap = await getDoc(ref);
+              if (snap.exists()) {
+                const data = snap.data() as any;
+                const normalizedRole = (String(data?.role || 'user').toLowerCase() as UserProfile['role']);
+                const profileRO: UserProfile = {
+                  id: firebaseUser.uid,
+                  email: data?.email || firebaseUser.email || '',
+                  displayName: data?.displayName || firebaseUser.displayName || '',
+                  photoURL: data?.photoURL || firebaseUser.photoURL || undefined,
+                  role: normalizedRole,
+                  createdAt: (data?.createdAt?.toDate ? data.createdAt.toDate() : new Date()),
+                  lastLogin: new Date(),
+                  preferences: data?.preferences || { emailNotifications: true, eventReminders: true }
+                };
+                setUserProfile(profileRO);
+              } else {
+                setUserProfile(null);
+              }
+            } catch (readErr) {
+              console.error('Failed to read user profile', readErr);
+              setUserProfile(null);
+            }
+          }
         }
       } else {
         setUser(null);
@@ -156,10 +246,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userProfile,
     loading,
     signInWithGoogle,
+    signInAnonymously,
     logout,
     updateUserProfile,
     isAdmin: userProfile?.role === 'admin',
-    isOrganizer: userProfile?.role === 'organizer' || userProfile?.role === 'admin'
+    isOrganizer: userProfile?.role === 'organizer' || userProfile?.role === 'admin',
+    isAnonymous: user?.isAnonymous || false
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -9,7 +9,7 @@ export default function Navbar() {
 
   const links = [
     { key: "about", href: "#about" },
-    { key: "events", href: "#events" },
+    { key: "events", href: "/events" },
     // { key: "partners", href: "#partners" },
     { key: "joinUs", href: "/register" },
     // { key: "contact", href: "#Footer" },

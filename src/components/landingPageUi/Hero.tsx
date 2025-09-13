@@ -50,7 +50,7 @@ export default function Hero() {
 
           <div className={`flex flex-wrap justify-center ${justifyClass} gap-3`}>
             <motion.a
-              href="#events"
+              href="/events"
               className="rounded-xl px-4 py-2 md:px-5 md:py-3 font-semibold text-white text-sm md:text-base"
               style={{ backgroundColor: "#f8cd5c" }}
               whileHover={{ scale: 1.05 }}
