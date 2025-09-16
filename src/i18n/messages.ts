@@ -51,21 +51,21 @@ export const messages = {
       },
       items: {
         energyWeek: {
-          title: "Energy Week",
+          title: "Energy Week 2025",
           short:
             "Energy Week 2025 at KFUPM showcased student-led innovation in sustainable energy.",
           content:
             "Energy Week 2025 at KFUPM marked the first student-led initiative promoting energy sustainability and innovation. Organized with CEEE and student clubs, it gathered over 1,000 participants for competitions, debates, and an expo with industry leaders. The event established a national platform for collaboration and set the foundation for future advancements in sustainable energy.",
         },
         sharkTank: {
-          title: "Shark Tank – 1st Edition",
+          title: "Engineering Shark Tank – 1st Edition",
           short:
             "The Engineers’ Shark Tank let students pitch innovative energy ideas to experts.",
           content:"The Engineers’ Shark Tank launched as a bold platform for students to pitch their groundbreaking ideas directly to experts and industry leaders. In its first edition, participants showcased innovative energy solutions, spanning renewable technologies, efficiency strategies, and entrepreneurial projects.\n\nThe event provided:\n-A real-world pitching experience before a panel of judges\n-Opportunities for mentorship and funding\n-Recognition for the most impactful ideas\n\nThe Shark Tank was more than a competition—it was a launchpad for student entrepreneurs to transform their concepts into tangible innovations, shaping the energy future.",
           
         },
         greenH2: {
-          title: "Green Hydrogen Workshop",
+          title: "Strategy& ME Hydrogen Workshop",
           short:
             "KFUPM hosted a Green Hydrogen workshop for student insights.",
           content:
@@ -114,7 +114,7 @@ export const messages = {
       gifAlt: "رسوم متحركة لتوربينات الرياح",
     },
     impact: {
-      title: "أرقام الأثر",
+      title: "أرقامنا",
       stats: {
         attendees: "الحضور",
         workingMembers: "أعضاء الفريق",

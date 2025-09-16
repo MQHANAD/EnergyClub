@@ -42,7 +42,8 @@ const SharedBase = z.object({
   competitions: experienceSchema,
   energy: experienceSchema,
   cvFile: OptionalFile, // validated client-side
-  designFile: OptionalFile // validated client-side
+  designFile: OptionalFile, // validated client-side
+  selectedCommittee: z.string().optional() // The selected committee (first committee)
 });
 
 export const EnergyWeekLeadershipChoice = z.object({

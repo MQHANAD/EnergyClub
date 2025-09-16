@@ -4,6 +4,7 @@ import React from 'react';
 import { Program } from '@/lib/registrationSchemas';
 import { cn } from '@/lib/utils';
 import { Calendar, Users, Zap, Star, Clock, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 type Props = {
   active: Program;
@@ -40,26 +41,43 @@ const tabs: {
   },
 ];
 
+const tabImages: Record<Program, { src: string; alt: string }> = {
+  energy_week_2: { src: '/energyWeekLogo.png', alt: 'Energy Week preview' },
+  female_energy_club: { src: '/energyClubLogo.png', alt: 'Female Energy Club preview' },
+};
+
 export default function RegisterTabs({ active, onChange }: Props) {
   return (
     <div className="w-full mb-8">
-      {/* Mobile Dropdown View */}
+      {/* Mobile Card View */}
       <div className="block lg:hidden">
-        <label htmlFor="program-select" className="sr-only">
-          Select a program
-        </label>
-        <select
-          id="program-select"
-          value={active}
-          onChange={(e) => onChange(e.target.value as Program)}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-        >
-          {tabs.map((tab) => (
-            <option key={tab.key} value={tab.key}>
-              {tab.title}
-            </option>
-          ))}
-        </select>
+        {/* Visible mobile cards for better discoverability */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {tabs.map((tab) => {
+            const isActive = active === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => onChange(tab.key)}
+                className={cn(
+                  'flex items-center gap-3 p-4 rounded-lg border transition-all text-left hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-500/20',
+                  isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                )}
+                aria-selected={isActive}
+              >
+                <div className="flex-shrink-0 rounded-md overflow-hidden border bg-white">
+                  <Image src={tabImages[tab.key].src} alt={tabImages[tab.key].alt} width={56} height={56} className="object-contain p-2" />
+                </div>
+                <div className="min-w-0">
+                  <div className={cn('font-medium truncate', isActive ? 'text-blue-900' : 'text-gray-900')}>{tab.label}</div>
+                  <div className="text-xs text-gray-500">{tab.duration}</div>
+                  <p className="mt-1 text-xs text-gray-600 line-clamp-2">{tab.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Desktop Card View */}
@@ -149,6 +167,21 @@ export default function RegisterTabs({ active, onChange }: Props) {
                       </span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Small Photo Section (dummy image) */}
+              <div className="mt-4">
+                <h4 className={cn(
+                  'text-xs font-semibold uppercase tracking-wide transition-colors',
+                  isActive ? 'text-blue-600' : 'text-gray-500'
+                )}>
+                  Program Snapshot
+                </h4>
+                <div className="mt-2 inline-flex items-center gap-2">
+                  <div className="rounded-md overflow-hidden border bg-white">
+                    <Image src={tabImages[tab.key].src} alt={tabImages[tab.key].alt} width={100} height={100} className="object-contain p-2" />
+                  </div>
                 </div>
               </div>
 

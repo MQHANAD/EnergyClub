@@ -187,19 +187,35 @@ export default function ApplicationsAdminPage() {
   }), [apps]);
 
   // Application decision handlers
-  const onDecide = async (application: Application, status: 'accepted' | 'rejected') => {
+  const onDecide = async (application: Application, status: 'accepted' | 'rejected', selectedCommittee?: number) => {
     if (!user) return;
     if (status === 'rejected' && !confirm('Reject this application?')) return;
 
     setProcessingId(application.id);
     try {
-      await decideApplication(application.id, status, user.uid);
+      // Map selected committee index to the actual committee name (string)
+      const selectedCommitteeValue =
+        typeof selectedCommittee === 'number' && Array.isArray(application.committees)
+          ? application.committees[selectedCommittee]
+          : undefined;
+
+      await decideApplication(
+        application.id,
+        status,
+        user.uid,
+        undefined,
+        selectedCommitteeValue
+      );
       // Optimistic update
-      setApps(prev => prev.map(a => (a.id === application.id ? { ...a, status } : a)));
+      const updatedApp = { ...application, status } as Application;
+      if (selectedCommitteeValue !== undefined) {
+        updatedApp.selectedCommittee = selectedCommitteeValue;
+      }
+      setApps(prev => prev.map(a => (a.id === application.id ? updatedApp : a)));
 
       // Update selected application if it's currently shown
       if (selectedApplication?.id === application.id) {
-        setSelectedApplication({ ...selectedApplication, status });
+        setSelectedApplication(updatedApp);
       }
     } catch (e: any) {
       console.error('Failed to decide application', e);
@@ -240,7 +256,7 @@ export default function ApplicationsAdminPage() {
     try {
       const pendingApps = applications.filter(app => app.status === 'pending');
       await Promise.all(
-        pendingApps.map(app => decideApplication(app.id, 'accepted', user.uid))
+        pendingApps.map(app => decideApplication(app.id, 'accepted', user.uid, undefined, undefined))
       );
 
       // Optimistic update
@@ -265,7 +281,7 @@ export default function ApplicationsAdminPage() {
     try {
       const pendingApps = applications.filter(app => app.status === 'pending');
       await Promise.all(
-        pendingApps.map(app => decideApplication(app.id, 'rejected', user.uid))
+        pendingApps.map(app => decideApplication(app.id, 'rejected', user.uid, undefined, undefined))
       );
 
       // Optimistic update
@@ -544,7 +560,7 @@ export default function ApplicationsAdminPage() {
           isOpen={showSlidePanel}
           onClose={handleClosePanel}
           application={selectedApplication}
-          onAccept={(app) => onDecide(app, 'accepted')}
+          onAccept={(app, selectedIdx) => onDecide(app, 'accepted', selectedIdx)}
           onReject={(app) => onDecide(app, 'rejected')}
           onUndo={onUndo}
           isProcessing={processingId === selectedApplication.id}

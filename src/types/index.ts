@@ -79,6 +79,7 @@ export interface Application {
   energy: string | null;
   linkedIn: string | null;
   designLink: string | null;
+  selectedCommittee: string | null;
   cvUrl: string | null;
   designFileUrl: string | null;
   cvPath?: string | null;

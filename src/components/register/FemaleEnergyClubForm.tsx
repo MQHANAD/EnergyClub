@@ -130,8 +130,6 @@ export default function FemaleEnergyClubForm() {
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showPreview, setShowPreview] = useState<boolean>(false);
-  
-  // Watch all form values for progress calculation
   const formValues = watch();
   
   // Helper function to check if personal info is completed
@@ -149,27 +147,32 @@ export default function FemaleEnergyClubForm() {
   
   const isFormValid = isPersonalInfoCompleted() && isCommitteesCompleted();
   
+  // Enforce sequential completion: a step cannot be completed unless previous steps are completed
+  const completedPersonal = isPersonalInfoCompleted();
+  const completedCommittees = completedPersonal && isCommitteesCompleted();
+  const completedAttachments = completedCommittees && true; // optional but gated by previous step
+  
   const steps: Step[] = [
     {
       id: 'personal',
       title: 'Personal Info',
       description: 'Basic information',
-      completed: isPersonalInfoCompleted(),
-      current: !isPersonalInfoCompleted() && !showPreview
+      completed: completedPersonal,
+      current: !completedPersonal && !showPreview
     },
     {
       id: 'committees',
       title: 'Committees',
       description: 'Select preferences',
-      completed: isCommitteesCompleted(),
-      current: isPersonalInfoCompleted() && !isCommitteesCompleted() && !showPreview
+      completed: completedCommittees,
+      current: completedPersonal && !completedCommittees && !showPreview
     },
     {
       id: 'attachments',
       title: 'Attachments',
       description: 'Upload documents',
-      completed: true, // Optional files are always considered complete
-      current: isPersonalInfoCompleted() && isCommitteesCompleted() && !showPreview
+      completed: completedAttachments,
+      current: completedPersonal && completedCommittees && !showPreview
     },
     {
       id: 'review',

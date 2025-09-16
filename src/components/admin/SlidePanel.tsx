@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import StatusBadge from './StatusBadge';
 import { Application } from '@/types';
-import { 
-  X, 
-  ExternalLink, 
-  User, 
-  Mail, 
-  Phone, 
+import {
+  X,
+  ExternalLink,
+  User,
+  Mail,
+  Phone,
   Calendar,
   FileText,
   Award,
@@ -24,7 +24,7 @@ export interface SlidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   application: Application;
-  onAccept?: (application: Application) => void;
+  onAccept?: (application: Application, selectedCommittee?: number) => void;
   onReject?: (application: Application) => void;
   onUndo?: (application: Application) => void;
   className?: string;
@@ -43,6 +43,9 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+
+
 
   // Focus management for accessibility
   useEffect(() => {
@@ -100,19 +103,19 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
-      
+
       {/* Panel */}
       <div
         ref={panelRef}
         className={cn(
           'fixed right-0 top-0 bottom-0 h-full! w-full max-w-2xl bg-white shadow-xl z-50 transform transition-transform duration-300 ease-out',
           'flex flex-col',
-          
+
           // Mobile: Full screen bottom sheet
           'md:max-w-2xl md:border-l md:border-gray-200',
           // Mobile styles
@@ -128,7 +131,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3 mb-2">
               <User className="h-6 w-6 text-gray-400 flex-shrink-0" />
-              <h2 
+              <h2
                 id="slide-panel-title"
                 className="text-xl font-semibold text-gray-900 truncate"
               >
@@ -147,7 +150,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
               </div>
             </div>
           </div>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -197,14 +200,44 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
               </h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 {application.committees?.length ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-3">
                     {application.committees.map((committee, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      <label 
+                        key={idx} 
+                        className="group flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 cursor-pointer"
                       >
-                        {committee}
-                      </span>
+                        <div className="relative flex items-center">
+                          <input
+                            type="radio"
+                            name="committee-selection"
+                            value={idx}
+                            checked={selectedIndex === idx}
+                            onChange={() => setSelectedIndex(idx)}
+                            className="sr-only"
+                          />
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                            selectedIndex === idx 
+                              ? 'border-blue-600 bg-blue-600' 
+                              : 'border-gray-300 bg-white group-hover:border-blue-400'
+                          }`}>
+                            {selectedIndex === idx && (
+                              <div className="w-2 h-2 rounded-full bg-white"></div>
+                            )}
+                          </div>
+                        </div>
+                        <span className={`text-sm font-medium transition-colors duration-200 ${
+                          selectedIndex === idx 
+                            ? 'text-blue-900' 
+                            : 'text-gray-700 group-hover:text-blue-800'
+                        }`}>
+                          {committee}
+                        </span>
+                        {selectedIndex === idx && (
+                          <div className="ml-auto">
+                            <Check className="h-4 w-4 text-blue-600" />
+                          </div>
+                        )}
+                      </label>
                     ))}
                   </div>
                 ) : (
@@ -253,14 +286,14 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.previous}</p>
                   </div>
                 )}
-                
+
                 {application.competitions && (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2">Competitions</h4>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.competitions}</p>
                   </div>
                 )}
-                
+
                 {application.energy && (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2">Energy Interest</h4>
@@ -366,7 +399,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
               {application.status === 'pending' ? (
                 <>
                   <Button
-                    onClick={() => onAccept?.(application)}
+                    onClick={() => onAccept?.(application, selectedIndex >= 0 ? selectedIndex : undefined)}
                     disabled={isProcessing}
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
@@ -393,12 +426,13 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
                 </Button>
               )}
             </div>
-            
+
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
           </div>
         </div>
+
       </div>
     </>
   );

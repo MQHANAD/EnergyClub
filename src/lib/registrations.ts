@@ -64,6 +64,7 @@ export async function createApplication(data: CreateApplicationInput): Promise<s
     energy: data.energy?.toString().trim() || null,
     linkedIn: data.linkedIn?.toString().trim() || null,
     designLink: data.designLink?.toString().trim() || null,
+    selectedCommittee: data.selectedCommittee || null,
     cvUrl: null as string | null,
     designFileUrl: null as string | null,
     cvPath: null as string | null,
@@ -485,6 +486,7 @@ export async function listApplications(): Promise<Application[]> {
       energy: (data?.energy as string | null) ?? null,
       linkedIn: (data?.linkedIn as string | null) ?? null,
       designLink: (data?.designLink as string | null) ?? null,
+      selectedCommittee: (data?.selectedCommittee as string | null) ?? null,
       cvUrl: (data?.cvUrl as string | null) ?? null,
       designFileUrl: (data?.designFileUrl as string | null) ?? null,
       cvPath: (data?.cvPath as string | null) ?? null,
@@ -509,15 +511,29 @@ export async function decideApplication(
   applicationId: string,
   status: 'accepted' | 'rejected',
   decidedByUid: string,
-  adminNotes?: string
+  adminNotes?: string,
+  selectedCommittee?: string | number
 ): Promise<void> {
-  await updateDoc(doc(db, 'applications', applicationId), {
+  console.log(`decideApplication selectedCommittee: ${selectedCommittee}, type: ${typeof selectedCommittee}`);
+  const payload: Record<string, any> = {
     status,
     decidedAt: serverTimestamp(),
     decidedBy: decidedByUid,
     adminNotes: typeof adminNotes === 'string' ? adminNotes : null,
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  // Only set selectedCommittee when it's defined for acceptance; clear it on rejection
+  if (status === 'accepted') {
+    if (typeof selectedCommittee !== 'undefined' && selectedCommittee !== null) {
+      payload.selectedCommittee = selectedCommittee;
+    }
+  } else if (status === 'rejected') {
+    payload.selectedCommittee = null;
+  }
+
+  console.log(`decideApplication payload.selectedCommittee: ${payload.selectedCommittee}`);
+  await updateDoc(doc(db, 'applications', applicationId), payload);
 }
 
 /**
