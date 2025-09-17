@@ -147,20 +147,22 @@ export default function SharedFields<TForm extends FieldValues>({
 
           <EnhancedField<TForm>
             id="email"
-            label="Email Address"
+            label="Personal Email"//⚠️ If you use your university email, messages may go to Junk. Please use your personal email.
             type="email"
             required
             placeholder="your.email@example.com"
             register={register('email' as Path<TForm>)}
             error={errors['email' as Path<TForm>]}
-            description="We'll use this to contact you about your application"
+            description="We'll use this to contact you about your application, If you use your university email, messages may go to Junk. Please use your personal email. ⚠️"
           />
+          
+          
 
           <EnhancedField<TForm>
             id="kfupmId"
             label="KFUPM ID"
             required
-            placeholder="123456789"
+            placeholder="202XXXXXX"
             maxLength={9}
             inputMode="numeric"
             pattern="\d{9}"

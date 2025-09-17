@@ -20,7 +20,14 @@ export const metadata: Metadata = {
   title: "Energy Club Web Platform",
   description: "Discover and register for Energy club events",
   icons: {
-    icon: "/favicon.png",
+    icon: [
+      "/favicon.png",
+      { url: "/favicon.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.png", type: "image/png", sizes: "64x64" },
+    ],
+    shortcut: ["/favicon.png"],
+    apple: [{ url: "/favicon.png" }],
   },
 };
 
