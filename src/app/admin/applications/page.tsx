@@ -190,6 +190,7 @@ export default function ApplicationsAdminPage() {
   const onDecide = async (application: Application, status: 'accepted' | 'rejected', selectedCommittee?: number) => {
     if (!user) return;
     if (status === 'rejected' && !confirm('Reject this application?')) return;
+    if (status === 'accepted' && !confirm('Accept this application?')) return;
 
     setProcessingId(application.id);
     try {
