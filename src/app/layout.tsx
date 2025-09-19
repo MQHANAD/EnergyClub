@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Energy Club Web Platform",
-  description: "Discover and register for Energy club events",
+  title: "Energy Hub",
+  description: "Discover and register for Energy club and Energy week events",
   icons: {
     icon: [
       "/favicon.png",
