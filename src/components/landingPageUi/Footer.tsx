@@ -88,22 +88,6 @@ export default function Footer({ primary = "#114DAF", accent = "#f8cd5c" }) {
 
         <div className="mt-8 border-t border-gray-100 pt-6 text-xs text-gray-500 text-center">
           © {new Date().getFullYear()} {t("footer.brandName")}. {t("footer.rights")} <span>
-            Website Developed by{' '}
-            <a
-              href="https://mqhanad.github.io/Portfolio/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-900 font-medium text-[#25818a]"
-            >
-              Muhannad Alduraywish
-            </a> and <a
-              href="https://omaralshahrani.great-site.net/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-900 font-medium text-[#25818a]"
-            >
-              Omar Alshahrani
-            </a>.
           </span>
         </div>
       </div>

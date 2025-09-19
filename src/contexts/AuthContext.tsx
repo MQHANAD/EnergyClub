@@ -3,16 +3,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User,
-  signInWithPopup,  // استخدم البوب اب بدل الريدايركت
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updateProfile,
   signInAnonymously as firebaseSignInAnonymously,
-  linkWithCredential,
-  GoogleAuthProvider
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 
 interface UserProfile {
   id: string;
@@ -32,8 +32,10 @@ interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   signInAnonymously: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   isAdmin: boolean;
@@ -124,34 +126,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithEmail = async (email: string, password: string) => {
     try {
-      // Check if there's an anonymous user that needs to be linked
-      if (auth.currentUser?.isAnonymous) {
-        // Link anonymous user with Google credential
-        const result = await signInWithPopup(auth, googleProvider);
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        if (credential) {
-          await linkWithCredential(auth.currentUser, credential);
-          const firebaseUser = result.user;
-          setUser(firebaseUser);
-          const profile = await createOrUpdateUserProfile(firebaseUser);
-          setUserProfile(profile);
-        }
-      } else {
-        // Normal Google sign-in
-        const result = await signInWithPopup(auth, googleProvider);
-        const firebaseUser = result.user;
-        setUser(firebaseUser);
-        const profile = await createOrUpdateUserProfile(firebaseUser);
-        setUserProfile(profile);
-      }
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = result.user;
+      setUser(firebaseUser);
+      const profile = await createOrUpdateUserProfile(firebaseUser);
+      setUserProfile(profile);
     } catch (error: any) {
-      console.error('Error signing in with Google (popup):', error);
-      // Handle specific error cases
-      if (error.code === 'auth/credential-already-in-use') {
-        console.warn('Google account already linked to another user');
-      }
+      console.error('Error signing in with email:', error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string, displayName: string) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = result.user;
+      
+      // Update the user's display name
+      await updateProfile(firebaseUser, { displayName });
+      
+      setUser(firebaseUser);
+      const profile = await createOrUpdateUserProfile(firebaseUser);
+      setUserProfile(profile);
+    } catch (error: any) {
+      console.error('Error signing up with email:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      console.error('Error sending password reset email:', error);
       throw error;
     }
   };
@@ -245,8 +254,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     userProfile,
     loading,
-    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
     signInAnonymously,
+    resetPassword,
     logout,
     updateUserProfile,
     isAdmin: userProfile?.role === 'admin',
