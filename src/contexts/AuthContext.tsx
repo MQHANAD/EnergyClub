@@ -18,7 +18,7 @@ interface UserProfile {
   id: string;
   email: string;
   displayName: string;
-  photoURL?: string;
+  photoURL: string;
   role: 'user' | 'organizer' | 'admin';
   createdAt: Date;
   lastLogin: Date;
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: firebaseUser.uid,
         email: existingData.email || firebaseUser.email || '',
         displayName: existingData.displayName || firebaseUser.displayName || '',
-        photoURL: existingData.photoURL || firebaseUser.photoURL || undefined,
+        photoURL: existingData.photoURL || firebaseUser.photoURL || 'https://via.placeholder.com/150/4F46E5/FFFFFF?text=User',
         role: normalizedRole,
         createdAt: (existingData.createdAt?.toDate ? existingData.createdAt.toDate() : now),
         lastLogin: now,
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: firebaseUser.uid,
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || '',
-        photoURL: firebaseUser.photoURL || undefined,
+        photoURL: firebaseUser.photoURL || 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png',
         role: 'user',
         createdAt: now,
         lastLogin: now,
@@ -224,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   id: firebaseUser.uid,
                   email: data?.email || firebaseUser.email || '',
                   displayName: data?.displayName || firebaseUser.displayName || '',
-                  photoURL: data?.photoURL || firebaseUser.photoURL || undefined,
+                  photoURL: data?.photoURL || firebaseUser.photoURL || 'https://via.placeholder.com/150/4F46E5/FFFFFF?text=User',
                   role: normalizedRole,
                   createdAt: (data?.createdAt?.toDate ? data.createdAt.toDate() : new Date()),
                   lastLogin: new Date(),
