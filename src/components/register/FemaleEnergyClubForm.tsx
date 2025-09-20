@@ -88,6 +88,81 @@ function CommitteesMultiSelect({
 }
 
 export default function FemaleEnergyClubForm() {
+  // Registration is closed for Female Energy Club
+  const isRegistrationClosed = true;
+  
+  // Show registration closed message
+  if (isRegistrationClosed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 flex items-center justify-center px-4 py-8">
+        <div className="mx-auto max-w-2xl w-full">
+          <div className="text-center mb-8 animate-fade-in-up">
+            <div className="relative inline-flex items-center justify-center w-24 h-24 bg-red-100 rounded-full mb-6">
+              <AlertTriangle className="h-12 w-12 text-red-600" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Registration Closed
+            </h1>
+            <p className="text-xl text-gray-600">
+              Female Energy Club registration is currently closed
+            </p>
+          </div>
+
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-8">
+              <div className="space-y-6 text-center">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-semibold text-gray-900">
+                    Thank You for Your Interest!
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">
+                    Registration for the Female Energy Club is currently closed. 
+                    We appreciate your interest in joining our community of women leaders in energy.
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Stay Connected</h4>
+                  <p className="text-blue-700 text-sm mb-3">
+                    Follow us on social media for updates on when registration reopens.
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <a
+                      href="https://www.linkedin.com/company/female-energy-club21/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      LinkedIn
+                    </a>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Questions?</h4>
+                  <a
+                    href="mailto:contact@energyhub.events"
+                    className="text-pink-600 hover:text-pink-700 text-sm"
+                  >
+                    📧 contact@energyhub.events
+                  </a>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={() => window.location.href = '/'}
+                  className="w-full bg-pink-600 hover:bg-pink-700 text-white"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const {
     register,
     handleSubmit,

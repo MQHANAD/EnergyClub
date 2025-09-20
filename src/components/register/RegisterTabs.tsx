@@ -19,6 +19,8 @@ const tabs: {
   icon: React.ElementType;
   features: string[];
   duration: string;
+  disabled?: boolean;
+  disabledMessage?: string;
 }[] = [
   {
     key: 'energy_week_2',
@@ -38,6 +40,8 @@ const tabs: {
     icon: Star,
     features: ['Skill Development', 'Community Building', 'Career Guidance'],
     duration: 'Ongoing',
+    disabled: true,
+    disabledMessage: 'Registration Closed',
   },
 ];
 
@@ -55,14 +59,20 @@ export default function RegisterTabs({ active, onChange }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {tabs.map((tab) => {
             const isActive = active === tab.key;
+            const isDisabled = tab.disabled;
             return (
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => onChange(tab.key)}
+                onClick={() => !isDisabled && onChange(tab.key)}
+                disabled={isDisabled}
                 className={cn(
-                  'flex items-center gap-3 p-4 rounded-lg border transition-all text-left hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-500/20',
-                  isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                  'flex items-center gap-3 p-4 rounded-lg border transition-all text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20',
+                  isDisabled
+                    ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                    : isActive
+                    ? 'border-blue-500 bg-blue-50 hover:shadow-md'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                 )}
                 aria-selected={isActive}
               >
@@ -70,9 +80,11 @@ export default function RegisterTabs({ active, onChange }: Props) {
                   <Image src={tabImages[tab.key].src} alt={tabImages[tab.key].alt} width={56} height={56} className="object-contain p-2" />
                 </div>
                 <div className="min-w-0">
-                  <div className={cn('font-medium truncate', isActive ? 'text-blue-900' : 'text-gray-900')}>{tab.label}</div>
-                  <div className="text-xs text-gray-500">{tab.duration}</div>
-                  <p className="mt-1 text-xs text-gray-600 line-clamp-2">{tab.description}</p>
+                  <div className={cn('font-medium truncate', isActive ? 'text-blue-900' : isDisabled ? 'text-gray-500' : 'text-gray-900')}>{tab.label}</div>
+                  <div className={cn('text-xs', isDisabled ? 'text-red-500' : 'text-gray-500')}>
+                    {isDisabled ? tab.disabledMessage : tab.duration}
+                  </div>
+                  <p className={cn('mt-1 text-xs line-clamp-2', isDisabled ? 'text-gray-400' : 'text-gray-600')}>{tab.description}</p>
                 </div>
               </button>
             );
@@ -84,24 +96,37 @@ export default function RegisterTabs({ active, onChange }: Props) {
       <div className="hidden lg:grid lg:grid-cols-2 gap-6">
         {tabs.map((tab) => {
           const isActive = active === tab.key;
+          const isDisabled = tab.disabled;
           const Icon = tab.icon;
           
           return (
             <button
               key={tab.key}
               type="button"
-              onClick={() => onChange(tab.key)}
+              onClick={() => !isDisabled && onChange(tab.key)}
+              disabled={isDisabled}
               className={cn(
-                'group relative p-6 rounded-xl border-2 transition-all duration-200 text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20 hover:shadow-lg hover:scale-[1.02]',
-                isActive
+                'group relative p-6 rounded-xl border-2 transition-all duration-200 text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20',
+                isDisabled
+                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                  : isActive
                   ? 'border-blue-500 bg-blue-50 shadow-lg scale-[1.02]'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:scale-[1.02]'
               )}
               aria-selected={isActive}
               role="tab"
             >
+              {/* Disabled Indicator */}
+              {isDisabled && (
+                <div className="absolute top-4 right-4">
+                  <div className="flex items-center justify-center px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                    {tab.disabledMessage}
+                  </div>
+                </div>
+              )}
+              
               {/* Active Indicator */}
-              {isActive && (
+              {isActive && !isDisabled && (
                 <div className="absolute top-4 right-4">
                   <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
                     <CheckCircle className="h-4 w-4 text-white" />
@@ -113,7 +138,9 @@ export default function RegisterTabs({ active, onChange }: Props) {
               <div className="flex items-start gap-4 mb-4">
                 <div className={cn(
                   'flex items-center justify-center w-12 h-12 rounded-lg transition-colors',
-                  isActive
+                  isDisabled
+                    ? 'bg-gray-200 text-gray-400'
+                    : isActive
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
                 )}>
@@ -122,7 +149,7 @@ export default function RegisterTabs({ active, onChange }: Props) {
                 <div className="flex-1 min-w-0">
                   <h3 className={cn(
                     'text-lg font-semibold mb-1 transition-colors',
-                    isActive ? 'text-blue-900' : 'text-gray-900'
+                    isDisabled ? 'text-gray-500' : isActive ? 'text-blue-900' : 'text-gray-900'
                   )}>
                     {tab.label}
                   </h3>
