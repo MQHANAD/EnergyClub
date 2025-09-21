@@ -134,6 +134,13 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
                                 <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                 <span>{formatDate(application.submittedAt)}</span>
                             </div>
+                            {application.selectedCommittee && (
+                                        <div className="mt-2">
+                                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
+                                                Selected: {application.selectedCommittee}
+                                            </span>
+                                        </div>
+                                    )}
                         </div>
                     </div>
                 </div>

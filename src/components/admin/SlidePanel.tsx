@@ -189,6 +189,12 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
                   <label className="text-sm font-medium text-gray-700">Academic Year</label>
                   <div className="text-sm text-gray-900">{application.academicYear}</div>
                 </div>
+                {application.selectedCommittee && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Selected Role</label>
+                    <div className="text-sm text-gray-900">{application.selectedCommittee}</div>
+                  </div>
+                )}
               </div>
             </section>
 
