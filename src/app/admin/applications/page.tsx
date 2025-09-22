@@ -17,6 +17,7 @@ import SlidePanel from '@/components/admin/SlidePanel';
 
 import { RefreshCw, Filter, Layout, List } from 'lucide-react';
 import { useI18n } from '@/i18n/index';
+import * as XLSX from 'xlsx';
 
 export default function ApplicationsAdminPage() {
   const router = useRouter();
@@ -402,6 +403,34 @@ export default function ApplicationsAdminPage() {
                   <Button variant="outline" onClick={loadAll} disabled={loadingApps}>
                     <RefreshCw className={`h-4 w-4 mr-2 ${loadingApps ? 'animate-spin' : ''}`} />
                     Refresh
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Sort applications by status
+                      const sortedApps = [...apps].sort((a, b) => {
+                        const statusOrder = { pending: 0, accepted: 1, rejected: 2 };
+                        return statusOrder[a.status] - statusOrder[b.status];
+                      });
+                      // Prepare data for Excel
+                      const data = sortedApps.map(app => ({
+                        Name: app.fullName,
+                        Email: app.email,
+                        KFUPM_ID: app.kfupmId,
+                        Status: app.status,
+                        Program: app.programLabel || app.program,
+                        AcademicYear: app.academicYear,
+                        Committees: Array.isArray(app.committees) ? app.committees.join(', ') : '',
+                        SelectedCommittee: app.selectedCommittee || '',
+                        SubmittedAt: app.submittedAt,
+                      }));
+                      const worksheet = XLSX.utils.json_to_sheet(data);
+                      const workbook = XLSX.utils.book_new();
+                      XLSX.utils.book_append_sheet(workbook, worksheet, 'Applications');
+                      XLSX.writeFile(workbook, 'applications.xlsx');
+                    }}
+                  >
+                    Export to Excel
                   </Button>
                 </div>
               </div>
