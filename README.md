@@ -12,6 +12,7 @@ cd EnergyClub
 ```bash
 npm install --legacy-peer-deps
 ```
+# add .env.local file into EnergyClub folder
 ```bash
 npm run dev
 ```
