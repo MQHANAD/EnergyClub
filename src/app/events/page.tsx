@@ -189,10 +189,10 @@ export default function EventsPage() {
                               />
                             )}
                           </div>
-                          
+                      
                           <div className="flex-1">
-                            <CardTitle className="text-lg mb-2 truncate">{event.title}</CardTitle>
-                            <CardDescription className="line-clamp-2 truncate">
+                            <CardTitle className="text-lg mb-2 whitespace-normal">{event.title}</CardTitle>
+                            <CardDescription className="truncate md:w-48 w-32">
                               {event.description}
                             </CardDescription>
                           </div>
