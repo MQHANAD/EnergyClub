@@ -176,7 +176,7 @@ export default function EventsPage() {
                               <img
                                 src={event.imageUrl}
                                 alt={event.title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-fill"
                                 onError={(e) => {
                                   (e.currentTarget as HTMLImageElement).src = '/file.svg';
                                 }}

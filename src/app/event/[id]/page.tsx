@@ -217,7 +217,7 @@ export default function EventDetailsPage() {
                 <img
                   src={event.imageUrl}
                   alt={event.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-fill"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">

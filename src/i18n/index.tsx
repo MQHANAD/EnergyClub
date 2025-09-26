@@ -130,7 +130,7 @@ const messages: Record<Lang, MessageTree> = {
     },
     eventsPage: {
       title: "Upcoming Events ⚡️",
-      subtitle: "Discover and register for Energy club events",
+      subtitle: "Discover and register for energy week events",
       loadingEvents: "Loading events...",
       noEventsFound: "No events found",
       noUpcoming: "There are no upcoming events at the moment.",
@@ -343,7 +343,7 @@ const messages: Record<Lang, MessageTree> = {
     },
     eventsPage: {
       title: "الفعاليات القادمة ⚡️",
-      subtitle: "اكتشف وسجّل في فعاليات نادي الطاقة",
+      subtitle: "اكتشف وسجّل في فعاليات اسبوع الطاقة",
       loadingEvents: "جارٍ تحميل الفعاليات...",
       noEventsFound: "لا توجد فعاليات",
       noUpcoming: "لا توجد فعاليات قادمة حالياً.",
