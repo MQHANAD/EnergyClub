@@ -212,12 +212,12 @@ export default function EventDetailsPage() {
 
           <div className="lg:col-span-2 space-y-6">
             {/* Event Image */}
-            <div className="w-full h-64 lg:h-96 overflow-hidden rounded-lg bg-gray-200">
+            <div className="h-auto w-auto overflow-hidden rounded-lg bg-gray-200">
               {event.imageUrl ? (
                 <img
                   src={event.imageUrl}
                   alt={event.title}
-                  className="w-full h-full object-fill"
+                  className="w-full h-full object-contain"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
