@@ -490,7 +490,7 @@ export default function AdminDashboard() {
                             {event.currentAttendees} / {event.maxAttendees}{" "}
                             {t("admin.attendees")}
                           </div>
-                          <div className="flex space-x-4 pt-2">
+                          <div className="flex flex-wrap gap-2 pt-2">
                             <Button
                               onClick={() => handleViewRegistrations(event)}
                               variant="outline"
@@ -510,8 +510,7 @@ export default function AdminDashboard() {
                             <Button
                               onClick={() => handleDeleteEvent(event.id)}
                               variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
+                              className="text-red-600 hover:text-red-700 md:w-auto w-full h-auto"
                             >
                               <Trash2 className="h-4 w-4" />
                               {t("admin.delete")}
@@ -713,7 +712,7 @@ export default function AdminDashboard() {
 
       {/* Edit Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
           </DialogHeader>
