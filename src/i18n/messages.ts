@@ -42,7 +42,8 @@ export const messages = {
       logo: "Logo {i}",
     },
     events: {
-      title: "Events",
+      title: "Previous Events",
+      title1: "Upcoming Events",
       ctaRegister: "Register for Events",
       ctaJoin: "Join the Energy Club",
       modal: {
@@ -130,7 +131,8 @@ export const messages = {
       logo: "الشعار {i}",
     },
     events: {
-      title: "الفعاليات",
+      title: "الفعاليات السابقة",
+      title1: "الفعاليات القادمة",
       ctaRegister: "سجّل في الفعاليات",
       ctaJoin: "انضم إلى نادي الطاقة",
       modal: {

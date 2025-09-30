@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import Input from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
+import React, { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
   Search,
   Filter,
   X,
@@ -15,8 +15,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Users
-} from 'lucide-react';
+  Users,
+} from "lucide-react";
 
 export interface FilterOption {
   id: string;
@@ -60,11 +60,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   statusCounts,
   className,
   isOpen = true,
-  onClose
+  onClose,
 }) => {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: '',
-    end: ''
+    start: "",
+    end: "",
   });
 
   const addFilter = (type: string, value: string, label: string) => {
@@ -72,37 +72,39 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       id: `${type}-${value}`,
       type,
       label,
-      value
+      value,
     };
 
     // Prevent duplicate filters
-    const exists = activeFilters.some(f => f.id === newFilter.id);
+    const exists = activeFilters.some((f) => f.id === newFilter.id);
     if (!exists) {
       onFilterChange([...activeFilters, newFilter]);
     }
   };
 
   const removeFilter = (filterId: string) => {
-    onFilterChange(activeFilters.filter(f => f.id !== filterId));
+    onFilterChange(activeFilters.filter((f) => f.id !== filterId));
   };
 
   const clearAllFilters = () => {
     onFilterChange([]);
-    setDateRange({ start: '', end: '' });
-    onSearchChange('');
+    setDateRange({ start: "", end: "" });
+    onSearchChange("");
   };
 
   const handleDateRangeApply = () => {
     // Remove existing date filters first
-    const withoutDateFilters = activeFilters.filter(f => f.type !== 'dateRange');
-    
+    const withoutDateFilters = activeFilters.filter(
+      (f) => f.type !== "dateRange"
+    );
+
     if (dateRange.start || dateRange.end) {
-      const label = `${dateRange.start || 'Any'} - ${dateRange.end || 'Any'}`;
+      const label = `${dateRange.start || "Any"} - ${dateRange.end || "Any"}`;
       const newFilter: ActiveFilter = {
-        id: 'dateRange-filter',
-        type: 'dateRange',
+        id: "dateRange-filter",
+        type: "dateRange",
         label: `Date: ${label}`,
-        value: dateRange
+        value: dateRange,
       };
       onFilterChange([...withoutDateFilters, newFilter]);
     } else {
@@ -111,14 +113,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   const isFilterActive = (type: string, value: string) => {
-    return activeFilters.some(f => f.type === type && f.value === value);
+    return activeFilters.some((f) => f.type === type && f.value === value);
   };
 
   return (
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={onClose}
           aria-hidden="true"
@@ -127,15 +129,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
       <aside
         className={cn(
-          'bg-white border-r border-gray-200 h-full overflow-y-auto',
+          "bg-white border-r border-gray-200 h-full overflow-y-auto",
           // Mobile styles
-          'fixed left-0 top-0 w-80 z-40 transform transition-transform duration-300 md:relative md:transform-none md:z-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          "fixed left-0 top-0 w-80 z-40 transform transition-transform duration-300 md:relative md:transform-none md:z-0",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           className
         )}
         aria-label="Filter applications"
       >
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 pt-20">
           {/* Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -143,9 +145,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               Filters
             </h2>
             {onClose && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onClose}
                 className="md:hidden"
               >
@@ -156,7 +158,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
           {/* Search */}
           <div>
-            <label htmlFor="search" className="sr-only">Search applications</label>
+            <label htmlFor="search" className="sr-only">
+              Search applications
+            </label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -218,13 +222,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </CardHeader>
             <CardContent className="space-y-2">
               <button
-                onClick={() => addFilter('status', 'pending', 'Pending')}
-                disabled={isFilterActive('status', 'pending')}
+                onClick={() => addFilter("status", "pending", "Pending")}
+                disabled={isFilterActive("status", "pending")}
                 className={cn(
-                  'w-full flex items-center justify-between p-2 text-left rounded-md border transition-colors',
-                  isFilterActive('status', 'pending')
-                    ? 'bg-amber-50 border-amber-200 text-amber-900'
-                    : 'hover:bg-gray-50 border-gray-200'
+                  "w-full flex items-center justify-between p-2 text-left rounded-md border transition-colors",
+                  isFilterActive("status", "pending")
+                    ? "bg-amber-50 border-amber-200 text-amber-900"
+                    : "hover:bg-gray-50 border-gray-200"
                 )}
               >
                 <div className="flex items-center space-x-2">
@@ -235,15 +239,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   {statusCounts.pending}
                 </span>
               </button>
-              
+
               <button
-                onClick={() => addFilter('status', 'accepted', 'Accepted')}
-                disabled={isFilterActive('status', 'accepted')}
+                onClick={() => addFilter("status", "accepted", "Accepted")}
+                disabled={isFilterActive("status", "accepted")}
                 className={cn(
-                  'w-full flex items-center justify-between p-2 text-left rounded-md border transition-colors',
-                  isFilterActive('status', 'accepted')
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                    : 'hover:bg-gray-50 border-gray-200'
+                  "w-full flex items-center justify-between p-2 text-left rounded-md border transition-colors",
+                  isFilterActive("status", "accepted")
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                    : "hover:bg-gray-50 border-gray-200"
                 )}
               >
                 <div className="flex items-center space-x-2">
@@ -254,15 +258,15 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   {statusCounts.accepted}
                 </span>
               </button>
-              
+
               <button
-                onClick={() => addFilter('status', 'rejected', 'Rejected')}
-                disabled={isFilterActive('status', 'rejected')}
+                onClick={() => addFilter("status", "rejected", "Rejected")}
+                disabled={isFilterActive("status", "rejected")}
                 className={cn(
-                  'w-full flex items-center justify-between p-2 text-left rounded-md border transition-colors',
-                  isFilterActive('status', 'rejected')
-                    ? 'bg-red-50 border-red-200 text-red-900'
-                    : 'hover:bg-gray-50 border-gray-200'
+                  "w-full flex items-center justify-between p-2 text-left rounded-md border transition-colors",
+                  isFilterActive("status", "rejected")
+                    ? "bg-red-50 border-red-200 text-red-900"
+                    : "hover:bg-gray-50 border-gray-200"
                 )}
               >
                 <div className="flex items-center space-x-2">
@@ -289,18 +293,22 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 {programs.map((program) => (
                   <button
                     key={program.id}
-                    onClick={() => addFilter('program', program.id, program.label)}
-                    disabled={isFilterActive('program', program.id)}
+                    onClick={() =>
+                      addFilter("program", program.id, program.label)
+                    }
+                    disabled={isFilterActive("program", program.id)}
                     className={cn(
-                      'w-full flex items-center justify-between p-2 text-left rounded-md border text-sm transition-colors',
-                      isFilterActive('program', program.id)
-                        ? 'bg-blue-50 border-blue-200 text-blue-900'
-                        : 'hover:bg-gray-50 border-transparent'
+                      "w-full flex items-center justify-between p-2 text-left rounded-md border text-sm transition-colors",
+                      isFilterActive("program", program.id)
+                        ? "bg-blue-50 border-blue-200 text-blue-900"
+                        : "hover:bg-gray-50 border-transparent"
                     )}
                   >
                     <span>{program.label}</span>
                     {program.count && (
-                      <span className="text-xs text-gray-500">{program.count}</span>
+                      <span className="text-xs text-gray-500">
+                        {program.count}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -321,18 +329,22 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 {academicYears.map((year) => (
                   <button
                     key={year.id}
-                    onClick={() => addFilter('academicYear', year.id, year.label)}
-                    disabled={isFilterActive('academicYear', year.id)}
+                    onClick={() =>
+                      addFilter("academicYear", year.id, year.label)
+                    }
+                    disabled={isFilterActive("academicYear", year.id)}
                     className={cn(
-                      'w-full flex items-center justify-between p-2 text-left rounded-md border text-sm transition-colors',
-                      isFilterActive('academicYear', year.id)
-                        ? 'bg-purple-50 border-purple-200 text-purple-900'
-                        : 'hover:bg-gray-50 border-transparent'
+                      "w-full flex items-center justify-between p-2 text-left rounded-md border text-sm transition-colors",
+                      isFilterActive("academicYear", year.id)
+                        ? "bg-purple-50 border-purple-200 text-purple-900"
+                        : "hover:bg-gray-50 border-transparent"
                     )}
                   >
                     <span>{year.label}</span>
                     {year.count && (
-                      <span className="text-xs text-gray-500">{year.count}</span>
+                      <span className="text-xs text-gray-500">
+                        {year.count}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -353,18 +365,22 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 {committees.map((committee) => (
                   <button
                     key={committee.id}
-                    onClick={() => addFilter('committee', committee.id, committee.label)}
-                    disabled={isFilterActive('committee', committee.id)}
+                    onClick={() =>
+                      addFilter("committee", committee.id, committee.label)
+                    }
+                    disabled={isFilterActive("committee", committee.id)}
                     className={cn(
-                      'w-full flex items-center justify-between p-2 text-left rounded-md border text-sm transition-colors',
-                      isFilterActive('committee', committee.id)
-                        ? 'bg-green-50 border-green-200 text-green-900'
-                        : 'hover:bg-gray-50 border-transparent'
+                      "w-full flex items-center justify-between p-2 text-left rounded-md border text-sm transition-colors",
+                      isFilterActive("committee", committee.id)
+                        ? "bg-green-50 border-green-200 text-green-900"
+                        : "hover:bg-gray-50 border-transparent"
                     )}
                   >
                     <span>{committee.label}</span>
                     {committee.count && (
-                      <span className="text-xs text-gray-500">{committee.count}</span>
+                      <span className="text-xs text-gray-500">
+                        {committee.count}
+                      </span>
                     )}
                   </button>
                 ))}
@@ -382,26 +398,36 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label htmlFor="date-start" className="block text-xs font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="date-start"
+                  className="block text-xs font-medium text-gray-700 mb-1"
+                >
                   From
                 </label>
                 <Input
                   id="date-start"
                   type="date"
                   value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({ ...prev, start: e.target.value }))
+                  }
                   className="text-sm"
                 />
               </div>
               <div>
-                <label htmlFor="date-end" className="block text-xs font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="date-end"
+                  className="block text-xs font-medium text-gray-700 mb-1"
+                >
                   To
                 </label>
                 <Input
                   id="date-end"
                   type="date"
                   value={dateRange.end}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({ ...prev, end: e.target.value }))
+                  }
                   className="text-sm"
                 />
               </div>

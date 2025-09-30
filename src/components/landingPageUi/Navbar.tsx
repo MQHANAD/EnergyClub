@@ -20,7 +20,7 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-3">
           {/* <div className="h-10 w-10 grid place-items-center rounded-xl text-white font-extrabold"> */}
-            {/* Logo placeholder */}
+          {/* Logo placeholder */}
           {/* </div> */}
           <span className="font-bold text-[#f8cd5c] text-2xl">
             {t("brand.short")}
@@ -36,7 +36,7 @@ export default function Navbar() {
               {t(`navigation.${key}`)}
             </Link>
           ))}
-        
+
           <div className="ml-3">
             <LanguageSwitcher />
           </div>

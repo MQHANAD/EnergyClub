@@ -1,19 +1,34 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { eventsApi } from '@/lib/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, UploadTask, UploadTaskSnapshot } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
-import { EventFormData } from '@/types';
-import Navigation from '@/components/Navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
-import { useI18n } from '@/i18n/index';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { eventsApi } from "@/lib/firestore";
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  UploadTask,
+  UploadTaskSnapshot,
+  getStorage,
+  uploadBytes,
+  deleteObject,
+} from "firebase/storage";
+import { storage } from "@/lib/firebase";
+import { EventFormData } from "@/types";
+import Navigation from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, X, Upload } from "lucide-react";
+import { useI18n } from "@/i18n/index";
 
 export default function CreateEventPage() {
   const { user, userProfile, isOrganizer } = useAuth();
@@ -21,49 +36,67 @@ export default function CreateEventPage() {
   const { t } = useI18n();
 
   const [formData, setFormData] = useState<EventFormData>({
-    title: '',
-    description: '',
-    date: '',
-    location: '',
+    title: "",
+    description: "",
+    date: "",
+    location: "",
     maxAttendees: 50,
     tags: [],
-    imageUrl: ''
+    imageUrls: [],
   });
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Image upload state
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Utility: add timeout to async ops (upload/create)
-  const withTimeout = async <T,>(promise: Promise<T>, ms: number, onTimeout?: () => void): Promise<T> => {
+  const withTimeout = async <T,>(
+    promise: Promise<T>,
+    ms: number,
+    onTimeout?: () => void
+  ): Promise<T> => {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
-        try { if (onTimeout) { onTimeout(); } } catch {}
+        try {
+          if (onTimeout) {
+            onTimeout();
+          }
+        } catch {}
         reject(new Error(`Operation timed out after ${ms}ms`));
       }, ms);
       promise.then(
-        (val) => { clearTimeout(timer); resolve(val); },
-        (err) => { clearTimeout(timer); reject(err); }
+        (val) => {
+          clearTimeout(timer);
+          resolve(val);
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        }
       );
     });
   };
 
   // Progress-aware timeout wrapper
-  const wrapUploadWithTimeout = async (uploadTask: UploadTask, ms: number, onProgress?: (pct: number) => void): Promise<string> => {
+  const wrapUploadWithTimeout = async (
+    uploadTask: UploadTask,
+    ms: number,
+    onProgress?: (pct: number) => void
+  ): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       let timer: ReturnType<typeof setTimeout> | null = null;
 
       const resetTimer = () => {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => {
-          try { uploadTask.cancel(); } catch {}
+          try {
+            uploadTask.cancel();
+          } catch {}
           reject(new Error(`Upload timed out after ${ms}ms`));
         }, ms);
       };
@@ -71,19 +104,23 @@ export default function CreateEventPage() {
       resetTimer();
 
       const unsubscribe = uploadTask.on(
-        'state_changed',
+        "state_changed",
         (snapshot: UploadTaskSnapshot) => {
           try {
-            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-            setUploadProgress(pct);
-            if (onProgress) { onProgress(pct); }
+            const pct = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            setUploadProgress(`${pct}%`);
+            if (onProgress) {
+              onProgress(pct);
+            }
           } catch {}
           resetTimer();
         },
         (err: any) => {
           if (timer) clearTimeout(timer);
           unsubscribe();
-          console.error("🔥 Upload error:", err.code, err.message); 
+          console.error("🔥 Upload error:", err.code, err.message);
           reject(err);
         },
         async () => {
@@ -100,84 +137,92 @@ export default function CreateEventPage() {
     });
   };
 
-  // Upload helper
-  const uploadImage = async (file: File): Promise<string> => {
-    setUploadError(null);
-    const storagePath = `events/${user?.uid}/${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, storagePath); 
-    const metadata = { contentType: file.type || 'application/octet-stream' };
-    const task = uploadBytesResumable(storageRef, file, metadata);
-    const url = await wrapUploadWithTimeout(task, 60000);
-    return url;
+  // Photo upload helper
+  const handlePhotoUpload = async (files: FileList) => {
+    if (!user) return;
+
+    const totalPhotos = formData.imageUrls.length + files.length;
+    if (totalPhotos > 10) {
+      alert("Maximum 10 photos allowed.");
+      return;
+    }
+
+    setUploadProgress("Uploading...");
+    const newUrls: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 5 * 1024 * 1024) {
+          // 5MB limit
+          alert("File size too large. Max 5MB per file.");
+          continue;
+        }
+
+        const fileName = `events/${user.uid}/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, fileName);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        newUrls.push(downloadURL);
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, ...newUrls],
+      }));
+      setUploadProgress(null);
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadProgress(null);
+      alert("Upload failed. Please try again.");
+    }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+  // Photo remove helper
+  const handlePhotoRemove = async (index: number) => {
+    if (!user) return;
+
+    const urlToRemove = formData.imageUrls[index];
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'maxAttendees' ? parseInt(value) || 0 : value
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index),
+    }));
+
+    // Try to delete from storage
+    try {
+      const storage = getStorage();
+      const fileRef = ref(storage, urlToRemove);
+      await deleteObject(fileRef);
+    } catch (error) {
+      console.warn("Could not delete file from storage:", error);
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "maxAttendees" ? parseInt(value) || 0 : value,
     }));
   };
 
   const handleAddTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tagInput.trim()]
+        tags: [...prev.tags, tagInput.trim()],
       }));
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
-  };
-
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setError(null);
-    setUploadError(null);
-    setUploadedUrl(null);
-
-    if (!file) {
-      setImageFile(null);
-      setImagePreview(null);
-      setUploadProgress(0);
-      return;
-    }
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (!validTypes.includes(file.type)) {
-      setError('Please upload a valid image (JPEG, PNG, WEBP, GIF).');
-      return;
-    }
-    if (file.size > maxSize) {
-      setError('Image size must be 5MB or less.');
-      return;
-    }
-
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-
-    setIsUploading(true);
-    try {
-      const url = await uploadImage(file);
-      if (url && url.length <= 500) {
-        setUploadedUrl(url);
-      } else {
-        setUploadError('Generated image URL is too long; skipping image.');
-        setUploadedUrl(null);
-      }
-    } catch (err: any) {
-      console.error('🔥 Immediate image upload failed:', err.code, err.message); // ✅ اطبع تفاصيل
-      setUploadError(err.message || 'Image upload failed.');
-      setUploadedUrl(null);
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,13 +234,18 @@ export default function CreateEventPage() {
       setError(null);
 
       // Validation
-      if (!formData.title || !formData.description || !formData.date || !formData.location) {
-        setError('Please fill in all required fields.');
+      if (
+        !formData.title ||
+        !formData.description ||
+        !formData.date ||
+        !formData.location
+      ) {
+        setError("Please fill in all required fields.");
         return;
       }
 
       if (formData.maxAttendees <= 0) {
-        setError('Maximum attendees must be greater than 0.');
+        setError("Maximum attendees must be greater than 0.");
         return;
       }
 
@@ -212,7 +262,9 @@ export default function CreateEventPage() {
         return;
       }
       if (formData.description.length > MAX.description) {
-        setError(`Description is too long (max ${MAX.description} characters).`);
+        setError(
+          `Description is too long (max ${MAX.description} characters).`
+        );
         return;
       }
       if (formData.location.length > MAX.location) {
@@ -224,40 +276,14 @@ export default function CreateEventPage() {
         return;
       }
 
-      if (isUploading) {
-        setError('Image upload in progress. Please wait for it to finish or remove the image.');
+      if (uploadProgress) {
+        setError("Photo upload in progress. Please wait for it to finish.");
         return;
       }
 
       setLoading(true);
 
-      // Upload image if needed
-      let uploadedUrlLocal: string | undefined = uploadedUrl ?? undefined;
-      if (imageFile && !uploadedUrlLocal) {
-        setIsUploading(true);
-        try {
-          const storagePath = `events/${user.uid}/${Date.now()}_${imageFile.name}`;
-          const storageRef = ref(storage, storagePath); // ✅
-          const metadata = { contentType: imageFile.type || 'application/octet-stream' };
-          const uploadTask = uploadBytesResumable(storageRef, imageFile, metadata);
-
-          const url = await wrapUploadWithTimeout(uploadTask, 60000);
-          uploadedUrlLocal = url;
-
-          if (uploadedUrlLocal && uploadedUrlLocal.length > 500) {
-            console.warn('Image URL exceeds 500 chars; skipping imageUrl to satisfy rules.');
-            uploadedUrlLocal = undefined;
-          }
-        } catch (uploadErr: any) {
-          console.error('🔥 Image upload failed; proceeding without image:', uploadErr.code, uploadErr.message);
-          setUploadError('Image upload failed; the event will be created without an image.');
-          uploadedUrlLocal = undefined;
-        } finally {
-          setIsUploading(false);
-        }
-      }
-
-      const baseEventData = {
+      const eventData = {
         title: formData.title,
         description: formData.description,
         date: new Date(formData.date),
@@ -265,16 +291,16 @@ export default function CreateEventPage() {
         maxAttendees: formData.maxAttendees,
         organizerId: user.uid,
         organizerName: userProfile.displayName,
-        status: 'active' as const,
+        status: "active" as const,
         tags: formData.tags,
+        imageUrls: formData.imageUrls,
       };
-      const eventData = uploadedUrlLocal ? { ...baseEventData, imageUrl: uploadedUrlLocal } : baseEventData;
 
       await withTimeout(eventsApi.createEvent(eventData), 30000);
-      router.push('/admin');
+      router.push("/admin");
     } catch (error: any) {
-      console.error('🔥 Error creating event:', error.code, error.message);
-      setError(error.message || 'Failed to create event. Please try again.');
+      console.error("🔥 Error creating event:", error.code, error.message);
+      setError(error.message || "Failed to create event. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -285,29 +311,31 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed">
+    <div className="min-h-screen bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed pt-16">
       <Navigation />
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-6">
-            <Button onClick={() => router.back()} variant="outline" className="mb-4">
+            <Button
+              onClick={() => router.back()}
+              variant="outline"
+              className="mb-4"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('admin.createPage.backToAdmin')}
+              {t("admin.createPage.backToAdmin")}
             </Button>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t('admin.createPage.pageTitle')}
+              {t("admin.createPage.pageTitle")}
             </h1>
-            <p className="text-gray-600">
-              {t('admin.createPage.subtitle')}
-            </p>
+            <p className="text-gray-600">{t("admin.createPage.subtitle")}</p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('admin.createPage.infoTitle')}</CardTitle>
+              <CardTitle>{t("admin.createPage.infoTitle")}</CardTitle>
               <CardDescription>
-                {t('admin.createPage.infoDesc')}
+                {t("admin.createPage.infoDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -320,7 +348,9 @@ export default function CreateEventPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <Label htmlFor="title">{t('admin.createPage.labels.title')}</Label>
+                    <Label htmlFor="title">
+                      {t("admin.createPage.labels.title")}
+                    </Label>
                     <input
                       type="text"
                       id="title"
@@ -328,13 +358,17 @@ export default function CreateEventPage() {
                       value={formData.title}
                       onChange={handleInputChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder={t('admin.createPage.labels.placeholders.title')}
+                      placeholder={t(
+                        "admin.createPage.labels.placeholders.title"
+                      )}
                       required
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <Label htmlFor="description">{t('admin.createPage.labels.description')}</Label>
+                    <Label htmlFor="description">
+                      {t("admin.createPage.labels.description")}
+                    </Label>
                     <textarea
                       id="description"
                       name="description"
@@ -342,13 +376,17 @@ export default function CreateEventPage() {
                       onChange={handleInputChange}
                       rows={4}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder={t('admin.createPage.labels.placeholders.description')}
+                      placeholder={t(
+                        "admin.createPage.labels.placeholders.description"
+                      )}
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="date">{t('admin.createPage.labels.dateTime')}</Label>
+                    <Label htmlFor="date">
+                      {t("admin.createPage.labels.dateTime")}
+                    </Label>
                     <input
                       type="datetime-local"
                       id="date"
@@ -361,7 +399,9 @@ export default function CreateEventPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="location">{t('admin.createPage.labels.location')}</Label>
+                    <Label htmlFor="location">
+                      {t("admin.createPage.labels.location")}
+                    </Label>
                     <input
                       type="text"
                       id="location"
@@ -369,13 +409,17 @@ export default function CreateEventPage() {
                       value={formData.location}
                       onChange={handleInputChange}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder={t('admin.createPage.labels.placeholders.location')}
+                      placeholder={t(
+                        "admin.createPage.labels.placeholders.location"
+                      )}
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="maxAttendees">{t('admin.createPage.labels.maxAttendees')}</Label>
+                    <Label htmlFor="maxAttendees">
+                      {t("admin.createPage.labels.maxAttendees")}
+                    </Label>
                     <input
                       type="number"
                       id="maxAttendees"
@@ -388,47 +432,92 @@ export default function CreateEventPage() {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="imageFile">{t('admin.createPage.labels.imageUrl')}</Label>
-                    <input
-                      type="file"
-                      id="imageFile"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    {imagePreview && (
-                      <div className="mt-2">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="h-32 rounded-md object-cover"
+                  <div className="md:col-span-2">
+                    <Label>Photos</Label>
+                    <div className="space-y-2">
+                      {formData.imageUrls.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {formData.imageUrls.map((url, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={url}
+                                alt={`Photo ${index + 1}`}
+                                className="w-full h-20 object-cover rounded"
+                              />
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                                onClick={() => handlePhotoRemove(index)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) =>
+                            e.target.files && handlePhotoUpload(e.target.files)
+                          }
+                          className="hidden"
+                          id="photo-upload"
+                          disabled={uploadProgress !== null}
                         />
+                        <Label
+                          htmlFor="photo-upload"
+                          className="cursor-pointer"
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            disabled={uploadProgress !== null}
+                          >
+                            <span>
+                              <Upload className="h-4 w-4 mr-2" />
+                              {uploadProgress || "Add Photos"}
+                            </span>
+                          </Button>
+                        </Label>
+                        <span className="text-sm text-gray-500">
+                          Max 10 photos, 5MB each
+                        </span>
                       </div>
-                    )}
-                    {uploadProgress > 0 && uploadProgress < 100 && (
-                      <div className="mt-2 text-sm text-gray-600">{uploadProgress}%</div>
-                    )}
-                    {uploadError && (
-                      <div className="mt-2 text-sm text-amber-600">{uploadError}</div>
-                    )}
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="tags">{t('admin.createPage.labels.tags')}</Label>
+                  <Label htmlFor="tags">
+                    {t("admin.createPage.labels.tags")}
+                  </Label>
                   <div className="flex gap-2 mt-1">
                     <input
                       type="text"
                       id="tags"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), handleAddTag())
+                      }
                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder={t('admin.createPage.labels.placeholders.tag')}
+                      placeholder={t(
+                        "admin.createPage.labels.placeholders.tag"
+                      )}
                     />
-                    <Button type="button" onClick={handleAddTag} variant="outline">
-                      {t('admin.createPage.labels.add')}
+                    <Button
+                      type="button"
+                      onClick={handleAddTag}
+                      variant="outline"
+                    >
+                      {t("admin.createPage.labels.add")}
                     </Button>
                   </div>
                   {formData.tags.length > 0 && (
@@ -459,16 +548,19 @@ export default function CreateEventPage() {
                     variant="outline"
                     disabled={loading}
                   >
-                    {t('admin.createPage.labels.cancel')}
+                    {t("admin.createPage.labels.cancel")}
                   </Button>
-                  <Button type="submit" disabled={loading || isUploading}>
+                  <Button
+                    type="submit"
+                    disabled={loading || uploadProgress !== null}
+                  >
                     {loading ? (
                       <>
                         <span className="loading loading-infinity loading-xl"></span>
-                        {t('admin.createPage.labels.creating')}
+                        {t("admin.createPage.labels.creating")}
                       </>
                     ) : (
-                      t('admin.createPage.labels.createEvent')
+                      t("admin.createPage.labels.createEvent")
                     )}
                   </Button>
                 </div>

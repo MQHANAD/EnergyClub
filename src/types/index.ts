@@ -12,7 +12,7 @@ export interface Event {
   createdAt: Date;
   updatedAt: Date;
   tags: string[];
-  imageUrl?: string;
+  imageUrls: string[];
 }
 
 export interface Registration {
@@ -51,7 +51,7 @@ export interface EventFormData {
   location: string;
   maxAttendees: number;
   tags: string[];
-  imageUrl?: string;
+  imageUrls: string[];
 }
 
 export interface RegistrationFormData {

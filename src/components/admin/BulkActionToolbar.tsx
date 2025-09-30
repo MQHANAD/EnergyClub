@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Application } from '@/types';
-import { 
-  Check, 
-  X, 
+import React, { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Application } from "@/types";
+import {
+  Check,
+  X,
   Square,
   CheckSquare,
   Trash2,
   Download,
   Mail,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 
 export interface BulkActionToolbarProps {
   selectedApplications: Application[];
@@ -38,57 +38,70 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
   onBulkEmail,
   totalApplications,
   isProcessing = false,
-  className
+  className,
 }) => {
-  const [showConfirm, setShowConfirm] = useState<'accept' | 'reject' | null>(null);
-  
+  const [showConfirm, setShowConfirm] = useState<"accept" | "reject" | null>(
+    null
+  );
+
   const selectedCount = selectedApplications.length;
-  const isAllSelected = selectedCount === totalApplications && totalApplications > 0;
+  const isAllSelected =
+    selectedCount === totalApplications && totalApplications > 0;
   const hasSelection = selectedCount > 0;
 
   // Filter selected applications by status
-  const pendingSelected = selectedApplications.filter(app => app.status === 'pending');
-  const acceptedSelected = selectedApplications.filter(app => app.status === 'accepted');
-  const rejectedSelected = selectedApplications.filter(app => app.status === 'rejected');
+  const pendingSelected = selectedApplications.filter(
+    (app) => app.status === "pending"
+  );
+  const acceptedSelected = selectedApplications.filter(
+    (app) => app.status === "accepted"
+  );
+  const rejectedSelected = selectedApplications.filter(
+    (app) => app.status === "rejected"
+  );
 
-  const handleBulkAction = (action: 'accept' | 'reject') => {
-    if (action === 'accept' && pendingSelected.length > 0) {
+  const handleBulkAction = (action: "accept" | "reject") => {
+    if (action === "accept" && pendingSelected.length > 0) {
       onBulkAccept(pendingSelected);
-    } else if (action === 'reject' && pendingSelected.length > 0) {
+    } else if (action === "reject" && pendingSelected.length > 0) {
       onBulkReject(pendingSelected);
     }
     setShowConfirm(null);
   };
 
-  const ConfirmDialog = ({ action }: { action: 'accept' | 'reject' }) => (
+  const ConfirmDialog = ({ action }: { action: "accept" | "reject" }) => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-md mx-4">
         <div className="flex items-center space-x-3 mb-4">
-          <AlertCircle className={cn(
-            "h-6 w-6",
-            action === 'accept' ? "text-green-600" : "text-red-600"
-          )} />
+          <AlertCircle
+            className={cn(
+              "h-6 w-6",
+              action === "accept" ? "text-green-600" : "text-red-600"
+            )}
+          />
           <h3 className="text-lg font-semibold text-gray-900">
-            Confirm Bulk {action === 'accept' ? 'Accept' : 'Reject'}
+            Confirm Bulk {action === "accept" ? "Accept" : "Reject"}
           </h3>
         </div>
-        
+
         <p className="text-sm text-gray-600 mb-6">
-          Are you sure you want to {action} {pendingSelected.length} pending application{pendingSelected.length !== 1 ? 's' : ''}? 
-          This action cannot be easily undone.
+          Are you sure you want to {action} {pendingSelected.length} pending
+          application{pendingSelected.length !== 1 ? "s" : ""}? This action
+          cannot be easily undone.
         </p>
-        
+
         <div className="flex space-x-3">
           <Button
             onClick={() => handleBulkAction(action)}
             disabled={isProcessing}
             className={cn(
-              action === 'accept' 
-                ? "bg-green-600 hover:bg-green-700 text-white" 
+              action === "accept"
+                ? "bg-green-600 hover:bg-green-700 text-white"
                 : "bg-red-600 hover:bg-red-700 text-white"
             )}
           >
-            {action === 'accept' ? 'Accept' : 'Reject'} {pendingSelected.length} Application{pendingSelected.length !== 1 ? 's' : ''}
+            {action === "accept" ? "Accept" : "Reject"} {pendingSelected.length}{" "}
+            Application{pendingSelected.length !== 1 ? "s" : ""}
           </Button>
           <Button
             variant="outline"
@@ -108,10 +121,12 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
   return (
     <>
-      <div className={cn(
-        "sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm",
-        className
-      )}>
+      <div
+        className={cn(
+          "sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm",
+          className
+        )}
+      >
         <div className="flex items-center justify-between p-4">
           {/* Selection Info */}
           <div className="flex items-center space-x-4">
@@ -126,16 +141,17 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                 ) : (
                   <Square className="h-4 w-4 text-gray-400" />
                 )}
-                <span>
-                  {isAllSelected ? "Deselect All" : "Select All"}
-                </span>
+                <span>{isAllSelected ? "Deselect All" : "Select All"}</span>
               </button>
             </div>
-            
+
             <div className="h-4 w-px bg-gray-300" />
-            
+
             <div className="text-sm text-gray-600">
-              <span className="font-semibold text-yellow-700">{selectedCount}</span> of {totalApplications} selected
+              <span className="font-semibold text-yellow-700">
+                {selectedCount}
+              </span>{" "}
+              of {totalApplications} selected
               {pendingSelected.length > 0 && (
                 <span className="ml-2 text-xs text-gray-500">
                   ({pendingSelected.length} pending)
@@ -150,7 +166,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
             {pendingSelected.length > 0 && (
               <>
                 <Button
-                  onClick={() => setShowConfirm('accept')}
+                  onClick={() => setShowConfirm("accept")}
                   disabled={isProcessing}
                   size="sm"
                   className="bg-green-600 hover:bg-green-700 text-white"
@@ -158,9 +174,9 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                   <Check className="h-4 w-4 mr-1" />
                   Accept ({pendingSelected.length})
                 </Button>
-                
+
                 <Button
-                  onClick={() => setShowConfirm('reject')}
+                  onClick={() => setShowConfirm("reject")}
                   disabled={isProcessing}
                   size="sm"
                   variant="destructive"

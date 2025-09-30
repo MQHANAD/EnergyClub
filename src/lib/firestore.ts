@@ -50,7 +50,7 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     createdAt: timestampToDate(data.createdAt),
     updatedAt: timestampToDate(data.updatedAt),
     tags: data.tags || [],
-    imageUrl: data.imageUrl
+    imageUrls: data.imageUrls || []
   };
 };
 
@@ -75,12 +75,12 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
 
 // Events API
 export const eventsApi = {
-  // Get all active events with pagination
+  // Get all active and completed events with pagination
   async getEvents(lastDoc?: DocumentSnapshot, pageSize: number = 10): Promise<{ events: Event[], lastDoc?: DocumentSnapshot }> {
     try {
       let eventsQuery = query(
         collection(db, 'events'),
-        where('status', '==', 'active'),
+        where('status', 'in', ['active', 'completed']),
         orderBy('date', 'asc'),
         limit(pageSize)
       );

@@ -43,11 +43,11 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} dir={dir}>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <AuthProvider>
-          <I18nProvider lang={lang}>
-            {children}
-          </I18nProvider>
+          <I18nProvider lang={lang}>{children}</I18nProvider>
         </AuthProvider>
       </body>
     </html>

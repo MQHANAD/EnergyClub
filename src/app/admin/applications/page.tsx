@@ -1,23 +1,30 @@
-'use client';
+"use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import Navigation from '@/components/Navigation';
-import { listApplications, decideApplication, revertApplication } from '@/lib/registrations';
-import type { Application } from '@/types';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import Navigation from "@/components/Navigation";
+import {
+  listApplications,
+  decideApplication,
+  revertApplication,
+} from "@/lib/registrations";
+import type { Application } from "@/types";
+import { Button } from "@/components/ui/button";
 
 // Import new admin components
-import ApplicationMetrics from '@/components/admin/ApplicationMetrics';
-import FilterSidebar, { ActiveFilter, FilterOption } from '@/components/admin/FilterSidebar';
-import ApplicationCard from '@/components/admin/ApplicationCard';
-import BulkActionToolbar from '@/components/admin/BulkActionToolbar';
-import SlidePanel from '@/components/admin/SlidePanel';
+import ApplicationMetrics from "@/components/admin/ApplicationMetrics";
+import FilterSidebar, {
+  ActiveFilter,
+  FilterOption,
+} from "@/components/admin/FilterSidebar";
+import ApplicationCard from "@/components/admin/ApplicationCard";
+import BulkActionToolbar from "@/components/admin/BulkActionToolbar";
+import SlidePanel from "@/components/admin/SlidePanel";
 
-import { RefreshCw, Filter, Layout, List } from 'lucide-react';
-import { useI18n } from '@/i18n/index';
-import * as XLSX from 'xlsx';
+import { RefreshCw, Filter, Layout, List } from "lucide-react";
+import { useI18n } from "@/i18n/index";
+import * as XLSX from "xlsx";
 
 export default function ApplicationsAdminPage() {
   const router = useRouter();
@@ -31,24 +38,29 @@ export default function ApplicationsAdminPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   // UI state
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
-  const [selectedApplications, setSelectedApplications] = useState<Application[]>([]);
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [selectedApplications, setSelectedApplications] = useState<
+    Application[]
+  >([]);
+  const [selectedApplication, setSelectedApplication] =
+    useState<Application | null>(null);
   const [showSlidePanel, setShowSlidePanel] = useState(false);
   const [showFilterSidebar, setShowFilterSidebar] = useState(true);
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
-  // Authentication check - Temporarily disabled for UI testing
+  // Authentication check
   useEffect(() => {
     if (!loading) {
-      // TODO: Re-enable authentication checks after testing
-      // if (!user) {
-      //   router.push('/login');
-      // } else if (!isOrganizer) {
-      //   router.push('/');
-      // }
+      if (!user) {
+        router.push("/login");
+      } else if (!isOrganizer) {
+        setAccessDenied(true);
+      } else {
+        setAccessDenied(false);
+      }
     }
   }, [loading, user, isOrganizer, router]);
 
@@ -60,17 +72,18 @@ export default function ApplicationsAdminPage() {
       const data = await listApplications();
       setApps(data);
     } catch (e: any) {
-      console.error('Failed to load applications', e);
-      setError(e?.message || 'Failed to load applications.');
+      console.error("Failed to load applications", e);
+      setError(e?.message || "Failed to load applications.");
     } finally {
       setLoadingApps(false);
     }
   };
 
   useEffect(() => {
-    // Temporarily always load data for testing - normally requires user && isOrganizer
-    loadAll();
-  }, []); // Removed user, isOrganizer dependencies for testing
+    if (user && isOrganizer) {
+      loadAll();
+    }
+  }, [user, isOrganizer]);
 
   // Filter and search applications
   const filteredApps = useMemo(() => {
@@ -80,36 +93,49 @@ export default function ApplicationsAdminPage() {
     if (searchQuery.trim()) {
       const query = searchQuery.trim().toLowerCase();
       filtered = filtered.filter((app) => {
-        const email = (app.email ?? '').toString().toLowerCase();
-        const id = (app.kfupmId ?? '').toString().toLowerCase();
-        const name = (app.fullName ?? '').toString().toLowerCase();
-        return email.includes(query) || id.includes(query) || name.includes(query);
+        const email = (app.email ?? "").toString().toLowerCase();
+        const id = (app.kfupmId ?? "").toString().toLowerCase();
+        const name = (app.fullName ?? "").toString().toLowerCase();
+        return (
+          email.includes(query) || id.includes(query) || name.includes(query)
+        );
       });
     }
 
     // Apply active filters
     activeFilters.forEach((filter) => {
       switch (filter.type) {
-        case 'status':
-          filtered = filtered.filter(app => app.status === filter.value);
+        case "status":
+          filtered = filtered.filter((app) => app.status === filter.value);
           break;
-        case 'program':
-          filtered = filtered.filter(app => app.program === filter.value);
+        case "program":
+          filtered = filtered.filter((app) => app.program === filter.value);
           break;
-        case 'academicYear':
-          filtered = filtered.filter(app => app.academicYear === filter.value);
+        case "academicYear":
+          filtered = filtered.filter(
+            (app) => app.academicYear === filter.value
+          );
           break;
-        case 'committee':
-          filtered = filtered.filter(app => app.committees?.includes(filter.value));
+        case "committee":
+          filtered = filtered.filter((app) =>
+            app.committees?.includes(filter.value)
+          );
           break;
-        case 'dateRange':
+        case "dateRange":
           if (filter.value.start || filter.value.end) {
-            const startDate = filter.value.start ? new Date(filter.value.start) : null;
-            const endDate = filter.value.end ? new Date(filter.value.end + 'T23:59:59') : null;
+            const startDate = filter.value.start
+              ? new Date(filter.value.start)
+              : null;
+            const endDate = filter.value.end
+              ? new Date(filter.value.end + "T23:59:59")
+              : null;
 
-            filtered = filtered.filter(app => {
+            filtered = filtered.filter((app) => {
               const appDate = new Date(app.submittedAt);
-              return (!startDate || appDate >= startDate) && (!endDate || appDate <= endDate);
+              return (
+                (!startDate || appDate >= startDate) &&
+                (!endDate || appDate <= endDate)
+              );
             });
           }
           break;
@@ -121,10 +147,10 @@ export default function ApplicationsAdminPage() {
 
   // Group applications by status
   const groupedApps = useMemo(() => {
-    const map: Record<Application['status'], Application[]> = {
+    const map: Record<Application["status"], Application[]> = {
       pending: [],
       accepted: [],
-      rejected: []
+      rejected: [],
     };
     for (const app of filteredApps) {
       map[app.status].push(app);
@@ -143,7 +169,7 @@ export default function ApplicationsAdminPage() {
     const yearCounts: Record<string, number> = {};
     const committeeCounts: Record<string, number> = {};
 
-    apps.forEach(app => {
+    apps.forEach((app) => {
       // Programs
       if (app.program) {
         programCounts[app.program] = (programCounts[app.program] || 0) + 1;
@@ -155,7 +181,7 @@ export default function ApplicationsAdminPage() {
       }
 
       // Committees
-      app.committees?.forEach(committee => {
+      app.committees?.forEach((committee) => {
         committeeCounts[committee] = (committeeCounts[committee] || 0) + 1;
       });
     });
@@ -164,8 +190,9 @@ export default function ApplicationsAdminPage() {
     Object.entries(programCounts).forEach(([program, count]) => {
       programs.push({
         id: program,
-        label: apps.find(app => app.program === program)?.programLabel || program,
-        count
+        label:
+          apps.find((app) => app.program === program)?.programLabel || program,
+        count,
       });
     });
 
@@ -181,23 +208,31 @@ export default function ApplicationsAdminPage() {
   }, [apps]);
 
   // Status counts for filter sidebar
-  const statusCounts = useMemo(() => ({
-    pending: apps.filter(app => app.status === 'pending').length,
-    accepted: apps.filter(app => app.status === 'accepted').length,
-    rejected: apps.filter(app => app.status === 'rejected').length,
-  }), [apps]);
+  const statusCounts = useMemo(
+    () => ({
+      pending: apps.filter((app) => app.status === "pending").length,
+      accepted: apps.filter((app) => app.status === "accepted").length,
+      rejected: apps.filter((app) => app.status === "rejected").length,
+    }),
+    [apps]
+  );
 
   // Application decision handlers
-  const onDecide = async (application: Application, status: 'accepted' | 'rejected', selectedCommittee?: number) => {
+  const onDecide = async (
+    application: Application,
+    status: "accepted" | "rejected",
+    selectedCommittee?: number
+  ) => {
     if (!user) return;
-    if (status === 'rejected' && !confirm('Reject this application?')) return;
-    if (status === 'accepted' && !confirm('Accept this application?')) return;
+    if (status === "rejected" && !confirm("Reject this application?")) return;
+    if (status === "accepted" && !confirm("Accept this application?")) return;
 
     setProcessingId(application.id);
     try {
       // Map selected committee index to the actual committee name (string)
       const selectedCommitteeValue =
-        typeof selectedCommittee === 'number' && Array.isArray(application.committees)
+        typeof selectedCommittee === "number" &&
+        Array.isArray(application.committees)
           ? application.committees[selectedCommittee]
           : undefined;
 
@@ -213,15 +248,17 @@ export default function ApplicationsAdminPage() {
       if (selectedCommitteeValue !== undefined) {
         updatedApp.selectedCommittee = selectedCommitteeValue;
       }
-      setApps(prev => prev.map(a => (a.id === application.id ? updatedApp : a)));
+      setApps((prev) =>
+        prev.map((a) => (a.id === application.id ? updatedApp : a))
+      );
 
       // Update selected application if it's currently shown
       if (selectedApplication?.id === application.id) {
         setSelectedApplication(updatedApp);
       }
     } catch (e: any) {
-      console.error('Failed to decide application', e);
-      alert(e?.message || 'Failed to update status.');
+      console.error("Failed to decide application", e);
+      alert(e?.message || "Failed to update status.");
     } finally {
       setProcessingId(null);
     }
@@ -233,18 +270,25 @@ export default function ApplicationsAdminPage() {
 
     try {
       await revertApplication(application.id);
-      setApps(prev =>
-        prev.map(a =>
-          a.id === application.id ? { ...a, status: 'pending', decidedAt: null, decidedBy: null } : a
+      setApps((prev) =>
+        prev.map((a) =>
+          a.id === application.id
+            ? { ...a, status: "pending", decidedAt: null, decidedBy: null }
+            : a
         )
       );
 
       if (selectedApplication?.id === application.id) {
-        setSelectedApplication({ ...selectedApplication, status: 'pending', decidedAt: null, decidedBy: null });
+        setSelectedApplication({
+          ...selectedApplication,
+          status: "pending",
+          decidedAt: null,
+          decidedBy: null,
+        });
       }
     } catch (e: any) {
-      console.error('Failed to undo decision', e);
-      alert(e?.message || 'Failed to undo decision.');
+      console.error("Failed to undo decision", e);
+      alert(e?.message || "Failed to undo decision.");
     } finally {
       setProcessingId(null);
     }
@@ -256,21 +300,27 @@ export default function ApplicationsAdminPage() {
     setIsProcessingBulk(true);
 
     try {
-      const pendingApps = applications.filter(app => app.status === 'pending');
+      const pendingApps = applications.filter(
+        (app) => app.status === "pending"
+      );
       await Promise.all(
-        pendingApps.map(app => decideApplication(app.id, 'accepted', user.uid, undefined, undefined))
+        pendingApps.map((app) =>
+          decideApplication(app.id, "accepted", user.uid, undefined, undefined)
+        )
       );
 
       // Optimistic update
-      setApps(prev => prev.map(a => {
-        const updated = pendingApps.find(pa => pa.id === a.id);
-        return updated ? { ...a, status: 'accepted' as const } : a;
-      }));
+      setApps((prev) =>
+        prev.map((a) => {
+          const updated = pendingApps.find((pa) => pa.id === a.id);
+          return updated ? { ...a, status: "accepted" as const } : a;
+        })
+      );
 
       setSelectedApplications([]);
     } catch (e: any) {
-      console.error('Bulk accept failed', e);
-      alert(e?.message || 'Failed to accept applications.');
+      console.error("Bulk accept failed", e);
+      alert(e?.message || "Failed to accept applications.");
     } finally {
       setIsProcessingBulk(false);
     }
@@ -281,21 +331,27 @@ export default function ApplicationsAdminPage() {
     setIsProcessingBulk(true);
 
     try {
-      const pendingApps = applications.filter(app => app.status === 'pending');
+      const pendingApps = applications.filter(
+        (app) => app.status === "pending"
+      );
       await Promise.all(
-        pendingApps.map(app => decideApplication(app.id, 'rejected', user.uid, undefined, undefined))
+        pendingApps.map((app) =>
+          decideApplication(app.id, "rejected", user.uid, undefined, undefined)
+        )
       );
 
       // Optimistic update
-      setApps(prev => prev.map(a => {
-        const updated = pendingApps.find(pa => pa.id === a.id);
-        return updated ? { ...a, status: 'rejected' as const } : a;
-      }));
+      setApps((prev) =>
+        prev.map((a) => {
+          const updated = pendingApps.find((pa) => pa.id === a.id);
+          return updated ? { ...a, status: "rejected" as const } : a;
+        })
+      );
 
       setSelectedApplications([]);
     } catch (e: any) {
-      console.error('Bulk reject failed', e);
-      alert(e?.message || 'Failed to reject applications.');
+      console.error("Bulk reject failed", e);
+      alert(e?.message || "Failed to reject applications.");
     } finally {
       setIsProcessingBulk(false);
     }
@@ -303,10 +359,10 @@ export default function ApplicationsAdminPage() {
 
   // Selection handlers
   const handleSelectApplication = (application: Application) => {
-    setSelectedApplications(prev => {
-      const isSelected = prev.some(app => app.id === application.id);
+    setSelectedApplications((prev) => {
+      const isSelected = prev.some((app) => app.id === application.id);
       if (isSelected) {
-        return prev.filter(app => app.id !== application.id);
+        return prev.filter((app) => app.id !== application.id);
       } else {
         return [...prev, application];
       }
@@ -341,8 +397,20 @@ export default function ApplicationsAdminPage() {
     );
   }
 
-  // Temporarily allow access for testing - normally requires user && isOrganizer
-  // if (!user || !isOrganizer) return null;
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            Access Denied
+          </h1>
+          <p className="text-gray-600">
+            You do not have permission to access this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed">
@@ -368,10 +436,12 @@ export default function ApplicationsAdminPage() {
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 p-6">
+            <div className="bg-white border-b border-gray-200 p-6 pt-20">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
-                  <h1 className="text-3xl font-bold text-gray-900">Application Review</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    Application Review
+                  </h1>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -385,23 +455,31 @@ export default function ApplicationsAdminPage() {
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                     <Button
-                      variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+                      variant={viewMode === "kanban" ? "default" : "ghost"}
                       size="sm"
-                      onClick={() => setViewMode('kanban')}
+                      onClick={() => setViewMode("kanban")}
                     >
                       <Layout className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      variant={viewMode === "list" ? "default" : "ghost"}
                       size="sm"
-                      onClick={() => setViewMode('list')}
+                      onClick={() => setViewMode("list")}
                     >
                       <List className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  <Button variant="outline" onClick={loadAll} disabled={loadingApps}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loadingApps ? 'animate-spin' : ''}`} />
+                  <Button
+                    variant="outline"
+                    onClick={loadAll}
+                    disabled={loadingApps}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${
+                        loadingApps ? "animate-spin" : ""
+                      }`}
+                    />
                     Refresh
                   </Button>
                   <Button
@@ -409,25 +487,35 @@ export default function ApplicationsAdminPage() {
                     onClick={() => {
                       // Sort applications by status
                       const sortedApps = [...apps].sort((a, b) => {
-                        const statusOrder = { pending: 0, accepted: 1, rejected: 2 };
+                        const statusOrder = {
+                          pending: 0,
+                          accepted: 1,
+                          rejected: 2,
+                        };
                         return statusOrder[a.status] - statusOrder[b.status];
                       });
                       // Prepare data for Excel
-                      const data = sortedApps.map(app => ({
+                      const data = sortedApps.map((app) => ({
                         Name: app.fullName,
                         Email: app.email,
                         KFUPM_ID: app.kfupmId,
                         Status: app.status,
                         Program: app.programLabel || app.program,
                         AcademicYear: app.academicYear,
-                        Committees: Array.isArray(app.committees) ? app.committees.join(', ') : '',
-                        SelectedCommittee: app.selectedCommittee || '',
+                        Committees: Array.isArray(app.committees)
+                          ? app.committees.join(", ")
+                          : "",
+                        SelectedCommittee: app.selectedCommittee || "",
                         SubmittedAt: app.submittedAt,
                       }));
                       const worksheet = XLSX.utils.json_to_sheet(data);
                       const workbook = XLSX.utils.book_new();
-                      XLSX.utils.book_append_sheet(workbook, worksheet, 'Applications');
-                      XLSX.writeFile(workbook, 'applications.xlsx');
+                      XLSX.utils.book_append_sheet(
+                        workbook,
+                        worksheet,
+                        "Applications"
+                      );
+                      XLSX.writeFile(workbook, "applications.xlsx");
                     }}
                   >
                     Export to Excel
@@ -440,8 +528,15 @@ export default function ApplicationsAdminPage() {
                 applications={apps}
                 onMetricClick={(metric) => {
                   // Handle metric clicks to filter
-                  if (metric === 'pending-review') {
-                    setActiveFilters([{ id: 'status-pending', type: 'status', label: 'Pending', value: 'pending' }]);
+                  if (metric === "pending-review") {
+                    setActiveFilters([
+                      {
+                        id: "status-pending",
+                        type: "status",
+                        label: "Pending",
+                        value: "pending",
+                      },
+                    ]);
                   }
                 }}
               />
@@ -473,14 +568,16 @@ export default function ApplicationsAdminPage() {
                 </div>
               ) : filteredApps.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-lg text-gray-600 mb-2">No applications found</p>
+                  <p className="text-lg text-gray-600 mb-2">
+                    No applications found
+                  </p>
                   <p className="text-sm text-gray-500">
                     {searchQuery || activeFilters.length > 0
-                      ? 'Try adjusting your search or filters'
-                      : 'No applications have been submitted yet'}
+                      ? "Try adjusting your search or filters"
+                      : "No applications have been submitted yet"}
                   </p>
                 </div>
-              ) : viewMode === 'kanban' ? (
+              ) : viewMode === "kanban" ? (
                 // Kanban View
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                   {/* Pending Column */}
@@ -493,15 +590,17 @@ export default function ApplicationsAdminPage() {
                         </h3>
                       </div>
                     </div>
-                    <div className="p-4 space-y-4 overflow-y-auto max-h-[96vh]">
-                      {groupedApps.pending.map(application => (
+                    <div className="p-4 space-y-4 overflow-y-auto max-h-[146.5vh]">
+                      {groupedApps.pending.map((application) => (
                         <ApplicationCard
                           key={application.id}
                           application={application}
-                          isSelected={selectedApplications.some(app => app.id === application.id)}
+                          isSelected={selectedApplications.some(
+                            (app) => app.id === application.id
+                          )}
                           onSelect={handleSelectApplication}
-                          onAccept={(app) => onDecide(app, 'accepted')}
-                          onReject={(app) => onDecide(app, 'rejected')}
+                          onAccept={(app) => onDecide(app, "accepted")}
+                          onReject={(app) => onDecide(app, "rejected")}
                           onViewDetails={handleViewDetails}
                           showBulkActions={true}
                           isProcessing={processingId === application.id}
@@ -520,12 +619,14 @@ export default function ApplicationsAdminPage() {
                         </h3>
                       </div>
                     </div>
-                    <div className="p-4 space-y-4 overflow-y-auto max-h-[96vh]">
-                      {groupedApps.accepted.map(application => (
+                    <div className="p-4 space-y-4 overflow-y-auto max-h-[146.5vh]">
+                      {groupedApps.accepted.map((application) => (
                         <ApplicationCard
                           key={application.id}
                           application={application}
-                          isSelected={selectedApplications.some(app => app.id === application.id)}
+                          isSelected={selectedApplications.some(
+                            (app) => app.id === application.id
+                          )}
                           onSelect={handleSelectApplication}
                           onViewDetails={handleViewDetails}
                           showBulkActions={true}
@@ -545,12 +646,14 @@ export default function ApplicationsAdminPage() {
                         </h3>
                       </div>
                     </div>
-                    <div className="p-4 space-y-4 overflow-y-auto max-h-[96vh]">
-                      {groupedApps.rejected.map(application => (
+                    <div className="p-4 space-y-4 overflow-y-auto max-h-[146.5vh]">
+                      {groupedApps.rejected.map((application) => (
                         <ApplicationCard
                           key={application.id}
                           application={application}
-                          isSelected={selectedApplications.some(app => app.id === application.id)}
+                          isSelected={selectedApplications.some(
+                            (app) => app.id === application.id
+                          )}
                           onSelect={handleSelectApplication}
                           onViewDetails={handleViewDetails}
                           showBulkActions={true}
@@ -563,14 +666,16 @@ export default function ApplicationsAdminPage() {
               ) : (
                 // List View
                 <div className="space-y-4">
-                  {filteredApps.map(application => (
+                  {filteredApps.map((application) => (
                     <ApplicationCard
                       key={application.id}
                       application={application}
-                      isSelected={selectedApplications.some(app => app.id === application.id)}
+                      isSelected={selectedApplications.some(
+                        (app) => app.id === application.id
+                      )}
                       onSelect={handleSelectApplication}
-                      onAccept={(app) => onDecide(app, 'accepted')}
-                      onReject={(app) => onDecide(app, 'rejected')}
+                      onAccept={(app) => onDecide(app, "accepted")}
+                      onReject={(app) => onDecide(app, "rejected")}
                       onViewDetails={handleViewDetails}
                       showBulkActions={true}
                       isProcessing={processingId === application.id}
@@ -590,11 +695,12 @@ export default function ApplicationsAdminPage() {
           isOpen={showSlidePanel}
           onClose={handleClosePanel}
           application={selectedApplication}
-          onAccept={(app, selectedIdx) => onDecide(app, 'accepted', selectedIdx)}
-          onReject={(app) => onDecide(app, 'rejected')}
+          onAccept={(app, selectedIdx) =>
+            onDecide(app, "accepted", selectedIdx)
+          }
+          onReject={(app) => onDecide(app, "rejected")}
           onUndo={onUndo}
           isProcessing={processingId === selectedApplication.id}
-          
         />
       )}
     </div>

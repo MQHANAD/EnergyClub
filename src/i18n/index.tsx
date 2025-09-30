@@ -13,8 +13,8 @@ type MessageTree = { [key: string]: string | MessageTree };
 const messages: Record<Lang, MessageTree> = {
   en: {
     brand: {
-      short: "KFUPM Energy Hub",
-      full: "KFUPM Energy Hub",
+      short: "Energy Hub",
+      full: "Energy Hub",
     },
     navigation: {
       home: "Home",
@@ -23,7 +23,7 @@ const messages: Record<Lang, MessageTree> = {
       partners: "Partners",
       joinUs: "Join Us",
       contact: "Contact",
-      admin: "Admin Dashboard",
+      admin: "Events Dashboard",
     },
     common: {
       loading: "Loading...",
@@ -37,7 +37,7 @@ const messages: Record<Lang, MessageTree> = {
       titleEnergyHub: "Energy Hub",
       tagline:
         "The platform uniting the Energy Clubs and Energy Week. We champion innovation, collaboration, and leadership in energy and sustainability, connecting students, academia, and industry. Rooted in King Fahd University of Petroleum & Minerals, one of the region’s leading institutions in science and technology, the Energy Hub builds on KFUPM’s legacy of excellence to empower students, foster industry partnerships, and drive solutions for a cleaner, more sustainable future.",
-      ctaExplore: "Explore Energy Week Events",
+      ctaExplore: "Explore Energy vents",
       ctaLearn: "Join Us",
       bgAlt: "Wind turbines and solar panels",
       gifAlt: "Wind turbines animation",
@@ -60,8 +60,8 @@ const messages: Record<Lang, MessageTree> = {
     },
     events: {
       title: "Events",
-      ctaRegister: "Register for Energy week Events",
-      ctaJoin: "Join the Energy Club",
+      ctaRegister: "Register for Energy Events",
+      ctaJoin: "Join Us",
       modal: {
         learnMore: "Learn More",
         close: "Close",
@@ -81,7 +81,8 @@ const messages: Record<Lang, MessageTree> = {
         },
         greenH2: {
           title: "Green Hydrogen Workshop",
-          short: "Deep dive into green hydrogen—technology, demand, and KSA roadmap.",
+          short:
+            "Deep dive into green hydrogen—technology, demand, and KSA roadmap.",
           content:
             "Hosted with Strategy&, this workshop offered students insights into sustainable energy technologies and potential roadmap for KSA aligned with Vision 2030.",
         },
@@ -108,7 +109,7 @@ const messages: Record<Lang, MessageTree> = {
     nav: {
       logoAlt: "Energy Club Logo",
       events: "Events",
-      admin: "Admin Dashboard",
+      admin: "Events Dashboard",
       logout: "Logout",
       signIn: "Sign In",
       openMenu: "Open main menu",
@@ -154,7 +155,8 @@ const messages: Record<Lang, MessageTree> = {
       alreadyRegistered: "Already Registered",
       youRegisteredOn: "You registered on {date}",
       reasonLabel: "Reason: {reason}",
-      eventStatusNotAccepting: "This event is {status} and not accepting registrations.",
+      eventStatusNotAccepting:
+        "This event is {status} and not accepting registrations.",
       eventFull: "Event is Full",
       eventFullSubtitle: "This event has reached its maximum capacity.",
       universityToggle: "Are you from the university?",
@@ -170,7 +172,7 @@ const messages: Record<Lang, MessageTree> = {
       dashboardTitle: "Admin Dashboard",
       manageDesc: "Manage events and view registrations",
       eventsTab: "Events ({count})",
-      registrationsTab: "Registrations for \"{title}\" ({count})",
+      registrationsTab: 'Registrations for "{title}" ({count})',
       createNewEvent: "Create New Event",
       loadingEvents: "Loading events...",
       noEventsTitle: "No events found",
@@ -178,7 +180,7 @@ const messages: Record<Lang, MessageTree> = {
       viewRegistrations: "View Registrations",
       delete: "Delete",
       backToEvents: "← Back to Events",
-      registrationsFor: "Registrations for \"{title}\"",
+      registrationsFor: 'Registrations for "{title}"',
       registrationsCount: "{count} registration{plural}",
       noRegistrationsTitle: "No registrations found",
       noRegistrationsDesc: "No one has registered for this event yet.",
@@ -250,7 +252,7 @@ const messages: Record<Lang, MessageTree> = {
       titleEnergyHub: "مركز الطاقة",
       tagline:
         " منصة تجمع أندية الطاقة وأسبوع الطاقة. نُعزز الابتكار والتعاون والقيادة في مجالات الطاقة والاستدامة، ونربط بين الطلاب والأكاديميا والصناعة. منبثقًا من جامعة الملك فهد للبترول والمعادن، إحدى المؤسسات الرائدة في المنطقة في مجالات العلوم والتقنية، يبني مركز الطاقة على إرث الجامعة العريق في التميز لتمكين الطلاب، وتعزيز الشراكات مع الصناعة، ودفع الحلول نحو مستقبل أنظف وأكثر استدامة ",
-      ctaExplore: "استكشف فعاليات اسبوع الطاقة",
+      ctaExplore: "استكشف فعاليات الطاقة",
       ctaLearn: "انضم الينا",
       bgAlt: "توربينات رياح وألواح شمسية",
       gifAlt: "رسوم متحركة لتوربينات الرياح",
@@ -274,7 +276,7 @@ const messages: Record<Lang, MessageTree> = {
     events: {
       title: "الفعاليات",
       ctaRegister: "سجّل في الفعاليات",
-      ctaJoin: "انضم إلى نادي الطاقة",
+      ctaJoin: "انضم إلينا",
       modal: {
         learnMore: "اقرأ المزيد",
         close: "إغلاق",
@@ -383,7 +385,7 @@ const messages: Record<Lang, MessageTree> = {
       dashboardTitle: "لوحة التحكم",
       manageDesc: "إدارة الفعاليات وعرض التسجيلات",
       eventsTab: "الفعاليات ({count})",
-      registrationsTab: "التسجيلات لفعالية \"{title}\" ({count})",
+      registrationsTab: 'التسجيلات لفعالية "{title}" ({count})',
       createNewEvent: "إنشاء فعالية جديدة",
       loadingEvents: "جارٍ تحميل الفعاليات...",
       noEventsTitle: "لا توجد فعاليات",
@@ -391,7 +393,7 @@ const messages: Record<Lang, MessageTree> = {
       viewRegistrations: "عرض التسجيلات",
       delete: "حذف",
       backToEvents: "← الرجوع إلى الفعاليات",
-      registrationsFor: "التسجيلات لفعالية \"{title}\"",
+      registrationsFor: 'التسجيلات لفعالية "{title}"',
       registrationsCount: "{count} تسجيل{plural}",
       noRegistrationsTitle: "لا توجد تسجيلات",
       noRegistrationsDesc: "لم يقم أحد بالتسجيل في هذه الفعالية بعد.",
@@ -437,10 +439,17 @@ const messages: Record<Lang, MessageTree> = {
   },
 };
 
-function getByPath(obj: MessageTree, path: string): string | MessageTree | undefined {
+function getByPath(
+  obj: MessageTree,
+  path: string
+): string | MessageTree | undefined {
   let current: unknown = obj;
   for (const key of path.split(".")) {
-    if (typeof current === "object" && current !== null && key in (current as Record<string, unknown>)) {
+    if (
+      typeof current === "object" &&
+      current !== null &&
+      key in (current as Record<string, unknown>)
+    ) {
       current = (current as Record<string, unknown>)[key];
     } else {
       return undefined;
@@ -496,9 +505,7 @@ export function I18nProvider({
     };
   }, [lang]);
 
-  return (
-    <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {
