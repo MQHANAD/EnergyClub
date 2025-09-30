@@ -59,7 +59,7 @@ const messages: Record<Lang, MessageTree> = {
       logo: "Logo {i}",
     },
     events: {
-      title: "Events",
+      title: "Upcoming Events",
       ctaRegister: "Register for Energy Events",
       ctaJoin: "Join Us",
       modal: {

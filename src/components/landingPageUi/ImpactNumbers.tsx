@@ -6,7 +6,7 @@ import { useI18n } from "@/i18n/index";
 
 const container = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { staggerChildren: 0.2 } }
+  show: { opacity: 1, y: 0, transition: { staggerChildren: 0.2 } },
 };
 
 const stats = [
@@ -14,7 +14,7 @@ const stats = [
   { key: "workingMembers", value: 200 },
   { key: "universities", value: 8 },
   { key: "panels", value: 4 },
-  { key: "majorEvents", value: 7 }
+  { key: "majorEvents", value: 7 },
 ];
 
 export default function ImpactNumbers() {
@@ -22,7 +22,7 @@ export default function ImpactNumbers() {
   const { t } = useI18n();
 
   return (
-    <section ref={ref} className="bg-gray-50 py-16">
+    <section ref={ref} className="bg-gray-50 py-16 mt-6">
       <div className="mx-auto max-w-7xl px-6">
         <motion.h2
           variants={container}
@@ -42,10 +42,19 @@ export default function ImpactNumbers() {
               className="rounded-3xl bg-white p-6 text-center shadow-sm hover:scale-[1.03] transition-transform"
             >
               <div className="text-3xl font-extrabold text-[#25818a]">
-                {inView ? <CountUp start={0} end={s.value} duration={2} separator="," /> : 0}
+                {inView ? (
+                  <CountUp start={0} end={s.value} duration={2} separator="," />
+                ) : (
+                  0
+                )}
               </div>
-              <div className="mt-2 text-sm text-gray-600">{t(`impact.stats.${s.key}`)}</div>
-              <div className="mx-auto mt-3 h-1.5 w-12 rounded-full" style={{ backgroundColor: "#f8cd5c" }} />
+              <div className="mt-2 text-sm text-gray-600">
+                {t(`impact.stats.${s.key}`)}
+              </div>
+              <div
+                className="mx-auto mt-3 h-1.5 w-12 rounded-full"
+                style={{ backgroundColor: "#f8cd5c" }}
+              />
             </motion.div>
           ))}
         </div>
@@ -53,5 +62,3 @@ export default function ImpactNumbers() {
     </section>
   );
 }
-
-

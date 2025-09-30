@@ -385,7 +385,7 @@ export default function AdminDashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t("admin.dashboardTitle")}
+              {t("nav.admin")}
             </h1>
             <p className="text-gray-600">{t("admin.manageDesc")}</p>
           </div>
