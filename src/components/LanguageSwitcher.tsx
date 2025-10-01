@@ -33,7 +33,7 @@ export default function LanguageSwitcher() {
       type="button"
       onClick={switchLang}
       disabled={pending}
-      className="rounded-md border border-black/30 bg-black/10 text-black hover:bg-black/20 px-3 py-1.5 text-sm transition cursor-pointer"
+      className="rounded-md border border-black/30 bg-gray/10 text-black hover:bg-black/20 px-3 py-1.5 text-sm transition cursor-pointer"
       aria-label={t("langSwitcher.label")}
       title={t("langSwitcher.label")}
     >
