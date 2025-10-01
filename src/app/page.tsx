@@ -62,8 +62,8 @@ export default async function HomePage() {
       <Hero />
 
       <ImpactNumbers />
-      <Events events={dummyEvents} title={m.events.title} showButtons={false} />
       <UpcomingEvents />
+      <Events events={dummyEvents} title={m.events.title} showButtons={true} />
       {/* <Partners /> */}
       <Footer />
     </main>

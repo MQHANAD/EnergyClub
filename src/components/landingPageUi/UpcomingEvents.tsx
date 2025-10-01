@@ -77,7 +77,7 @@ export default function UpcomingEvents() {
     <Events
       events={upcomingEvents}
       title={t("events.title")}
-      showButtons={true}
+      showButtons={false}
     />
   );
 }

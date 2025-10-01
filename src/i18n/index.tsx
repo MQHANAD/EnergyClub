@@ -37,7 +37,7 @@ const messages: Record<Lang, MessageTree> = {
       titleEnergyHub: "Energy Hub",
       tagline:
         "The platform uniting the Energy Clubs and Energy Week. We champion innovation, collaboration, and leadership in energy and sustainability, connecting students, academia, and industry. Rooted in King Fahd University of Petroleum & Minerals, one of the region’s leading institutions in science and technology, the Energy Hub builds on KFUPM’s legacy of excellence to empower students, foster industry partnerships, and drive solutions for a cleaner, more sustainable future.",
-      ctaExplore: "Explore Energy vents",
+      ctaExplore: "Explore Energy Events",
       ctaLearn: "Join Us",
       bgAlt: "Wind turbines and solar panels",
       gifAlt: "Wind turbines animation",
