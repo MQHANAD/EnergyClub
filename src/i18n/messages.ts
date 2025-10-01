@@ -42,7 +42,7 @@ export const messages = {
       logo: "Logo {i}",
     },
     events: {
-      title: "Previous Events",
+      title: "Past Events",
       title1: "Upcoming Events",
       ctaRegister: "Register for Events",
       ctaJoin: "Join the Energy Club",
