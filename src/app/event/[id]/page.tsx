@@ -280,7 +280,7 @@ export default function EventDetailsPage() {
     user && !userRegistration && event.status === "active" && !isEventFull;
 
   return (
-    <div className="min-h-screen bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed">
+    <div className="min-h-screen bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed scroll-smooth">
       <div className="min-h-screen bg-gradient-to-br from-gray-50/95 to-gray-100/95 backdrop-blur-sm">
         <Navigation />
          {/* Back Button */}
