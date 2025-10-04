@@ -34,6 +34,8 @@ import { signInAnonymously, signOut, setPersistence, inMemoryPersistence } from 
 
 type FormValues = z.infer<typeof EnergyWeekSchema>;
 
+type Props = { isOpen?: boolean };
+
 function CommitteesMultiSelect({
   options,
   values,
@@ -86,8 +88,10 @@ function CommitteesMultiSelect({
   );
 }
 
-export default function EnergyWeekForm() {
+export default function EnergyWeekForm({ isOpen = true }: Props) {
   const [activeTab, setActiveTab] = useState<'energy_week_2' | 'female_energy_club'>('energy_week_2');
+
+  if (!isOpen) return null;
 
   const {
     register,
