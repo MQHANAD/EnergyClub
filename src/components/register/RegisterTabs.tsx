@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Program } from '@/lib/registrationSchemas';
+import type { Program } from '@/lib/registrationSchemas';
 import { cn } from '@/lib/utils';
 import { Calendar, Users, Zap, Star, Clock, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -9,7 +9,11 @@ import Image from 'next/image';
 type Props = {
   active: Program;
   onChange: (p: Program) => void;
+  availability?: Partial<Record<Program, boolean>>;
+  showAdmin?: boolean;  // NEW
+  onAdminToggle?: (program: Program, open: boolean) => void; // NEW
 };
+
 
 const tabs: {
   key: Program;
@@ -40,8 +44,7 @@ const tabs: {
     icon: Star,
     features: ['Skill Development', 'Community Building', 'Career Guidance'],
     duration: 'Ongoing',
-    disabled: true,
-    disabledMessage: 'Registration Closed',
+    
   },
 ];
 
@@ -50,7 +53,16 @@ const tabImages: Record<Program, { src: string; alt: string }> = {
   female_energy_club: { src: '/energyClubLogo.png', alt: 'Female Energy Club preview' },
 };
 
-export default function RegisterTabs({ active, onChange }: Props) {
+export default function RegisterTabs({
+  active,
+  onChange,
+  availability = { energy_week_2: true, female_energy_club: true },
+  showAdmin = false,
+  onAdminToggle,
+}: Props) {
+  const ew2Open = availability.energy_week_2 !== false;
+  const fecOpen = availability.female_energy_club !== false;
+
   return (
     <div className="w-full mb-8">
       {/* Mobile Card View */}
@@ -59,17 +71,18 @@ export default function RegisterTabs({ active, onChange }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {tabs.map((tab) => {
             const isActive = active === tab.key;
-            const isDisabled = tab.disabled;
+            const isDisabled = tab.key === 'energy_week_2' ? !ew2Open : !fecOpen;
+            const cardDisabled = isDisabled && !showAdmin; 
             return (
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => !isDisabled && onChange(tab.key)}
-                disabled={isDisabled}
+                onClick={() => !cardDisabled && onChange(tab.key)}   
+                disabled={cardDisabled}   
                 className={cn(
-                  'flex items-center gap-3 p-4 rounded-lg border transition-all text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20',
+                  'relative flex items-center gap-3 p-4 rounded-lg border transition-all text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20',
                   isDisabled
-                    ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                    ? `border-gray-200 bg-gray-50 ${showAdmin ? 'cursor-default' : 'cursor-not-allowed'} opacity-60`
                     : isActive
                     ? 'border-blue-500 bg-blue-50 hover:shadow-md'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
@@ -82,10 +95,47 @@ export default function RegisterTabs({ active, onChange }: Props) {
                 <div className="min-w-0">
                   <div className={cn('font-medium truncate', isActive ? 'text-blue-900' : isDisabled ? 'text-gray-500' : 'text-gray-900')}>{tab.label}</div>
                   <div className={cn('text-xs', isDisabled ? 'text-red-500' : 'text-gray-500')}>
-                    {isDisabled ? tab.disabledMessage : tab.duration}
+                    {isDisabled ? 'Registration Closed' : tab.duration}
                   </div>
                   <p className={cn('mt-1 text-xs line-clamp-2', isDisabled ? 'text-gray-400' : 'text-gray-600')}>{tab.description}</p>
                 </div>
+                <div className="absolute top-3 right-3">
+                  {isDisabled ? (
+                    <span className="rounded-full bg-red-100 text-red-700 px-3 py-1 text-xs font-semibold">
+                      Registration Closed
+                    </span>
+                  ) : isActive ? (
+                    <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </div>
+                  ) : null}
+                </div>
+                {/* ADMIN TOGGLE (mobile) */}
+                {showAdmin && (
+                  <div
+                    className="absolute top-3 right-3 translate-y-9 z-10"
+                    onClick={(e) => e.stopPropagation()}   // <— stop the card click here
+                  >
+                    {isDisabled ? (
+                      <button
+                        type="button"
+                        onClick={() => onAdminToggle?.(tab.key, true)}   // OPEN
+                        className="px-2 py-1 text-xs rounded-md border border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                      >
+                        Open
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onAdminToggle?.(tab.key, false)}  // CLOSE
+                        className="px-2 py-1 text-xs rounded-md border border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                )}
+
               </button>
             );
           })}
@@ -96,19 +146,21 @@ export default function RegisterTabs({ active, onChange }: Props) {
       <div className="hidden lg:grid lg:grid-cols-2 gap-6">
         {tabs.map((tab) => {
           const isActive = active === tab.key;
-          const isDisabled = tab.disabled;
+          const isDisabled = tab.key === 'energy_week_2' ? !ew2Open : !fecOpen;
+          const cardDisabled = isDisabled && !showAdmin; 
+
           const Icon = tab.icon;
           
           return (
             <button
               key={tab.key}
               type="button"
-              onClick={() => !isDisabled && onChange(tab.key)}
-              disabled={isDisabled}
+              onClick={() => !cardDisabled && onChange(tab.key)}   
+              disabled={cardDisabled}  
               className={cn(
                 'group relative p-6 rounded-xl border-2 transition-all duration-200 text-left focus:outline-none focus:ring-4 focus:ring-blue-500/20',
                 isDisabled
-                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                ? `border-gray-200 bg-gray-50 ${showAdmin ? 'cursor-default' : 'cursor-not-allowed'} opacity-60`
                   : isActive
                   ? 'border-blue-500 bg-blue-50 shadow-lg scale-[1.02]'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:scale-[1.02]'
@@ -116,23 +168,7 @@ export default function RegisterTabs({ active, onChange }: Props) {
               aria-selected={isActive}
               role="tab"
             >
-              {/* Disabled Indicator */}
-              {isDisabled && (
-                <div className="absolute top-4 right-4">
-                  <div className="flex items-center justify-center px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
-                    {tab.disabledMessage}
-                  </div>
-                </div>
-              )}
-              
-              {/* Active Indicator */}
-              {isActive && !isDisabled && (
-                <div className="absolute top-4 right-4">
-                  <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
-                    <CheckCircle className="h-4 w-4 text-white" />
-                  </div>
-                </div>
-              )}
+          
 
               {/* Header */}
               <div className="flex items-start gap-4 mb-4">
@@ -217,6 +253,44 @@ export default function RegisterTabs({ active, onChange }: Props) {
                 'absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/5 to-green-500/5 opacity-0 transition-opacity',
                 !isActive && 'group-hover:opacity-100'
               )} />
+               {/* STATUS BADGE*/}
+            <div className="absolute top-3 right-3">
+              {isDisabled ? (
+                <span className="rounded-full bg-red-100 text-red-700 px-3 py-1 text-xs font-semibold">
+                  Registration Closed
+                </span>
+              ) : isActive ? (
+                <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-white" />
+                </div>
+              ) : null}
+            </div>
+            {/* ADMIN TOGGLE (desktop) */}
+          {showAdmin && (
+            <div
+              className="absolute top-4 right-4 translate-y-9 z-10"
+              onClick={(e) => e.stopPropagation()}   // <— stop the card click here
+            >
+              {isDisabled ? (
+                <button
+                  type="button"
+                  onClick={() => onAdminToggle?.(tab.key, true)}   // OPEN
+                  className="px-2 py-1 text-xs rounded-md border border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                >
+                  Open
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onAdminToggle?.(tab.key, false)}  // CLOSE
+                  className="px-2 py-1 text-xs rounded-md border border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          )}
+
             </button>
           );
         })}

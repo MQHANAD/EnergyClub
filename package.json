@@ -51,7 +51,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
-    "firebase-mock": "^2.3.2",
+    "firebase-mock": "^2.2.4",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.41",
