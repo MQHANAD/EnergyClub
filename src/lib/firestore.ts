@@ -6,6 +6,8 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  setDoc,          
+  onSnapshot,     
   query,
   where,
   orderBy,
@@ -16,6 +18,7 @@ import {
   Timestamp,
   DocumentData,
 } from 'firebase/firestore';
+
 import { db } from './firebase';
 import { Event, Registration, UserProfile } from '@/types';
 

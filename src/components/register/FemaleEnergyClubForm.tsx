@@ -87,12 +87,13 @@ function CommitteesMultiSelect({
   );
 }
 
-export default function FemaleEnergyClubForm() {
-  // Registration is closed for Female Energy Club
-  const isRegistrationClosed = true;
+type Props = { isOpen?: boolean };
+
+export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
+
   
   // Show registration closed message
-  if (isRegistrationClosed) {
+  if (!isOpen) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 flex items-center justify-center px-4 py-8">
         <div className="mx-auto max-w-2xl w-full">
