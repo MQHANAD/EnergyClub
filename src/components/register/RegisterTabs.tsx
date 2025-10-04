@@ -110,61 +110,76 @@ export default function RegisterTabs({
                     className="object-contain p-2"
                   />
                 </div>
-                <div className="min-w-0">
+              <div className="min-w-0 flex-1">
+                {/* 2x2 grid: 
+                    col1 = text, col2 = badge/dropdown
+                    row1 = title + badge
+                    row2 = status + dropdown (on the right) */}
+                <div className="grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-2">
+                  {/* Title (ellipsized) */}
                   <div
                     className={cn(
-                      'font-medium truncate',
+                      'font-medium leading-tight truncate min-w-0', // ellipsis
                       isActive ? 'text-blue-900' : isDisabled ? 'text-gray-500' : 'text-gray-900'
                     )}
+                    title={tab.label}
                   >
                     {tab.label}
                   </div>
-                  <div className={cn('text-xs', isDisabled ? 'text-red-500' : 'text-gray-500')}>
-                    {isDisabled ? 'Registration Closed' : tab.duration}
+
+                  {/* Badge (top-right) */}
+                <div className="col-start-2 row-start-1 self-start shrink-0 justify-self-end -mr-1 -mt-1">
+                    {isDisabled ? (
+                      <span className="rounded-full bg-red-100 text-red-700 px-3 py-1 text-xs font-semibold whitespace-nowrap">
+                        Registration Closed
+                      </span>
+                    ) : isActive ? (
+                      <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
+                        <CheckCircle className="h-4 w-4 text-white" />
+                      </div>
+                    ) : null}
                   </div>
-                  <p
+
+                  {/* Status/Duration (bottom-left) */}
+                  <div
                     className={cn(
-                      'mt-1 text-xs line-clamp-2',
-                      isDisabled ? 'text-gray-400' : 'text-gray-600'
+                      'col-start-1 row-start-2 mt-1 text-xs',
+                      isDisabled ? 'text-red-500' : 'text-gray-500'
                     )}
                   >
-                    {tab.description}
-                  </p>
-                </div>
-
-                <div className="absolute top-3 right-3">
-                  {isDisabled ? (
-                    <span className="rounded-full bg-red-100 text-red-700 px-3 py-1 text-xs font-semibold">
-                      Registration Closed
-                    </span>
-                  ) : isActive ? (
-                    <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full">
-                      <CheckCircle className="h-4 w-4 text-white" />
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* ADMIN TOGGLE (mobile) */}
-                {showAdmin && (
-                  <div
-                    className="absolute top-3 right-3 translate-y-9 z-10"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    <label htmlFor={`status-${tab.key}-m`} className="sr-only">
-                      Registration status
-                    </label>
-                    <select
-                      id={`status-${tab.key}-m`}
-                      className="px-2 py-1 text-xs rounded-md border bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={isDisabled ? 'closed' : 'open'}
-                      onChange={(e) => onAdminToggle?.(tab.key, e.target.value === 'open')}
-                    >
-                      <option value="open">Open</option>
-                      <option value="closed">Close</option>
-                    </select>
+                    {isDisabled ? 'Registration Closed' : tab.duration}
                   </div>
-                )}
+
+                  {/* Dropdown (bottom-right, under badge) */}
+                  {showAdmin && (
+                    <div className="col-start-2 row-start-2 justify-self-end mt-1">
+                      <label htmlFor={`status-${tab.key}-m`} className="sr-only">
+                        Registration status
+                      </label>
+                      <select
+                        id={`status-${tab.key}-m`}
+                        className="px-2 py-1 text-xs rounded-md border bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={isDisabled ? 'closed' : 'open'}
+                        onChange={(e) => onAdminToggle?.(tab.key, e.target.value === 'open')}
+                      >
+                        <option value="open">Open</option>
+                        <option value="closed">Close</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Description below the grid */}
+                <p
+                  className={cn(
+                    'mt-2 text-xs',
+                    isDisabled ? 'text-gray-400' : 'text-gray-600'
+                  )}
+                >
+                  {tab.description}
+                </p>
+              </div>
+
               </div>
             );
           })}
