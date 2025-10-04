@@ -88,7 +88,6 @@ export default function RegisterTabs({
                 tabIndex={cardDisabled ? -1 : 0}
                 aria-disabled={cardDisabled || undefined}
                 aria-pressed={isActive || undefined}
-                aria-selected={isActive}
                 onClick={() => !cardDisabled && onChange(tab.key)}
                 onKeyDown={(e) => handleKey(e, cardDisabled, tab.key)}
                 className={cn(
@@ -184,13 +183,11 @@ export default function RegisterTabs({
           return (
             <div
               key={tab.key}
+             
               role="button"
-              // keeping role="tab" if you rely on it; otherwise remove it:
-              role="tab"
               tabIndex={cardDisabled ? -1 : 0}
               aria-disabled={cardDisabled || undefined}
               aria-pressed={isActive || undefined}
-              aria-selected={isActive}
               onClick={() => !cardDisabled && onChange(tab.key)}
               onKeyDown={(e) => handleKey(e, cardDisabled, tab.key)}
               className={cn(
