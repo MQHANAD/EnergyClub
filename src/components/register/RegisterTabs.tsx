@@ -128,7 +128,7 @@ export default function RegisterTabs({
                   </div>
 
                   {/* Badge (top-right) */}
-                <div className="col-start-2 row-start-1 self-start shrink-0 justify-self-end -mr-1 -mt-1">
+                <div className="col-start-2 row-start-1 self-start shrink-0 justify-self-end -mr-1 -mt-1 pointer-events-none">
                     {isDisabled ? (
                       <span className="rounded-full bg-red-100 text-red-700 px-3 py-1 text-xs font-semibold whitespace-nowrap">
                         Registration Closed
@@ -151,22 +151,28 @@ export default function RegisterTabs({
                   </div>
 
                   {/* Dropdown (bottom-right, under badge) */}
-                  {showAdmin && (
-                    <div className="col-start-2 row-start-2 justify-self-end mt-1">
-                      <label htmlFor={`status-${tab.key}-m`} className="sr-only">
-                        Registration status
-                      </label>
-                      <select
-                        id={`status-${tab.key}-m`}
-                        className="px-2 py-1 text-xs rounded-md border bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={isDisabled ? 'closed' : 'open'}
-                        onChange={(e) => onAdminToggle?.(tab.key, e.target.value === 'open')}
-                      >
-                        <option value="open">Open</option>
-                        <option value="closed">Close</option>
-                      </select>
-                    </div>
-                  )}
+                 {showAdmin && (
+                  <div
+                    className="col-start-2 row-start-2 justify-self-end mt-1"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <label htmlFor={`status-${tab.key}-m`} className="sr-only">
+                      Registration status
+                    </label>
+                    <select
+                      id={`status-${tab.key}-m`}
+                      className="px-2 py-1 text-xs rounded-md border bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={isDisabled ? 'closed' : 'open'}
+                      onChange={(e) => onAdminToggle?.(tab.key, e.target.value === 'open')}
+                    >
+                      <option value="open">Open</option>
+                      <option value="closed">Close</option>
+                    </select>
+                  </div>
+                )}
+
                 </div>
 
                 {/* Description below the grid */}
