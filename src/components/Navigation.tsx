@@ -151,8 +151,11 @@ export default function Navigation() {
               </AnimatePresence>
             </div>
           ) : (
-            <Link href="/login">
-              <Button size="sm">{t("nav.signIn")}</Button>
+            <Link
+              href="/login"
+              className="relative px-4 py-2 text-sm font-medium text-slate-800 hover:text-black transition-colors"
+            >
+              {t("nav.signIn")}
             </Link>
           )}
         </div>
@@ -202,8 +205,11 @@ export default function Navigation() {
                   </Button>
                 </div>
               ) : (
-                <Link href="/login" className="w-full">
-                  <Button className="w-full">{t("nav.signIn")}</Button>
+                <Link 
+                  href="/login" 
+                  className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                >
+                  {t("nav.signIn")}
                 </Link>
               )}
               <div className="mt-3 flex justify-center">

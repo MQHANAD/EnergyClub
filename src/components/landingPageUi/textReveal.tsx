@@ -26,7 +26,7 @@ export const TextReveal: FC<TextRevealProps> = ({ children, className }) => {
     <div ref={targetRef} className={cn("relative z-0 h-[200vh]", className)}>
       <div
         className={
-          "sticky top-0 mx-auto flex h-screen items-center bg-transparent px-26"
+          "sticky top-0 mx-auto flex h-screen items-center bg-transparent md:px-26 px-0"
         }
       >
          <motion.span
