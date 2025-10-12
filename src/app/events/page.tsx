@@ -70,7 +70,7 @@ export default function EventsPage() {
     if (!authLoading) {
       loadEvents();
     }
-  }, [authLoading]);
+  }, [authLoading]); 
 
   // Local search query debounce
   useEffect(() => {
@@ -78,10 +78,32 @@ export default function EventsPage() {
     return () => clearTimeout(handle);
   }, [query]);
 
+  // FIXED: Proper event sorting from latest to oldest
   const filteredEvents = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    if (!q) return events;
-    return events.filter((e) => (e.title ?? "").toLowerCase().includes(q));
+    
+    // Combine filtering and sorting in one chain
+    const result = events
+      .filter(event => 
+        q ? (event.title ?? "").toLowerCase().includes(q) : true
+      )
+      .slice() // Create a shallow copy to avoid mutating original
+      .sort((a, b) => {
+        // Convert to timestamps for reliable comparison
+        const timeA = new Date(a.date).getTime();
+        const timeB = new Date(b.date).getTime();
+        
+        // Sort by date descending (newest first)
+        return timeB - timeA;
+      });
+
+    // Debug: log the sorted order
+    console.log("Sorted events (newest first):");
+    result.forEach((event, index) => {
+      console.log(`${index + 1}. ${event.title} - ${new Date(event.date).toLocaleString()}`);
+    });
+
+    return result;
   }, [events, debouncedQuery]);
 
   const handleLoadMore = () => {
