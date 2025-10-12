@@ -46,6 +46,8 @@ export const messages = {
       title1: "Upcoming Events",
       ctaRegister: "Register for Events",
       ctaJoin: "Join the Energy Club",
+      showMore: "Show More",
+      showLess: "Show Less",
       modal: {
         learnMore: "Learn More",
         close: "Close",
@@ -135,6 +137,8 @@ export const messages = {
       title1: "الفعاليات القادمة",
       ctaRegister: "سجّل في الفعاليات",
       ctaJoin: "انضم إلى نادي الطاقة",
+      showMore: "عرض المزيد",
+      showLess: "عرض أقل",
       modal: {
         learnMore: "اقرأ المزيد",
         close: "إغلاق",

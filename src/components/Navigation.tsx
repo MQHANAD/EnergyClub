@@ -26,6 +26,7 @@ export default function Navigation() {
   const navLinks = [
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
+    { href: "/register", label: t("navigation.joinUs") },
     ...(canSeeAdmin
       ? [
           { href: "/admin", label: t("nav.admin") },
@@ -79,12 +80,7 @@ export default function Navigation() {
             : "bg-white/10 backdrop-blur-md border-white/20"
         }`}
       >
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <span className="font-bold text-[#25818a] text-2xl">
-            {t("brand.short")}
-          </span>
-        </Link>
+        
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2">
