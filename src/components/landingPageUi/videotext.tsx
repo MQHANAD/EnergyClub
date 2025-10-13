@@ -136,21 +136,54 @@ export function VideoText({
 
     const tryPlay = async () => {
       try {
+        // Set all Safari-specific attributes
         video.muted = true;
         video.playsInline = true;
-        (video as any).webkitPlaysinline = true;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        video.setAttribute('x-webkit-airplay', 'allow');
+        
+        // Try to play
         await video.play();
+        console.log("Video autoplay successful");
       } catch (error) {
         console.warn("Autoplay prevented:", error);
-        const retry = () => {
-          video.play().catch(() => {});
-          window.removeEventListener("click", retry);
+        
+        // Set up user interaction handlers for Safari
+        const enableAutoplay = async () => {
+          try {
+            await video.play();
+            console.log("Video started after user interaction");
+          } catch (err) {
+            console.warn("Still unable to play video:", err);
+          }
         };
-        window.addEventListener("click", retry);
+
+        // Listen for any user interaction
+        const events = ['click', 'touchstart', 'keydown'];
+        const handleUserInteraction = () => {
+          enableAutoplay();
+          events.forEach(event => {
+            document.removeEventListener(event, handleUserInteraction);
+          });
+        };
+
+        events.forEach(event => {
+          document.addEventListener(event, handleUserInteraction, { once: true });
+        });
       }
     };
 
-    tryPlay();
+    // Wait for video to be ready
+    if (video.readyState >= 3) {
+      tryPlay();
+    } else {
+      video.addEventListener('canplay', tryPlay, { once: true });
+    }
+
+    return () => {
+      video.removeEventListener('canplay', tryPlay);
+    };
   }, [autoPlay]);
 
   return (
@@ -176,8 +209,8 @@ export function VideoText({
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
-          autoPlay
-          muted
+          autoPlay={autoPlay}
+          muted={muted}
           loop={loop}
           preload={preload}
           playsInline
