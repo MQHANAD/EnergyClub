@@ -26,6 +26,7 @@ export default function Navigation() {
   const navLinks = [
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
+    { href: "/register", label: t("navigation.joinUs") },
     ...(canSeeAdmin
       ? [
           { href: "/admin", label: t("nav.admin") },
@@ -79,12 +80,7 @@ export default function Navigation() {
             : "bg-white/10 backdrop-blur-md border-white/20"
         }`}
       >
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <span className="font-bold text-[#25818a] text-2xl">
-            {t("brand.short")}
-          </span>
-        </Link>
+        
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2">
@@ -155,8 +151,11 @@ export default function Navigation() {
               </AnimatePresence>
             </div>
           ) : (
-            <Link href="/login">
-              <Button size="sm">{t("nav.signIn")}</Button>
+            <Link
+              href="/login"
+              className="relative px-4 py-2 text-sm font-medium text-slate-800 hover:text-black transition-colors"
+            >
+              {t("nav.signIn")}
             </Link>
           )}
         </div>
@@ -206,8 +205,11 @@ export default function Navigation() {
                   </Button>
                 </div>
               ) : (
-                <Link href="/login" className="w-full">
-                  <Button className="w-full">{t("nav.signIn")}</Button>
+                <Link 
+                  href="/login" 
+                  className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                >
+                  {t("nav.signIn")}
                 </Link>
               )}
               <div className="mt-3 flex justify-center">

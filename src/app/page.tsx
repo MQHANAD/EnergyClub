@@ -6,6 +6,8 @@ import Footer from "@/components/landingPageUi/Footer";
 import UpcomingEvents from "@/components/landingPageUi/UpcomingEvents";
 import { cookies } from "next/headers";
 import { messages, type Lang } from "@/i18n/messages";
+import { VideoText } from "@/components/landingPageUi/videotext";
+import ScrollRevealWrapper from "@/components/landingPageUi/ScrollRevealWrapper";
 
 export default async function HomePage() {
   const cookieStore = await cookies();
@@ -14,14 +16,18 @@ export default async function HomePage() {
   const m = messages[lang] ?? messages.en;
 
   return (
-    <main className="bg-white text-gray-900">
+    <ScrollRevealWrapper>
       <Navigation />
+      <div className="relative h-[70vh] w-[80%] overflow-hidden mx-auto mt-20">
+        <VideoText src="/5180_Wind_Turbine_Wind_Turbines_1920x1080.mp4">
+          Energy Hub
+        </VideoText>
+      </div>
       <Hero />
-
       <ImpactNumbers />
       <UpcomingEvents />
-      {/* <Partners /> */}
+      <Partners />
       <Footer />
-    </main>
+    </ScrollRevealWrapper>
   );
 }

@@ -62,6 +62,8 @@ const messages: Record<Lang, MessageTree> = {
       title: "Upcoming Events",
       ctaRegister: "Register for Energy Events",
       ctaJoin: "Join Us",
+      showMore: "Show More",
+      showLess: "Show Less",
       modal: {
         learnMore: "Learn More",
         close: "Close",
@@ -277,6 +279,8 @@ const messages: Record<Lang, MessageTree> = {
       title: "الفعاليات",
       ctaRegister: "سجّل في الفعاليات",
       ctaJoin: "انضم إلينا",
+      showMore: "عرض المزيد",
+      showLess: "عرض أقل",
       modal: {
         learnMore: "اقرأ المزيد",
         close: "إغلاق",
