@@ -115,8 +115,11 @@ export function VideoText({
 
   // Attempt to play video on mount (for browsers that block autoplay)
   useEffect(() => {
-    if (videoRef.current && autoPlay) {
-      videoRef.current.play().catch(error => {
+    const video = videoRef.current;
+    if (video && autoPlay) {
+      video.muted = true;        // ✅ Critical for Safari
+      video.playsInline = true;  // ✅ Prevents fullscreen on iOS
+      video.play().catch(error => {
         console.warn('Autoplay was prevented:', error);
       });
     }

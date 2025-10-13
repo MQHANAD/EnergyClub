@@ -20,7 +20,7 @@ export default function ScrollRevealWrapper({ children }: ScrollRevealWrapperPro
   const bgOpacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
 
   return (
-    <div className="relative md:min-h-[660vh] min-h-[700vh]"> {/* Make sure this is tall enough */}
+    <div className="relative md:mb-50 mb-22">
       {/* Fixed Background Layer */}
       <motion.div 
         className="fixed inset-0 z-0 bg-gradient-to-br from-[#25818a] via-[#1a6d75] to-[#0f5960] flex items-end justify-center pb-20"

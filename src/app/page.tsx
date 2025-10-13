@@ -18,7 +18,7 @@ export default async function HomePage() {
   return (
     <ScrollRevealWrapper>
       <Navigation />
-      <div className="relative h-screen w-[80%] overflow-hidden mx-auto">
+      <div className="relative h-[70vh] w-[80%] overflow-hidden mx-auto mt-20">
         <VideoText src="/5180_Wind_Turbine_Wind_Turbines_1920x1080.mp4">
           Energy Hub
         </VideoText>

@@ -31,7 +31,7 @@ export const TextReveal: FC<TextRevealProps> = ({ children, className }) => {
       >
          <motion.span
            className={
-             "flex flex-wrap items-center justify-center gap-1 p-4 text-base font-light leading-snug text-black/5 md:gap-2 md:p-6 md:text-lg lg:gap-3 lg:p-8 lg:text-xl xl:text-2xl font-serif"
+             "flex flex-wrap items-center justify-center gap-1 text-base font-light leading-snug text-black/5 md:gap-2 md:text-lg lg:gap-3 lg:text-xl xl:text-2xl font-serif"
            }
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
