@@ -194,15 +194,25 @@ export default function EventDetailsPage() {
             </CardHeader>
 
             {/* Event Image */}
-            {event.imageUrls && event.imageUrls.length > 0 && (
-              <div className="overflow-hidden rounded-xl mb-4">
-                <img
-                  src={event.imageUrls[0]}
-                  alt={event.title}
-                  className="w-full h-auto object-contain transition-transform duration-500 hover:scale-105"
-                />
-              </div>
-            )}
+            <div className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white transition-transform duration-300 hover:shadow-3xl mb-6">
+              {event.imageUrls && event.imageUrls.length > 0 ? (
+                <div className="relative w-full aspect-video md:aspect-[21/9] overflow-hidden">
+                  <img
+                    src={event.imageUrls[0]}
+                    alt={event.title}
+                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              ) : (
+                <div className="w-full aspect-video md:aspect-[21/9] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                  <span className="text-gray-400 text-lg font-medium">
+                    {t("eventDetails.noImage")}
+                  </span>
+                </div>
+              )}
+            </div>
+
 
 
             <CardContent className="space-y-4">
@@ -250,13 +260,13 @@ export default function EventDetailsPage() {
                   {/* Email Field */}
                   <div className="space-y-2">
                     <Label htmlFor="email">
-                      {t("Email address") || "Email"}{" "}
+                      {t("Student ID") || "Email"}{" "}
                       <span className="text-red-500">*</span>
                     </Label>
                     <input
                       type="email"
                       id="email"
-                      placeholder={t("Enter you personal email") || "Enter your email"}
+                      placeholder={t("Enter your Student ID") || "Enter your email"}
                       value={userEmail}
                       onChange={(e) => {
                         const v = e.target.value;
