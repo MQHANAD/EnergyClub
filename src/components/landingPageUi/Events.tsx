@@ -31,7 +31,7 @@ export default function Events({
   const [slideIdx, setSlideIdx] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { t, dir } = useI18n();
+  const { t } = useI18n();
 
   const displayedEvents = events.slice(0, showAll ? events.length : 3);
   const titleText = title || t("events.title");
@@ -88,17 +88,17 @@ export default function Events({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ 
-              type: "spring", 
-              damping: 25, 
+            transition={{
+              type: "spring",
+              damping: 25,
               stiffness: 300,
-              duration: 0.3
+              duration: 0.3,
             }}
-            className="relative w-full max-w-lg lg:max-w-xl bg-white rounded-xl sm:rounded-2xl shadow-2xl h-auto overflow-hidden flex flex-col mx-auto"
+            className="relative w-full max-w-lg lg:max-w-xl bg-white rounded-xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col mx-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-white sticky top-0 z-20">
+            {/* Header - Fixed */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-white sticky top-0 z-20 flex-shrink-0">
               <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 pr-8 line-clamp-2">
                 {active.title}
               </h3>
@@ -128,7 +128,7 @@ export default function Events({
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                       />
                     )}
-                    
+
                     {/* Navigation Arrows */}
                     {active.images.length > 1 && (
                       <>
@@ -174,9 +174,9 @@ export default function Events({
                             goToSlide(index);
                           }}
                           className={`flex-shrink-0 relative aspect-[4/3] w-20 sm:w-24 rounded-md overflow-hidden border-2 transition-all duration-200 ${
-                            index === slideIdx 
-                              ? 'border-gray-900 ring-2 ring-gray-900 ring-opacity-20' 
-                              : 'border-transparent hover:border-gray-400'
+                            index === slideIdx
+                              ? "border-gray-900 ring-2 ring-gray-900 ring-opacity-20"
+                              : "border-transparent hover:border-gray-400"
                           }`}
                           aria-label={`View image ${index + 1}`}
                         >
@@ -198,12 +198,12 @@ export default function Events({
 
                 {/* Content */}
                 <div className="space-y-4 sm:space-y-6">
-                  <div className="prose prose-sm sm:prose-base max-w-none text-gray-600 leading-relaxed">
+                  <div className="prose prose-sm sm:prose-base max-w-none text-gray-600 leading-relaxed overflow-hidden">
                     {active.content}
                   </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+
+                  {/* Action Buttons - Sticky at bottom when scrolling */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white pb-2">
                     <Link
                       href="/events"
                       className="flex items-center justify-center gap-2 px-6 py-3 font-medium text-white rounded-lg transition-all hover:opacity-90 text-center"
@@ -212,12 +212,12 @@ export default function Events({
                       <span>{t("events.ctaRegister")}</span>
                       <ExternalLink className="h-4 w-4" />
                     </Link>
-                    
+
                     <button
                       onClick={() => setActive(null)}
                       className="px-6 py-3 font-medium text-gray-700 border border-gray-300 rounded-lg transition-all hover:border-gray-400 hover:text-gray-900"
                     >
-                      Close
+                      {t("events.modal.close")}
                     </button>
                   </div>
                 </div>
@@ -234,20 +234,20 @@ export default function Events({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { 
-        staggerChildren: 0.1
+      transition: {
+        staggerChildren: 0.1,
       },
     },
   };
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5
-      }
+        duration: 0.5,
+      },
     },
     exit: { opacity: 0, y: 20 },
   };
@@ -257,7 +257,10 @@ export default function Events({
   }
 
   return (
-    <section id="events" className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+    <section
+      id="events"
+      className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20"
+    >
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -298,7 +301,7 @@ export default function Events({
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-lg font-light text-gray-900 group-hover:text-gray-700 transition-colors">
                   {e.title}
@@ -315,7 +318,7 @@ export default function Events({
 
       {/* CTA Buttons */}
       {events.length > 3 && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
