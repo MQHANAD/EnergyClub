@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import React, {
   ElementType,
   ReactNode,
@@ -8,6 +9,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
+import Image from "next/image";
 
 // Utility for joining class names
 const cn = (...inputs: (string | undefined | null | false)[]) =>
@@ -139,16 +141,16 @@ export function VideoText({
         // Set all Safari-specific attributes
         video.muted = true;
         video.playsInline = true;
-        video.setAttribute('playsinline', 'true');
-        video.setAttribute('webkit-playsinline', 'true');
-        video.setAttribute('x-webkit-airplay', 'allow');
-        
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        video.setAttribute("x-webkit-airplay", "allow");
+
         // Try to play
         await video.play();
         console.log("Video autoplay successful");
       } catch (error) {
         console.warn("Autoplay prevented:", error);
-        
+
         // Set up user interaction handlers for Safari
         const enableAutoplay = async () => {
           try {
@@ -160,16 +162,18 @@ export function VideoText({
         };
 
         // Listen for any user interaction
-        const events = ['click', 'touchstart', 'keydown'];
+        const events = ["click", "touchstart", "keydown"];
         const handleUserInteraction = () => {
           enableAutoplay();
-          events.forEach(event => {
+          events.forEach((event) => {
             document.removeEventListener(event, handleUserInteraction);
           });
         };
 
-        events.forEach(event => {
-          document.addEventListener(event, handleUserInteraction, { once: true });
+        events.forEach((event) => {
+          document.addEventListener(event, handleUserInteraction, {
+            once: true,
+          });
         });
       }
     };
@@ -178,19 +182,21 @@ export function VideoText({
     if (video.readyState >= 3) {
       tryPlay();
     } else {
-      video.addEventListener('canplay', tryPlay, { once: true });
+      video.addEventListener("canplay", tryPlay, { once: true });
     }
 
     return () => {
-      video.removeEventListener('canplay', tryPlay);
+      video.removeEventListener("canplay", tryPlay);
     };
   }, [autoPlay]);
 
   return (
-    <Component className={cn("relative w-full h-full overflow-hidden", className)}>
+    <Component
+      className={cn("relative w-full h-full overflow-hidden", className)}
+    >
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center",
+          "absolute inset-0 flex items-center justify-center mb-6",
           !isVideoLoaded && "opacity-0 transition-opacity duration-500"
         )}
         style={{
@@ -233,8 +239,25 @@ export function VideoText({
           <div className="text-white text-opacity-50">Loading...</div>
         </div>
       )}
-
       <span className="sr-only">{content}</span>
+
+      {/* Logos positioned under the text */}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center space-x-6">
+        <Image
+          src="/CEEELogo.png"
+          alt="Energy Club Logo"
+          width={300}
+          height={300}
+          className="object-contain"
+        />
+        <Image
+          src="/energyWeekLogo.png"
+          alt="Energy Week Logo"
+          width={200}
+          height={200}
+          className="object-contain"
+        />
+      </div>
     </Component>
   );
 }

@@ -6,37 +6,37 @@ import { useI18n } from "@/i18n/index";
 
 const container = {
   hidden: { opacity: 0 },
-  show: { 
-    opacity: 1, 
-    transition: { 
-      staggerChildren: 0.15
-    } 
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+    },
   },
 };
 
 const item = {
   hidden: { opacity: 0, y: 20 },
-  show: { 
-    opacity: 1, 
+  show: {
+    opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6
-    }
-  }
+      duration: 0.6,
+    },
+  },
 };
 
 const stats = [
-  { key: "attendees", value: 1500 },
-  { key: "workingMembers", value: 200 },
+  { key: "attendees", value: 2000 },
+  { key: "workingMembers", value: 280 },
   { key: "universities", value: 8 },
   { key: "panels", value: 4 },
   { key: "majorEvents", value: 7 },
 ];
 
 export default function ImpactNumbers() {
-  const { ref, inView } = useInView({ 
+  const { ref, inView } = useInView({
     threshold: 0.2,
-    triggerOnce: true 
+    triggerOnce: true,
   });
   const { t } = useI18n();
 
@@ -51,7 +51,7 @@ export default function ImpactNumbers() {
         >
           {t("impact.title")}
         </motion.h2>
-        
+
         <motion.div
           variants={container}
           initial="hidden"
@@ -59,17 +59,13 @@ export default function ImpactNumbers() {
           className="grid gap-8 md:grid-cols-2 lg:grid-cols-5"
         >
           {stats.map((s, i) => (
-            <motion.div
-              key={i}
-              variants={item}
-              className="group text-center"
-            >
+            <motion.div key={i} variants={item} className="group text-center">
               <div className="text-5xl font-light text-gray-900 mb-3">
                 {inView ? (
-                  <CountUp 
-                    start={0} 
-                    end={s.value} 
-                    duration={2.5} 
+                  <CountUp
+                    start={0}
+                    end={s.value}
+                    duration={2.5}
                     separator=","
                     delay={0.2}
                   />

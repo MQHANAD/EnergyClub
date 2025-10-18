@@ -1,5 +1,8 @@
 "use client";
 
+// Performance logging for Navigation component
+console.time("Navigation Component Load");
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +12,7 @@ import { LogOut, User, Menu, X } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
-
+import { VideoText } from "./landingPageUi/videotext";
 export default function Navigation() {
   const { user, userProfile, logout, loading, isOrganizer, isAdmin } =
     useAuth();
@@ -80,8 +83,6 @@ export default function Navigation() {
             : "bg-white/10 backdrop-blur-md border-white/20"
         }`}
       >
-        
-
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2">
           {navLinks.map((link) => (
@@ -205,8 +206,8 @@ export default function Navigation() {
                   </Button>
                 </div>
               ) : (
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
                 >
                   {t("nav.signIn")}
@@ -222,3 +223,6 @@ export default function Navigation() {
     </header>
   );
 }
+
+// Log Navigation component load time
+console.timeEnd("Navigation Component Load");

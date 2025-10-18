@@ -168,3 +168,22 @@ body {
 .animate-scroll {
   animation: scrollHorizontal 10s linear infinite;
 }
+@layer components {
+  .glow-divider {
+    
+    background: linear-gradient(to right, #25828a63, #25828a79);
+    box-shadow: 0 0 10px #25818a,
+                0 0 20px #25818a;
+  }
+
+  /* Optional: pulse animation */
+  .glow-divider-animate {
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%   { box-shadow: 0 0 10px #25818a; }
+    50%  { box-shadow: 0 0 20px #25818a; }
+    100% { box-shadow: 0 0 10px #25818a; }
+  }
+}

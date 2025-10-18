@@ -129,8 +129,12 @@ export default function UpcomingEvents() {
 
   return (
     <>
-      {upcomingEvents.length > 0 && <Events events={upcomingEvents} title="Upcoming Events" />}
-      {pastEvents.length > 0 && <Events events={pastEvents} title="Past Events" />}
+      {upcomingEvents.length > 0 && (
+        <Events events={upcomingEvents} title={t("events.title1")} />
+      )}
+      {pastEvents.length > 0 && (
+        <Events events={pastEvents} title={t("events.title")} />
+      )}
     </>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { title } from "process";
 import React, { createContext, useContext, useMemo } from "react";
 
 export type Lang = "en" | "ar";
@@ -34,9 +35,9 @@ const messages: Record<Lang, MessageTree> = {
     },
     hero: {
       titlePrefix: "KFUPM",
-      titleEnergyHub: "Energy Hub",
+      titleEnergyHub: "About Energy Hub",
       tagline:
-        "The platform uniting the Energy Clubs and Energy Week. We champion innovation, collaboration, and leadership in energy and sustainability, connecting students, academia, and industry. Rooted in King Fahd University of Petroleum & Minerals, one of the region’s leading institutions in science and technology, the Energy Hub builds on KFUPM’s legacy of excellence to empower students, foster industry partnerships, and drive solutions for a cleaner, more sustainable future.",
+        "Energy Hub unites the Energy Clubs and Energy Week. We champion innovation, collaboration, and leadership in energy and sustainability, connecting students, academia, and industry. Rooted in King Fahd University of Petroleum & Minerals, one of the region’s leading institutions in science and technology, the Energy Hub builds on KFUPM’s legacy of excellence to empower students, foster industry partnerships, and drive solutions for a cleaner, more sustainable future.",
       ctaExplore: "Explore Energy Events",
       ctaLearn: "Join Us",
       bgAlt: "Wind turbines and solar panels",
@@ -55,11 +56,12 @@ const messages: Record<Lang, MessageTree> = {
     partners: {
       title: "Partners & Collaborations",
       description:
-        "We are proud to collaborate with leading organizations in energy and sustainability. Logos are placeholders for now.",
+        "We are proud to collaborate with leading organizations in energy and sustainability.",
       logo: "Logo {i}",
     },
     events: {
-      title: "Upcoming Events",
+      title1: "Upcoming Events",
+      title: "Past Events",
       ctaRegister: "Register for Energy Events",
       ctaJoin: "Join Us",
       showMore: "Show More",
@@ -251,7 +253,7 @@ const messages: Record<Lang, MessageTree> = {
     },
     hero: {
       titlePrefix: "جامعة الملك فهد",
-      titleEnergyHub: "مركز الطاقة",
+      titleEnergyHub: "عن مركز الطاقة",
       tagline:
         " منصة تجمع أندية الطاقة وأسبوع الطاقة. نُعزز الابتكار والتعاون والقيادة في مجالات الطاقة والاستدامة، ونربط بين الطلاب والأكاديميا والصناعة. منبثقًا من جامعة الملك فهد للبترول والمعادن، إحدى المؤسسات الرائدة في المنطقة في مجالات العلوم والتقنية، يبني مركز الطاقة على إرث الجامعة العريق في التميز لتمكين الطلاب، وتعزيز الشراكات مع الصناعة، ودفع الحلول نحو مستقبل أنظف وأكثر استدامة ",
       ctaExplore: "استكشف فعاليات الطاقة",
@@ -271,12 +273,12 @@ const messages: Record<Lang, MessageTree> = {
     },
     partners: {
       title: "الشركاء والتعاون",
-      description:
-        "نفخر بالتعاون مع جهات رائدة في مجالات الطاقة والاستدامة. الشعارات حالياً افتراضية.",
+      description: "نفخر بالتعاون مع جهات رائدة في مجالات الطاقة والاستدامة.",
       logo: "الشعار {i}",
     },
     events: {
-      title: "الفعاليات",
+      title1: "الفعاليات القادمة",
+      title: "الفعاليات السابقة",
       ctaRegister: "سجّل في الفعاليات",
       ctaJoin: "انضم إلينا",
       showMore: "عرض المزيد",
