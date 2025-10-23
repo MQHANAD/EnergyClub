@@ -1,8 +1,5 @@
 "use client";
 
-// Performance logging for Navigation component
-console.time("Navigation Component Load");
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,11 +26,13 @@ export default function Navigation() {
   const navLinks = [
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
+    { href: "/team", label: t("navigation.team") },
     { href: "/register", label: t("navigation.joinUs") },
     ...(canSeeAdmin
       ? [
           { href: "/admin", label: t("nav.admin") },
           { href: "/admin/applications", label: t("nav.applications") },
+          { href: "/admin/team", label: "Team Management" },
         ]
       : []),
   ];
@@ -224,5 +223,3 @@ export default function Navigation() {
   );
 }
 
-// Log Navigation component load time
-console.timeEnd("Navigation Component Load");

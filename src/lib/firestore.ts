@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from './firebase';
-import { Event, Registration, UserProfile } from '@/types';
+import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition } from '@/types';
 
 // Convert Firestore timestamp-like value to Date
 function hasToDate(v: unknown): v is { toDate: () => Date } {
@@ -73,6 +73,51 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
     attendance: data.attendance,
     isFromUniversity: data.isFromUniversity,
     universityEmail: data.universityEmail
+  };
+};
+
+// Convert Member document to Member object
+const docToMember = (doc: QueryDocumentSnapshot): Member => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    fullName: data.fullName,
+    role: data.role,
+    profilePicture: data.profilePicture,
+    linkedInUrl: data.linkedInUrl,
+    committeeId: data.committeeId,
+    isActive: data.isActive,
+    createdAt: timestampToDate(data.createdAt),
+    updatedAt: timestampToDate(data.updatedAt)
+  };
+};
+
+// Convert Committee document to Committee object
+const docToCommittee = (doc: QueryDocumentSnapshot): Committee => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    name: data.name,
+    description: data.description,
+    order: data.order,
+    isActive: data.isActive,
+    createdAt: timestampToDate(data.createdAt),
+    updatedAt: timestampToDate(data.updatedAt),
+    members: [] // Will be populated separately
+  };
+};
+
+// Convert LeadershipPosition document to LeadershipPosition object
+const docToLeadershipPosition = (doc: QueryDocumentSnapshot): LeadershipPosition => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    title: data.title,
+    memberId: data.memberId,
+    member: data.member, // This will be populated when fetching
+    isActive: data.isActive,
+    createdAt: timestampToDate(data.createdAt),
+    updatedAt: timestampToDate(data.updatedAt)
   };
 };
 
@@ -312,6 +357,219 @@ export const registrationsApi = {
       }
     } catch (error) {
       console.error('Error rejecting registration:', error);
+      throw error;
+    }
+  }
+};
+
+// Team API
+export const teamApi = {
+  // Committees API
+  async getCommittees(): Promise<Committee[]> {
+    try {
+      const q = query(
+        collection(db, 'committees'),
+        where('isActive', '==', true),
+        orderBy('order', 'asc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const committees = querySnapshot.docs.map(docToCommittee);
+      
+      // Fetch members for each committee
+      for (const committee of committees) {
+        committee.members = await this.getCommitteeMembers(committee.id);
+      }
+      
+      return committees;
+    } catch (error) {
+      console.error('Error fetching committees:', error);
+      throw error;
+    }
+  },
+
+  async getCommittee(committeeId: string): Promise<Committee | null> {
+    try {
+      const committeeDoc = await getDoc(doc(db, 'committees', committeeId));
+      if (committeeDoc.exists()) {
+        const committee = docToCommittee(committeeDoc as QueryDocumentSnapshot);
+        committee.members = await this.getCommitteeMembers(committeeId);
+        return committee;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching committee:', error);
+      throw error;
+    }
+  },
+
+  async createCommittee(committeeData: Omit<Committee, 'id' | 'createdAt' | 'updatedAt' | 'members'>): Promise<string> {
+    try {
+      const now = Timestamp.now();
+      const docRef = await addDoc(collection(db, 'committees'), {
+        ...committeeData,
+        createdAt: now,
+        updatedAt: now
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating committee:', error);
+      throw error;
+    }
+  },
+
+  async updateCommittee(committeeId: string, updates: Partial<Committee>): Promise<void> {
+    try {
+      const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
+      await updateDoc(doc(db, 'committees', committeeId), updateData);
+    } catch (error) {
+      console.error('Error updating committee:', error);
+      throw error;
+    }
+  },
+
+  async deleteCommittee(committeeId: string): Promise<void> {
+    try {
+      // First delete all members in this committee
+      const membersQuery = query(
+        collection(db, 'members'),
+        where('committeeId', '==', committeeId)
+      );
+      const membersSnapshot = await getDocs(membersQuery);
+      
+      const deletePromises = membersSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      
+      // Then delete the committee
+      await deleteDoc(doc(db, 'committees', committeeId));
+    } catch (error) {
+      console.error('Error deleting committee:', error);
+      throw error;
+    }
+  },
+
+  // Members API
+  async getCommitteeMembers(committeeId: string): Promise<Member[]> {
+    try {
+      const q = query(
+        collection(db, 'members'),
+        where('committeeId', '==', committeeId),
+        where('isActive', '==', true),
+        orderBy('fullName', 'asc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(docToMember);
+    } catch (error) {
+      console.error('Error fetching committee members:', error);
+      throw error;
+    }
+  },
+
+  async getMember(memberId: string): Promise<Member | null> {
+    try {
+      const memberDoc = await getDoc(doc(db, 'members', memberId));
+      if (memberDoc.exists()) {
+        return docToMember(memberDoc as QueryDocumentSnapshot);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching member:', error);
+      throw error;
+    }
+  },
+
+  async createMember(memberData: Omit<Member, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      const now = Timestamp.now();
+      const docRef = await addDoc(collection(db, 'members'), {
+        ...memberData,
+        createdAt: now,
+        updatedAt: now
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating member:', error);
+      throw error;
+    }
+  },
+
+  async updateMember(memberId: string, updates: Partial<Member>): Promise<void> {
+    try {
+      const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
+      await updateDoc(doc(db, 'members', memberId), updateData);
+    } catch (error) {
+      console.error('Error updating member:', error);
+      throw error;
+    }
+  },
+
+  async deleteMember(memberId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'members', memberId));
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      throw error;
+    }
+  },
+
+  // Leadership API
+  async getLeadershipPositions(): Promise<LeadershipPosition[]> {
+    try {
+      const q = query(
+        collection(db, 'leadership'),
+        where('isActive', '==', true),
+        orderBy('title', 'asc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const positions = querySnapshot.docs.map(docToLeadershipPosition);
+      
+      // Fetch member details for each position
+      for (const position of positions) {
+        const member = await this.getMember(position.memberId);
+        if (member) {
+          position.member = member;
+        }
+      }
+      
+      return positions;
+    } catch (error) {
+      console.error('Error fetching leadership positions:', error);
+      throw error;
+    }
+  },
+
+  async createLeadershipPosition(positionData: Omit<LeadershipPosition, 'id' | 'createdAt' | 'updatedAt' | 'member'>): Promise<string> {
+    try {
+      const now = Timestamp.now();
+      const docRef = await addDoc(collection(db, 'leadership'), {
+        ...positionData,
+        createdAt: now,
+        updatedAt: now
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating leadership position:', error);
+      throw error;
+    }
+  },
+
+  async updateLeadershipPosition(positionId: string, updates: Partial<LeadershipPosition>): Promise<void> {
+    try {
+      const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
+      await updateDoc(doc(db, 'leadership', positionId), updateData);
+    } catch (error) {
+      console.error('Error updating leadership position:', error);
+      throw error;
+    }
+  },
+
+  async deleteLeadershipPosition(positionId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'leadership', positionId));
+    } catch (error) {
+      console.error('Error deleting leadership position:', error);
       throw error;
     }
   }
