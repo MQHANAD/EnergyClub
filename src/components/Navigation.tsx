@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/index";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
 import { VideoText } from "./landingPageUi/videotext";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 export default function Navigation() {
   const { user, userProfile, logout, loading, isOrganizer, isAdmin } =
     useAuth();
@@ -28,6 +29,7 @@ export default function Navigation() {
     { href: "/events", label: t("nav.events") },
     { href: "/team", label: t("navigation.team") },
     { href: "/register", label: t("navigation.joinUs") },
+    ...(user ? [{ href: "/profile", label: "My Profile" }] : []),
     ...(canSeeAdmin
       ? [
           { href: "/admin", label: t("nav.admin") },
@@ -113,17 +115,14 @@ export default function Navigation() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2 focus:outline-none"
               >
-                {userProfile?.photoURL ? (
-                  <img
-                    src={userProfile.photoURL}
-                    alt={userProfile.displayName}
-                    className="h-8 w-8 rounded-full object-cover cursor-pointer"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="h-4 w-4 text-gray-600" />
-                  </div>
-                )}
+                <OptimizedImage
+                  src={userProfile?.photoURL}
+                  alt={userProfile?.displayName || 'User'}
+                  className="h-8 w-8 rounded-full object-cover cursor-pointer"
+                  fallbackText={userProfile?.displayName || 'User'}
+                  size={32}
+                  loading="lazy"
+                />
               </button>
               <AnimatePresence>
                 {dropdownOpen && (

@@ -62,7 +62,7 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   }
 
   return (
-    <section className={`py-20 bg-white ${className}`}>
+    <section className={`py-10 bg-white ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -72,102 +72,36 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
               {t('team.leadership.title')}
             </h2>
           </div>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto font-light">
-            {t('team.leadership.subtitle')}
-          </p>
         </div>
 
         {/* Leadership Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* President */}
-          {president && (
-            <div className="relative">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg z-10">
-                <Crown className="w-6 h-6 text-white" />
-              </div>
-              <div className="bg-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-light text-yellow-600 mb-2">
-                    {t('team.leadership.president')}
-                  </h3>
-                  <div className="w-16 h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 mx-auto rounded-full"></div>
-                </div>
-                <MemberCard 
-                  member={president.member} 
-                  isLeadership={true}
-                  className="border-0 shadow-none hover:shadow-none hover:scale-100"
-                />
-              </div>
-            </div>
+          {president && president.member && (
+            <MemberCard 
+              member={president.member} 
+              isLeadership={true}
+            />
           )}
 
           {/* Vice President */}
-          {vicePresident && (
-            <div className="relative">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-lg z-10">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div className="bg-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200">
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-light text-blue-600 mb-2">
-                    {t('team.leadership.vicePresident')}
-                  </h3>
-                  <div className="w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 mx-auto rounded-full"></div>
-                </div>
-                <MemberCard 
-                  member={vicePresident.member} 
-                  isLeadership={true}
-                  className="border-0 shadow-none hover:shadow-none hover:scale-100"
-                />
-              </div>
-            </div>
+          {vicePresident && vicePresident.member && (
+            <MemberCard 
+              member={vicePresident.member} 
+              isLeadership={true}
+            />
           )}
 
           {/* Other Leadership Positions */}
           {allLeadership
             .filter(pos => pos.title !== 'president' && pos.title !== 'vice_president')
+            .filter(position => position.member) // Only render if member exists
             .map((position) => (
-              <div key={position.id} className="relative">
-                {position.isFormalLeadership ? (
-                  <div className="relative">
-                    <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full flex items-center justify-center shadow-lg z-10">
-                      <Crown className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="bg-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200">
-                      <div className="text-center mb-6">
-                        <h3 className="text-xl font-light text-purple-600 mb-2">
-                          {position.title === 'leader' ? 'Leader' : position.title}
-                        </h3>
-                        <div className="w-16 h-1 bg-gradient-to-r from-purple-400 to-purple-600 mx-auto rounded-full"></div>
-                      </div>
-                      <MemberCard 
-                        member={position.member} 
-                        isLeadership={true}
-                        className="border-0 shadow-none hover:shadow-none hover:scale-100"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg z-10">
-                      <Star className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="bg-gray-50 rounded-2xl p-8 shadow-lg border border-gray-200">
-                      <div className="text-center mb-6">
-                        <h3 className="text-xl font-light text-green-600 mb-2">
-                          Leader of "{position.committeeName}"
-                        </h3>
-                        <div className="w-16 h-1 bg-gradient-to-r from-green-400 to-green-600 mx-auto rounded-full"></div>
-                      </div>
-                      <MemberCard 
-                        member={position.member} 
-                        isLeadership={true}
-                        className="border-0 shadow-none hover:shadow-none hover:scale-100"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+              <MemberCard 
+                key={position.id}
+                member={position.member} 
+                isLeadership={true}
+              />
             ))}
         </div>
       </div>

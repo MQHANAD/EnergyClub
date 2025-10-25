@@ -6,6 +6,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { I18nProvider } from "@/i18n/index";
+import { MemberSyncInitializer } from "@/components/MemberSyncInitializer";
 import { getDirFromLang, type Lang } from "@/i18n/messages";
 import { cookies } from "next/headers";
 
@@ -51,6 +52,7 @@ export default async function RootLayout({
       >
         <AuthProvider>
           <I18nProvider lang={lang}>
+            <MemberSyncInitializer />
             {children}
             <script
               dangerouslySetInnerHTML={{

@@ -5,6 +5,7 @@ import { Committee, LeadershipPosition } from '@/types';
 import { useI18n } from '@/i18n';
 import { teamApi } from '@/lib/firestore';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
+import Navigation from '@/components/Navigation';
 import { Users, AlertCircle } from 'lucide-react';
 
 // Lazy load heavy components for better performance
@@ -88,19 +89,17 @@ export default function TeamPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Navigation />
       {/* Hero Section */}
-      <section className="bg-white pt-16 md:pt-24 py-20">
+      <section className="bg-white pt-16 md:pt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center justify-center">
               <Users className="w-12 h-12 mr-4 text-gray-700" />
               <h1 className="text-4xl md:text-5xl font-light text-gray-900">
                 {t('team.title')}
               </h1>
             </div>
-            <p className="bg-[#25818a10] px-16 py-12 text-gray-700 text-center max-w-5xl mx-auto text-xl font-light rounded-3xl border border-gray-200">
-              {t('team.subtitle')}
-            </p>
           </div>
         </div>
       </section>

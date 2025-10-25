@@ -229,10 +229,10 @@ const messages: Record<Lang, MessageTree> = {
       },
     },
     team: {
-      title: "Our Team",
+      title: "Our Energy Week Team",
       subtitle: "Meet the dedicated members who make our energy initiatives possible",
       leadership: {
-        title: "Leadership",
+        title: "Leaders",
         subtitle: "Leading the way in energy innovation and sustainability",
         president: "President",
         vicePresident: "Vice President",

@@ -6,6 +6,7 @@ import { Committee, Member } from '@/types';
 import { useI18n } from '@/i18n';
 import { teamApi } from '@/lib/firestore';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
+import Navigation from '@/components/Navigation';
 import { MemberCard } from '@/components/team/MemberCard';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,8 +82,9 @@ export default function CommitteePage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Navigation />
       {/* Header */}
-      <section className="bg-white pt-16 md:pt-24 py-20">
+      <section className="bg-white pt-16 md:pt-24 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Button 
@@ -97,42 +99,53 @@ export default function CommitteePage() {
           
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              <Building2 className="w-12 h-12 mr-4 text-blue-600" />
+              
               <h1 className="text-4xl md:text-5xl font-light text-gray-900">
                 {committee.name}
               </h1>
             </div>
-            {committee.description && (
-              <p className="bg-[#25818a10] px-16 py-12 text-gray-700 text-center max-w-5xl mx-auto text-xl font-light rounded-3xl border border-gray-200">
-                {committee.description}
-              </p>
-            )}
+           
           </div>
         </div>
       </section>
 
       {/* Members Section */}
-      <section className="py-20 bg-white">
+      <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-blue-600 mr-3" />
-              <h2 className="text-4xl font-light text-gray-900">
-                Committee Members
-              </h2>
-            </div>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto font-light">
-              Meet the dedicated members of the {committee.name} committee
-            </p>
-          </div>
+          
 
           {/* Members Grid */}
           {committee.members.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {committee.members.map((member) => (
-                <MemberCard key={member.id} member={member} />
-              ))}
+              {committee.members
+                .sort((a, b) => {
+                  // Check if member is a leader
+                  const aIsLeader = a.role?.trim().toLowerCase() === "leader" || 
+                                   a.role?.trim().toLowerCase() === "team leader" || 
+                                   a.role?.trim().toLowerCase() === "committee leader";
+                  const bIsLeader = b.role?.trim().toLowerCase() === "leader" || 
+                                   b.role?.trim().toLowerCase() === "team leader" || 
+                                   b.role?.trim().toLowerCase() === "committee leader";
+                  
+                  // Leaders come first
+                  if (aIsLeader && !bIsLeader) return -1;
+                  if (!aIsLeader && bIsLeader) return 1;
+                  
+                  // If both are leaders or both are not leaders, maintain original order
+                  return 0;
+                })
+                .map((member) => {
+                  const isLeader = member.role?.trim().toLowerCase() === "leader" || 
+                                 member.role?.trim().toLowerCase() === "team leader" || 
+                                 member.role?.trim().toLowerCase() === "committee leader";
+                  return (
+                    <MemberCard 
+                      key={member.id} 
+                      member={member} 
+                      isLeadership={isLeader}
+                    />
+                  );
+                })}
             </div>
           ) : (
             <Card className="p-12 text-center bg-gray-50 border border-gray-200">

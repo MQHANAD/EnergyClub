@@ -527,13 +527,20 @@ export const teamApi = {
       
       // Fetch member details for each position
       for (const position of positions) {
-        const member = await this.getMember(position.memberId);
-        if (member) {
-          position.member = member;
+        try {
+          const member = await this.getMember(position.memberId);
+          if (member) {
+            position.member = member;
+          } else {
+            console.warn(`Leadership position ${position.title} references non-existent member: ${position.memberId}`);
+          }
+        } catch (error) {
+          console.error(`Error fetching member for leadership position ${position.title}:`, error);
         }
       }
       
-      return positions;
+      // Filter out positions without valid members
+      return positions.filter(position => position.member);
     } catch (error) {
       console.error('Error fetching leadership positions:', error);
       throw error;
