@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
 import { Event, Registration } from "@/types";
 import Navigation from "@/components/Navigation";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
+import { logEventView, logEventRegistration } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,21 +64,9 @@ export default function EventDetailsPage() {
       }
 
       setEvent(eventData);
-
-      // Check if user is already registered
-      if (user) {
-        try {
-          const userRegistrations = await registrationsApi.getUserRegistrations(
-            user.uid
-          );
-          const existingRegistration = userRegistrations.find(
-            (reg) => reg.eventId === id
-          );
-          setUserRegistration(existingRegistration || null);
-        } catch (error) {
-          console.error("Error checking registration status:", error);
-        }
-      }
+      
+      // Log event view for analytics
+      logEventView(id, eventData.title);
     } catch (error) {
       console.error("Error loading event:", error);
       setError("Failed to load event details. Please try again.");
@@ -85,9 +75,29 @@ export default function EventDetailsPage() {
     }
   };
 
+  // Load event immediately on mount
   useEffect(() => {
     loadEvent();
-  }, [id, user]);
+  }, [id]);
+
+  // Check registration status separately when user is available
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (user && id && typeof id === "string") {
+        try {
+          // Use optimized single-event registration check
+          const registration = await registrationsApi.getUserEventRegistration(
+            user.uid,
+            id
+          );
+          setUserRegistration(registration);
+        } catch (error) {
+          console.error("Error checking registration status:", error);
+        }
+      }
+    };
+    checkRegistration();
+  }, [user, id]);
 
   useEffect(() => {
     if (!isFromUniversity) {
@@ -149,6 +159,9 @@ export default function EventDetailsPage() {
         isFromUniversity,
         universityEmail || undefined
       );
+
+      // Log registration for analytics
+      logEventRegistration(event.id, event.title);
 
       // Reload event to get updated attendee count
       await loadEvent();
@@ -238,13 +251,15 @@ export default function EventDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-white">
         <Navigation />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <div className="mb-6 md:mb-8">
-            <div className="h-10 w-32 bg-gray-300 rounded-lg animate-pulse"></div>
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <LoadingSpinner size="lg" />
+              <p className="mt-4 text-gray-600">{t("common.loading")}</p>
+            </div>
           </div>
-          <SkeletonLoader />
         </main>
       </div>
     );
@@ -587,7 +602,7 @@ export default function EventDetailsPage() {
                         >
                           {registering ? (
                             <span className="flex items-center justify-center gap-2">
-                              <Loader2 className="h-5 w-5 animate-spin" />
+                              <LoadingSpinner size="sm" variant="white" />
                               <span>{t("eventDetails.registering")}</span>
                             </span>
                           ) : (

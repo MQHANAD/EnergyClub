@@ -93,3 +93,54 @@ export interface Application {
   decidedBy: string | null;
   adminNotes: string | null;
 }
+
+export interface Member {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  profilePicture?: string;
+  linkedInUrl?: string;
+  portfolioUrl?: string;
+  committeeId: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Committee {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  members: Member[];
+}
+
+export interface LeadershipPosition {
+  id: string;
+  title: 'president' | 'vice_president' | 'leader';
+  memberId: string;
+  member: Member;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeamFormData {
+  email?: string;
+  fullName: string;
+  role: string;
+  profilePicture?: string;
+  linkedInUrl?: string;
+  portfolioUrl?: string;
+  committeeId: string;
+}
+
+export interface CommitteeFormData {
+  name: string;
+  description?: string;
+  order: number;
+}

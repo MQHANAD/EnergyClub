@@ -1,6 +1,5 @@
 "use client";
 
-import { title } from "process";
 import React, { createContext, useContext, useMemo } from "react";
 
 export type Lang = "en" | "ar";
@@ -25,6 +24,7 @@ const messages: Record<Lang, MessageTree> = {
       joinUs: "Join Us",
       contact: "Contact",
       admin: "Events Dashboard",
+      team: "Our Team",
     },
     common: {
       loading: "Loading...",
@@ -72,19 +72,19 @@ const messages: Record<Lang, MessageTree> = {
       },
       items: {
         energyWeek: {
-          title: "Energy Week (EW)",
+          title: "Energy Week 2025",
           short: "A flagship series uniting students, academia, and industry.",
           content:
             "Energy Week brings together thought leaders and innovators to explore the future of energy through talks, panels, and interactive showcases.",
         },
         sharkTank: {
-          title: "Shark Tank – 1st Edition",
+          title: "Engineering Shark Tank",
           short: "A launchpad for student entrepreneurs in energy innovation.",
           content:
             "The Engineers’ Shark Tank launched as a bold platform for students to pitch their groundbreaking ideas directly to experts and industry leaders.",
         },
         greenH2: {
-          title: "Green Hydrogen Workshop",
+          title: "Strategy& ME Hydrogen",
           short:
             "Deep dive into green hydrogen—technology, demand, and KSA roadmap.",
           content:
@@ -118,6 +118,7 @@ const messages: Record<Lang, MessageTree> = {
       signIn: "Sign In",
       openMenu: "Open main menu",
       applications: "Applications",
+      analytics: "Analytics",
     },
     login: {
       title: "Energy Hub",
@@ -228,6 +229,78 @@ const messages: Record<Lang, MessageTree> = {
         },
       },
     },
+    team: {
+      title: "Our Team",
+      subtitle: "Meet the dedicated members who make our energy initiatives possible",
+      leadership: {
+        title: "Leaders",
+        subtitle: "Leading the way in energy innovation and sustainability",
+        president: "President",
+        vicePresident: "Vice President",
+      },
+      committees: {
+        title: "Committees",
+        subtitle: "Our specialized teams working across different energy domains",
+        noMembers: "No members yet",
+        viewLinkedIn: "View LinkedIn Profile",
+      },
+      member: {
+        role: "Role",
+        linkedIn: "LinkedIn",
+        portfolio: "Portfolio",
+        noLinks: "No links",
+        noProfilePicture: "No profile picture",
+      },
+      admin: {
+        title: "Team Management",
+        subtitle: "Manage committees and team members",
+        addMember: "Add Member",
+        addCommittee: "Add Committee",
+        editMember: "Edit Member",
+        editCommittee: "Edit Committee",
+        deleteMember: "Delete Member",
+        deleteCommittee: "Delete Committee",
+        confirmDeleteMember: "Are you sure you want to delete this member?",
+        confirmDeleteCommittee: "Are you sure you want to delete this committee? This will also delete all members in this committee.",
+        memberForm: {
+          fullName: "Full Name",
+          role: "Role/Title",
+          profilePicture: "Profile Picture URL",
+          linkedInUrl: "LinkedIn Profile URL",
+          committee: "Committee",
+          fullNamePlaceholder: "Enter full name",
+          rolePlaceholder: "Enter role or title",
+          profilePicturePlaceholder: "Enter profile picture URL",
+          linkedInPlaceholder: "Enter LinkedIn profile URL",
+        },
+        committeeForm: {
+          name: "Committee Name",
+          description: "Description",
+          order: "Display Order",
+          namePlaceholder: "Enter committee name",
+          descriptionPlaceholder: "Enter committee description",
+          orderPlaceholder: "Enter display order number",
+        },
+        actions: {
+          save: "Save",
+          cancel: "Cancel",
+          delete: "Delete",
+          edit: "Edit",
+          add: "Add",
+          saving: "Saving...",
+          deleting: "Deleting...",
+        },
+        messages: {
+          memberAdded: "Member added successfully",
+          memberUpdated: "Member updated successfully",
+          memberDeleted: "Member deleted successfully",
+          committeeAdded: "Committee added successfully",
+          committeeUpdated: "Committee updated successfully",
+          committeeDeleted: "Committee deleted successfully",
+          error: "An error occurred. Please try again.",
+        },
+      },
+    },
   },
 
   ar: {
@@ -243,6 +316,7 @@ const messages: Record<Lang, MessageTree> = {
       joinUs: "انضم إلينا",
       contact: "تواصل معنا",
       admin: "لوحة التحكم",
+      team: "فريقنا",
     },
     common: {
       loading: "جارٍ التحميل...",
@@ -334,6 +408,7 @@ const messages: Record<Lang, MessageTree> = {
       signIn: "تسجيل الدخول",
       openMenu: "فتح القائمة الرئيسية",
       applications: "الطلبات",
+      analytics: "التحليلات",
     },
     login: {
       title: "نادي الطاقة",
@@ -439,6 +514,78 @@ const messages: Record<Lang, MessageTree> = {
             tag: "أضف وسمًا واضغط Enter",
             universityEmail: "أدخل بريدك الجامعي",
           },
+        },
+      },
+    },
+    team: {
+      title: "فريقنا",
+      subtitle: "تعرف على الأعضاء المتفانين الذين يجعلون مبادراتنا في مجال الطاقة ممكنة",
+      leadership: {
+        title: "القيادة",
+        subtitle: "نقود الطريق في الابتكار والاستدامة في مجال الطاقة",
+        president: "الرئيس",
+        vicePresident: "نائب الرئيس",
+      },
+      committees: {
+        title: "اللجان",
+        subtitle: "فرقنا المتخصصة التي تعمل عبر مجالات الطاقة المختلفة",
+        noMembers: "لا يوجد أعضاء بعد",
+        viewLinkedIn: "عرض ملف LinkedIn",
+      },
+      member: {
+        role: "الدور",
+        linkedIn: "LinkedIn",
+        portfolio: "الموقع الشخصي",
+        noLinks: "لا توجد روابط",
+        noProfilePicture: "لا توجد صورة شخصية",
+      },
+      admin: {
+        title: "إدارة الفريق",
+        subtitle: "إدارة اللجان وأعضاء الفريق",
+        addMember: "إضافة عضو",
+        addCommittee: "إضافة لجنة",
+        editMember: "تعديل العضو",
+        editCommittee: "تعديل اللجنة",
+        deleteMember: "حذف العضو",
+        deleteCommittee: "حذف اللجنة",
+        confirmDeleteMember: "هل أنت متأكد من حذف هذا العضو؟",
+        confirmDeleteCommittee: "هل أنت متأكد من حذف هذه اللجنة؟ سيتم حذف جميع الأعضاء في هذه اللجنة أيضًا.",
+        memberForm: {
+          fullName: "الاسم الكامل",
+          role: "الدور/المنصب",
+          profilePicture: "رابط الصورة الشخصية",
+          linkedInUrl: "رابط ملف LinkedIn",
+          committee: "اللجنة",
+          fullNamePlaceholder: "أدخل الاسم الكامل",
+          rolePlaceholder: "أدخل الدور أو المنصب",
+          profilePicturePlaceholder: "أدخل رابط الصورة الشخصية",
+          linkedInPlaceholder: "أدخل رابط ملف LinkedIn",
+        },
+        committeeForm: {
+          name: "اسم اللجنة",
+          description: "الوصف",
+          order: "ترتيب العرض",
+          namePlaceholder: "أدخل اسم اللجنة",
+          descriptionPlaceholder: "أدخل وصف اللجنة",
+          orderPlaceholder: "أدخل رقم ترتيب العرض",
+        },
+        actions: {
+          save: "حفظ",
+          cancel: "إلغاء",
+          delete: "حذف",
+          edit: "تعديل",
+          add: "إضافة",
+          saving: "جارٍ الحفظ...",
+          deleting: "جارٍ الحذف...",
+        },
+        messages: {
+          memberAdded: "تم إضافة العضو بنجاح",
+          memberUpdated: "تم تحديث العضو بنجاح",
+          memberDeleted: "تم حذف العضو بنجاح",
+          committeeAdded: "تم إضافة اللجنة بنجاح",
+          committeeUpdated: "تم تحديث اللجنة بنجاح",
+          committeeDeleted: "تم حذف اللجنة بنجاح",
+          error: "حدث خطأ. يرجى المحاولة مرة أخرى.",
         },
       },
     },

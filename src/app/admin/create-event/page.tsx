@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi } from "@/lib/firestore";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
 import {
   ref,
   uploadBytesResumable,

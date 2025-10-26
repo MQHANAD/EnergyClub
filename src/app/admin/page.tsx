@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
 import { Event, Registration } from "@/types";
 import Navigation from "@/components/Navigation";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -364,10 +365,10 @@ export default function AdminDashboard() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <span className="loading loading-infinity loading-xl"></span>
-          <span>{t("common.loading")}</span>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     );

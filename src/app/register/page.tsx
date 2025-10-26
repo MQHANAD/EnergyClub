@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Navigation from '@/components/Navigation';
 import RegisterTabs from '@/components/register/RegisterTabs';
 import EnergyWeekForm from '@/components/register/EnergyWeekForm';
 import FemaleEnergyClubForm from '@/components/register/FemaleEnergyClubForm';
@@ -133,8 +134,9 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <Navigation />
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#25818a] to-[#f8cd5c] text-white">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#25818a] to-[#f8cd5c] text-white pt-16 md:pt-20">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative mx-auto max-w-6xl px-4 py-16">
           <div className="text-center">

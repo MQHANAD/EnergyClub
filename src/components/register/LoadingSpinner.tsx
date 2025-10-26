@@ -21,7 +21,7 @@ export default function LoadingSpinner({
   };
 
   const variantClasses = {
-    primary: 'border-blue-600 border-t-blue-200',
+    primary: 'border-[#25818a] border-t-[#25818a]/30',
     white: 'border-white border-t-white/30',
     gray: 'border-gray-400 border-t-gray-200'
   };
@@ -37,7 +37,6 @@ export default function LoadingSpinner({
       role="status"
       aria-label="Loading"
     >
-      <span className="sr-only">Loading...</span>
     </div>
   );
 }
@@ -46,7 +45,7 @@ export default function LoadingSpinner({
 export function LoadingButton({
   loading = false,
   children,
-  loadingText = 'Loading...',
+  loadingText = '',
   className,
   disabled,
   onClick,
@@ -77,7 +76,7 @@ export function LoadingButton({
   };
 
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md',
+    primary: 'bg-[#25818a] text-white hover:bg-[#1a6d75] focus:ring-[#25818a] shadow-sm hover:shadow-md',
     secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 shadow-sm hover:shadow-md',
     outline: 'border-2 border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 focus:ring-gray-500'
   };
