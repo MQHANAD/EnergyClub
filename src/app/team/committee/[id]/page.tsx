@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Committee, Member } from '@/types';
+import { HybridMember, getCommitteeMembersDirect } from '@/lib/hybridMembers';
 import { useI18n } from '@/i18n';
 import { teamApi } from '@/lib/firestore';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
@@ -11,6 +12,7 @@ import { MemberCard } from '@/components/team/MemberCard';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building2, Users, AlertCircle } from 'lucide-react';
+import { logCommitteeView } from '@/lib/analytics';
 
 export default function CommitteePage() {
   const { t } = useI18n();
@@ -19,6 +21,7 @@ export default function CommitteePage() {
   const committeeId = params.id as string;
   
   const [committee, setCommittee] = useState<Committee | null>(null);
+  const [members, setMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,9 +31,18 @@ export default function CommitteePage() {
         setLoading(true);
         setError(null);
         
-        const committeeData = await teamApi.getCommittee(committeeId);
+        // Fetch committee data and members in parallel
+        const [committeeData, membersData] = await Promise.all([
+          teamApi.getCommitteeLight(committeeId),
+          committeeId ? getCommitteeMembersDirect(committeeId) : Promise.resolve([])
+        ]);
+        
         if (committeeData) {
           setCommittee(committeeData);
+          setMembers(membersData);
+          
+          // Log committee view for analytics
+          logCommitteeView(committeeId, committeeData.name);
         } else {
           setError('Committee not found');
         }
@@ -52,9 +64,7 @@ export default function CommitteePage() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner />
-          <p className="mt-4 text-gray-600 font-light">
-            {t('common.loading')}
-          </p>
+         
         </div>
       </div>
     );
@@ -115,9 +125,9 @@ export default function CommitteePage() {
           
 
           {/* Members Grid */}
-          {committee.members.length > 0 ? (
+          {members.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {committee.members
+              {members
                 .sort((a, b) => {
                   // Check if member is a leader
                   const aIsLeader = a.role?.trim().toLowerCase() === "leader" || 
@@ -138,10 +148,26 @@ export default function CommitteePage() {
                   const isLeader = member.role?.trim().toLowerCase() === "leader" || 
                                  member.role?.trim().toLowerCase() === "team leader" || 
                                  member.role?.trim().toLowerCase() === "committee leader";
+                  
+                  // Convert hybrid member to Member format for MemberCard
+                  const memberData = {
+                    id: member.id,
+                    fullName: member.fullName,
+                    role: member.role,
+                    committeeId: member.committeeId,
+                    profilePicture: member.profilePicture || undefined,
+                    linkedInUrl: member.linkedInUrl || undefined,
+                    portfolioUrl: member.portfolioUrl || undefined,
+                    email: member.email,
+                    isActive: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  };
+                  
                   return (
                     <MemberCard 
                       key={member.id} 
-                      member={member} 
+                      member={memberData} 
                       isLeadership={isLeader}
                     />
                   );

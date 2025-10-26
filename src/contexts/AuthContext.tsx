@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { logUserLogin, logUserSignup, setAnalyticsUserId, setAnalyticsUserProperties } from '@/lib/analytics';
 
 interface UserProfile {
   id: string;
@@ -133,6 +134,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(firebaseUser);
       const profile = await createOrUpdateUserProfile(firebaseUser);
       setUserProfile(profile);
+      
+      // Log login event for analytics
+      logUserLogin('email');
+      setAnalyticsUserId(firebaseUser.uid);
+      setAnalyticsUserProperties({
+        user_role: profile.role,
+      });
     } catch (error: any) {
       console.error('Error signing in with email:', error);
       throw error;
@@ -150,6 +158,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(firebaseUser);
       const profile = await createOrUpdateUserProfile(firebaseUser);
       setUserProfile(profile);
+      
+      // Log signup event for analytics
+      logUserSignup('email');
+      setAnalyticsUserId(firebaseUser.uid);
+      setAnalyticsUserProperties({
+        user_role: profile.role,
+      });
     } catch (error: any) {
       console.error('Error signing up with email:', error);
       throw error;

@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { primeEventCache } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi } from "@/lib/firestore";
 import { Event } from "@/types";
 import Navigation from "@/components/Navigation";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +24,7 @@ import { useI18n, getLocale } from "@/i18n/index";
 import type { DocumentSnapshot } from "firebase/firestore";
 
 export default function EventsPage() {
+  const router = useRouter();
   const { user, loading: authLoading, isAdmin } = useAuth();
   const { t, lang } = useI18n();
   const [events, setEvents] = useState<Event[]>([]);
@@ -67,10 +71,9 @@ export default function EventsPage() {
   };
 
   useEffect(() => {
-    if (!authLoading) {
-      loadEvents();
-    }
-  }, [authLoading]);
+    // Load events immediately, don't wait for auth
+    loadEvents();
+  }, []); // Empty dependency array - run once on mount
 
   // Local search query debounce
   useEffect(() => {
@@ -114,16 +117,7 @@ export default function EventsPage() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <span className="loading loading-infinity loading-xl"></span>
-          <span>{t("common.loading")}</span>
-        </div>
-      </div>
-    );
-  }
+  // No need to block on authLoading, events can load independently
 
   return (
     <div className="min-h-screen bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed pt-16">
@@ -155,9 +149,9 @@ export default function EventsPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2">
-                <span className="loading loading-infinity loading-xl"></span>
-                <span>{t("eventsPage.loadingEvents")}</span>
+              <div className="text-center">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-gray-600">{t("eventsPage.loadingEvents")}</p>
               </div>
             </div>
           ) : filteredEvents.length === 0 ? (
@@ -255,12 +249,19 @@ export default function EventsPage() {
                       )}
 
                       {/* Action Button */}
-                      <Link href={`/event/${event.id}`} className="w-full">
-                        <Button className="w-full" size="sm">
-                          {t("eventsPage.viewDetails")}
-                          <ChevronRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
+                      <Button
+                        className="w-full"
+                        size="sm"
+                        onMouseEnter={() => primeEventCache(event)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          primeEventCache(event);
+                          router.push(`/event/${event.id}`);
+                        }}
+                      >
+                        {t("eventsPage.viewDetails")}
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
                     </div>
                   </Card>
                 ))}
@@ -272,12 +273,13 @@ export default function EventsPage() {
                     onClick={handleLoadMore}
                     disabled={loadingMore}
                     variant="outline"
+                    className="border-[#25818a] text-[#25818a] hover:bg-[#25818a] hover:text-white"
                   >
                     {loadingMore ? (
-                      <>
-                        <span className="loading loading-infinity loading-xl"></span>
+                      <div className="flex items-center gap-2">
+                        <LoadingSpinner size="sm" />
                         {t("eventsPage.loading")}
-                      </>
+                      </div>
                     ) : (
                       t("eventsPage.loadMore")
                     )}

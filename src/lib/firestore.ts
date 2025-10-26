@@ -81,10 +81,12 @@ const docToMember = (doc: QueryDocumentSnapshot): Member => {
   const data = doc.data();
   return {
     id: doc.id,
+    email: data.email || '',
     fullName: data.fullName,
     role: data.role,
     profilePicture: data.profilePicture,
     linkedInUrl: data.linkedInUrl,
+    portfolioUrl: data.portfolioUrl,
     committeeId: data.committeeId,
     isActive: data.isActive,
     createdAt: timestampToDate(data.createdAt),
@@ -110,9 +112,26 @@ const docToCommittee = (doc: QueryDocumentSnapshot): Committee => {
 // Convert LeadershipPosition document to LeadershipPosition object
 const docToLeadershipPosition = (doc: QueryDocumentSnapshot): LeadershipPosition => {
   const data = doc.data();
+  const normalizeLeadershipTitle = (value: unknown): LeadershipPosition['title'] => {
+    const raw = String(value ?? '').toLowerCase().trim();
+    const simplified = raw.replace(/[-\s]+/g, '_');
+    if (simplified === 'president') return 'president';
+    if (
+      simplified === 'vice_president' ||
+      simplified === 'vicepresident' ||
+      simplified === 'vice-president' ||
+      simplified === 'vice president'
+    ) {
+      return 'vice_president';
+    }
+    if (simplified === 'leader' || simplified === 'committee_leader') return 'leader';
+    // Default fallback: treat unknown as vice_president only if matches startswith vice
+    if (simplified.startsWith('vice')) return 'vice_president';
+    return 'leader';
+  };
   return {
     id: doc.id,
-    title: data.title,
+    title: normalizeLeadershipTitle(data.title),
     memberId: data.memberId,
     member: data.member, // This will be populated when fetching
     isActive: data.isActive,
@@ -121,11 +140,25 @@ const docToLeadershipPosition = (doc: QueryDocumentSnapshot): LeadershipPosition
   };
 };
 
+// Simple in-memory cache for events
+const eventsCache = new Map<string, { data: Event, timestamp: number }>();
+const eventsCacheKey = 'events_list';
+const EVENTS_CACHE_TTL = 30000; // 30 seconds
+
 // Events API
 export const eventsApi = {
   // Get all active and completed events with pagination
   async getEvents(lastDoc?: DocumentSnapshot, pageSize: number = 10): Promise<{ events: Event[], lastDoc?: DocumentSnapshot }> {
     try {
+      // Check cache only for first page (no lastDoc)
+      if (!lastDoc) {
+        const cached = eventsCache.get(eventsCacheKey);
+        if (cached && Date.now() - cached.timestamp < EVENTS_CACHE_TTL) {
+          // Return cached first page
+          return { events: [cached.data] as Event[], lastDoc: undefined };
+        }
+      }
+
       let eventsQuery = query(
         collection(db, 'events'),
         where('status', 'in', ['active', 'completed']),
@@ -149,12 +182,21 @@ export const eventsApi = {
     }
   },
 
-  // Get single event by ID
+  // Get single event by ID with caching
   async getEvent(eventId: string): Promise<Event | null> {
     try {
+      // Check cache first
+      const cached = eventsCache.get(eventId);
+      if (cached && Date.now() - cached.timestamp < EVENTS_CACHE_TTL) {
+        return cached.data;
+      }
+
       const eventDoc = await getDoc(doc(db, 'events', eventId));
       if (eventDoc.exists()) {
-        return docToEvent(eventDoc as QueryDocumentSnapshot);
+        const event = docToEvent(eventDoc as QueryDocumentSnapshot);
+        // Cache the event
+        eventsCache.set(eventId, { data: event, timestamp: Date.now() });
+        return event;
       }
       return null;
     } catch (error) {
@@ -208,6 +250,15 @@ export const eventsApi = {
   }
 };
 
+// Prime the event cache to accelerate navigation to detail pages
+export function primeEventCache(event: Event): void {
+  try {
+    eventsCache.set(event.id, { data: event, timestamp: Date.now() });
+  } catch (e) {
+    // best-effort
+  }
+}
+
 // Registrations API
 export const registrationsApi = {
   // Get registrations for an event
@@ -240,6 +291,27 @@ export const registrationsApi = {
       return querySnapshot.docs.map(docToRegistration);
     } catch (error) {
       console.error('Error fetching user registrations:', error);
+      throw error;
+    }
+  },
+
+  // Check if user is registered for a specific event (optimized)
+  async getUserEventRegistration(userId: string, eventId: string): Promise<Registration | null> {
+    try {
+      const q = query(
+        collection(db, 'registrations'),
+        where('userId', '==', userId),
+        where('eventId', '==', eventId),
+        limit(1)
+      );
+
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        return null;
+      }
+      return docToRegistration(querySnapshot.docs[0]);
+    } catch (error) {
+      console.error('Error checking user event registration:', error);
       throw error;
     }
   },
@@ -364,6 +436,33 @@ export const registrationsApi = {
 
 // Team API
 export const teamApi = {
+  // Simple in-memory caches with short TTL (client-only)
+  _cacheTtlMs: 60000,
+  _committeesLightCache: null as { data: Committee[]; ts: number } | null,
+  _committeeLightCache: new Map<string, { data: Committee; ts: number }>(),
+  _leadershipCache: null as { data: LeadershipPosition[]; ts: number } | null,
+
+  // Lightweight: fetch committees without loading members
+  async getCommitteesLight(): Promise<Committee[]> {
+    try {
+      if (this._committeesLightCache && Date.now() - this._committeesLightCache.ts < this._cacheTtlMs) {
+        return this._committeesLightCache.data;
+      }
+      const q = query(
+        collection(db, 'committees'),
+        where('isActive', '==', true),
+        orderBy('order', 'asc')
+      );
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(docToCommittee);
+      this._committeesLightCache = { data, ts: Date.now() };
+      return data;
+    } catch (error) {
+      console.error('Error fetching committees (light):', error);
+      throw error;
+    }
+  },
+
   // Committees API
   async getCommittees(): Promise<Committee[]> {
     try {
@@ -384,6 +483,26 @@ export const teamApi = {
       return committees;
     } catch (error) {
       console.error('Error fetching committees:', error);
+      throw error;
+    }
+  },
+
+  // Lightweight: fetch single committee without members
+  async getCommitteeLight(committeeId: string): Promise<Committee | null> {
+    try {
+      const cached = this._committeeLightCache.get(committeeId);
+      if (cached && Date.now() - cached.ts < this._cacheTtlMs) {
+        return cached.data;
+      }
+      const committeeDoc = await getDoc(doc(db, 'committees', committeeId));
+      if (committeeDoc.exists()) {
+        const committee = docToCommittee(committeeDoc as QueryDocumentSnapshot);
+        this._committeeLightCache.set(committeeId, { data: committee, ts: Date.now() });
+        return committee;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching committee (light):', error);
       throw error;
     }
   },
@@ -513,9 +632,42 @@ export const teamApi = {
     }
   },
 
+  // Members without a committee (isActive and committeeId empty or null)
+  async getMembersWithoutCommittee(): Promise<Member[]> {
+    try {
+      const base = collection(db, 'members');
+      const qEmpty = query(
+        base,
+        where('isActive', '==', true),
+        where('committeeId', '==', '')
+      );
+      const qNull = query(
+        base,
+        where('isActive', '==', true),
+        where('committeeId', '==', null)
+      );
+
+      const [snapEmpty, snapNull] = await Promise.all([getDocs(qEmpty), getDocs(qNull)]);
+      const byId = new Map<string, Member>();
+      for (const d of snapEmpty.docs) {
+        byId.set(d.id, docToMember(d));
+      }
+      for (const d of snapNull.docs) {
+        if (!byId.has(d.id)) byId.set(d.id, docToMember(d));
+      }
+      return Array.from(byId.values());
+    } catch (error) {
+      console.error('Error fetching members without committee:', error);
+      throw error;
+    }
+  },
+
   // Leadership API
   async getLeadershipPositions(): Promise<LeadershipPosition[]> {
     try {
+      if (this._leadershipCache && Date.now() - this._leadershipCache.ts < this._cacheTtlMs) {
+        return this._leadershipCache.data;
+      }
       const q = query(
         collection(db, 'leadership'),
         where('isActive', '==', true),
@@ -531,6 +683,18 @@ export const teamApi = {
           const member = await this.getMember(position.memberId);
           if (member) {
             position.member = member;
+            // Enrich with committee name so cards can render "Leader of {Committee}"
+            try {
+              if (member.committeeId) {
+                const cdoc = await getDoc(doc(db, 'committees', member.committeeId));
+                if (cdoc.exists()) {
+                  // Attach committeeName dynamically
+                  (position.member as any).committeeName = (cdoc.data() as any)?.name;
+                }
+              }
+            } catch (e) {
+              // Best-effort enrichment only
+            }
           } else {
             console.warn(`Leadership position ${position.title} references non-existent member: ${position.memberId}`);
           }
@@ -540,7 +704,9 @@ export const teamApi = {
       }
       
       // Filter out positions without valid members
-      return positions.filter(position => position.member);
+      const data = positions.filter(position => position.member);
+      this._leadershipCache = { data, ts: Date.now() };
+      return data;
     } catch (error) {
       console.error('Error fetching leadership positions:', error);
       throw error;

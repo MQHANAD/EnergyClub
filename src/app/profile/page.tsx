@@ -24,9 +24,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { syncUserProfileToMembers } from '@/lib/syncMembers';
 
 interface MemberData {
   id: string;
@@ -36,6 +35,7 @@ interface MemberData {
   committeeName?: string;
   profilePicture?: string;
   linkedInUrl?: string;
+  portfolioUrl?: string;
   email: string;
   isMember: boolean;
 }
@@ -56,6 +56,7 @@ function ProfileContent() {
   const [formData, setFormData] = useState({
     displayName: '',
     linkedInUrl: '',
+    portfolioUrl: '',
     profilePicture: ''
   });
   
@@ -80,17 +81,17 @@ function ProfileContent() {
         return;
       }
 
-      // Get user profile data, create if doesn't exist
-      const userRef = doc(db, 'users', user.email);
+      // Get user profile data by UID (avoid duplicate user docs keyed by email)
+      const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
       
       let userData;
       if (!userDoc.exists()) {
-        // Create user profile if it doesn't exist
-        console.log(`Creating user profile for: ${user.email}`);
+        // Create user profile if it doesn't exist (keyed by UID)
+        console.log(`Creating user profile for UID: ${user.uid}`);
         userData = {
-          id: user.email,
-          email: user.email,
+          id: user.uid,
+          email: user.email || '',
           displayName: user.displayName || user.email.split('@')[0],
           photoURL: user.photoURL || null,
           linkedIn: null,
@@ -103,9 +104,10 @@ function ProfileContent() {
         userData = userDoc.data();
       }
       
-      // Get member data from members collection
-      const membersRef = doc(db, 'members', user.email);
-      const memberDoc = await getDoc(membersRef);
+      // Get member data from members collection by email (doc id may not be email)
+      const membersColl = collection(db, 'members');
+      const memberQuery = query(membersColl, where('email', '==', user.email));
+      const memberSnap = await getDocs(memberQuery);
       
       let memberInfo: MemberData = {
         id: user.email,
@@ -118,14 +120,16 @@ function ProfileContent() {
         isMember: false
       };
 
-      if (memberDoc.exists()) {
-        const memberData = memberDoc.data();
+      if (!memberSnap.empty) {
+        const memberData = memberSnap.docs[0].data();
         memberInfo = {
           ...memberInfo,
           fullName: memberData.fullName || userData.displayName || user.email.split('@')[0],
           role: memberData.role || 'Member',
           committeeId: memberData.committeeId || '',
+          profilePicture: memberData.profilePicture || userData.photoURL || null,
           linkedInUrl: memberData.linkedInUrl || userData.linkedIn || null,
+          portfolioUrl: memberData.portfolioUrl || userData.portfolioUrl || null,
           isMember: true
         };
 
@@ -137,12 +141,18 @@ function ProfileContent() {
             memberInfo.committeeName = committeeDoc.data().name;
           }
         }
+      } else {
+        // If user is not a member, use role from users when available
+        if (userData.role) {
+          memberInfo.role = userData.role;
+        }
       }
 
       setMemberData(memberInfo);
       setFormData({
         displayName: memberInfo.fullName,
         linkedInUrl: memberInfo.linkedInUrl || '',
+        portfolioUrl: memberInfo.portfolioUrl || '',
         profilePicture: memberInfo.profilePicture || ''
       });
     } catch (err) {
@@ -169,6 +179,7 @@ function ProfileContent() {
       setFormData({
         displayName: memberData.fullName,
         linkedInUrl: memberData.linkedInUrl || '',
+        portfolioUrl: memberData.portfolioUrl || '',
         profilePicture: memberData.profilePicture || ''
       });
     }
@@ -232,42 +243,28 @@ function ProfileContent() {
         }
       }
 
-      // Update user document - let real-time sync handle member updates
-      const userRef = doc(db, 'users', user.email);
+      // Update user document (keyed by UID)
+      const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         displayName: formData.displayName,
         photoURL: newProfilePicture,
         linkedIn: formData.linkedInUrl,
+        portfolioUrl: formData.portfolioUrl || null,
         updatedAt: new Date()
       });
 
-      console.log(`Updated user profile for ${user.email}. Real-time sync will update member records.`);
-
-      // Trigger immediate sync to ensure member records are updated
-      try {
-        console.log(`Triggering direct sync for user: ${user.email}`);
-        await syncUserProfileToMembers(user.email);
-        console.log('Direct sync completed successfully');
-      } catch (syncError) {
-        console.warn('Failed to trigger direct sync:', syncError);
-        
-        // Fallback: Directly update member record if sync fails
-        try {
-          const memberRef = doc(db, 'members', user.email);
-          const memberDoc = await getDoc(memberRef);
-          
-          if (memberDoc.exists()) {
-            await updateDoc(memberRef, {
-              fullName: formData.displayName,
-              profilePicture: newProfilePicture,
-              linkedInUrl: formData.linkedInUrl,
-              updatedAt: new Date()
-            });
-            console.log('Fallback member update completed');
-          }
-        } catch (fallbackError) {
-          console.error('Fallback member update also failed:', fallbackError);
-        }
+      // Update member document if exists (do not create new member docs for non-members)
+      const memberQueryForUpdate = query(collection(db, 'members'), where('email', '==', user.email));
+      const memberSnapForUpdate = await getDocs(memberQueryForUpdate);
+      if (!memberSnapForUpdate.empty) {
+        const memberRef = doc(db, 'members', memberSnapForUpdate.docs[0].id);
+        await updateDoc(memberRef, {
+          fullName: formData.displayName,
+          profilePicture: newProfilePicture,
+          linkedInUrl: formData.linkedInUrl,
+          portfolioUrl: formData.portfolioUrl || null,
+          updatedAt: new Date()
+        });
       }
 
       // Update local state immediately
@@ -275,7 +272,8 @@ function ProfileContent() {
         ...prev,
         fullName: formData.displayName,
         profilePicture: newProfilePicture,
-        linkedInUrl: formData.linkedInUrl
+        linkedInUrl: formData.linkedInUrl,
+        portfolioUrl: formData.portfolioUrl
       } : null);
 
       setIsEditing(false);
@@ -297,9 +295,6 @@ function ProfileContent() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner />
-          <p className="mt-4 text-gray-600 font-light">
-            {t('common.loading')}
-          </p>
         </div>
       </div>
     );
@@ -482,6 +477,38 @@ function ProfileContent() {
                           </a>
                         ) : (
                           <p className="text-gray-500 font-light">No LinkedIn profile</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Portfolio */}
+                  <div className={memberData.isMember ? "md:col-span-2" : "md:col-span-1"}>
+                    <Label className="text-gray-700 font-medium flex items-center mb-2">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Portfolio
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        value={formData.portfolioUrl}
+                        onChange={(e) => setFormData({ ...formData, portfolioUrl: e.target.value })}
+                        placeholder="https://yourportfolio.com"
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <div className="flex items-center">
+                        {memberData.portfolioUrl ? (
+                          <a
+                            href={memberData.portfolioUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 font-light flex items-center"
+                          >
+                            {memberData.portfolioUrl}
+                            <ExternalLink className="w-4 h-4 ml-1" />
+                          </a>
+                        ) : (
+                          <p className="text-gray-500 font-light">No portfolio added</p>
                         )}
                       </div>
                     )}

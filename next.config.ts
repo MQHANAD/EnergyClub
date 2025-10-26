@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   
   // Optimize images
   images: {
+    domains: ['upload.wikimedia.org'],
     remotePatterns: [
       {
         protocol: 'https',

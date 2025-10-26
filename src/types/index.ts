@@ -96,10 +96,12 @@ export interface Application {
 
 export interface Member {
   id: string;
+  email: string;
   fullName: string;
   role: string;
   profilePicture?: string;
   linkedInUrl?: string;
+  portfolioUrl?: string;
   committeeId: string;
   isActive: boolean;
   createdAt: Date;
@@ -119,7 +121,7 @@ export interface Committee {
 
 export interface LeadershipPosition {
   id: string;
-  title: 'president' | 'vice_president';
+  title: 'president' | 'vice_president' | 'leader';
   memberId: string;
   member: Member;
   isActive: boolean;
@@ -128,10 +130,12 @@ export interface LeadershipPosition {
 }
 
 export interface TeamFormData {
+  email?: string;
   fullName: string;
   role: string;
   profilePicture?: string;
   linkedInUrl?: string;
+  portfolioUrl?: string;
   committeeId: string;
 }
 

@@ -10,6 +10,7 @@ import React, {
   useCallback,
 } from "react";
 import Image from "next/image";
+import { useI18n } from "@/i18n/index";
 
 // Utility for joining class names
 const cn = (...inputs: (string | undefined | null | false)[]) =>
@@ -68,6 +69,8 @@ export function VideoText({
 }: VideoTextProps) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { t, lang } = useI18n();
+  const isArabic = lang === "ar";
 
   // Combine child text content
   const content = useMemo(() => {
@@ -89,6 +92,13 @@ export function VideoText({
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
 
+    const computedFont = isArabic
+      ? "Tahoma, Arial, system-ui, sans-serif"
+      : fontFamily;
+    const rtlAttrs = isArabic
+      ? "direction='rtl' unicode-bidi='plaintext'"
+      : "";
+
     const svgString = `
       <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>
         <text 
@@ -98,7 +108,8 @@ export function VideoText({
           font-weight='${fontWeight}' 
           text-anchor='${textAnchor}' 
           dominant-baseline='${dominantBaseline}' 
-          font-family='${fontFamily}'
+          font-family='${computedFont}'
+          ${rtlAttrs}
           ${letterSpacing ? `letter-spacing='${letterSpacing}'` : ""}
           ${textTransform !== "none" ? `text-transform='${textTransform}'` : ""}
         >
@@ -114,6 +125,7 @@ export function VideoText({
     textAnchor,
     dominantBaseline,
     fontFamily,
+    isArabic,
     letterSpacing,
     textTransform,
   ]);
@@ -236,18 +248,25 @@ export function VideoText({
 
       {!isVideoLoaded && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-opacity-50">Loading...</div>
+          <div className="text-white text-opacity-50">{t("common.loading")}</div>
         </div>
       )}
       <span className="sr-only">{content}</span>
 
       {/* Logos positioned under the text */}
       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center space-x-6">
+      <Image
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/KFUPM.svg/1280px-KFUPM.svg.png"
+          alt="Energy Week Logo"
+          width={200}
+          height={200}
+          className="object-contain"
+        />
         <Image
           src="/CEEELogo.png"
           alt="Energy Club Logo"
-          width={300}
-          height={300}
+          width={270}
+          height={270}
           className="object-contain"
         />
         <Image
@@ -257,6 +276,14 @@ export function VideoText({
           height={200}
           className="object-contain"
         />
+        <Image
+          src="/energyClubLogo.png"
+          alt="Energy Week Logo"
+          width={200}
+          height={200}
+          className="object-contain"
+        />
+        
       </div>
     </Component>
   );

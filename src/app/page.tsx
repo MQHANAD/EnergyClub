@@ -6,6 +6,7 @@ import Footer from "@/components/landingPageUi/Footer";
 import UpcomingEvents from "@/components/landingPageUi/UpcomingEvents";
 import { cookies } from "next/headers";
 import { messages, type Lang } from "@/i18n/messages";
+import { getDirFromLang } from "@/i18n/messages";
 import { VideoText } from "@/components/landingPageUi/videotext";
 import ScrollRevealWrapper from "@/components/landingPageUi/ScrollRevealWrapper";
 
@@ -16,8 +17,9 @@ export default async function HomePage() {
   const m = messages[lang] ?? messages.en;
   const heroTitle = m.hero.titleEnergyHub;
   return (
+    <div dir={getDirFromLang(lang)}>
+    <Navigation />
     <ScrollRevealWrapper>
-      <Navigation />
       <div className="relative h-[80vh] w-[80%] overflow-hidden mx-auto mt-20">
         <VideoText src="https://firebasestorage.googleapis.com/v0/b/university-club-platform.firebasestorage.app/o/5180_Wind_Turbine_Wind_Turbines_1920x1080.mp4?alt=media&token=86106837-780e-4ce9-a9bc-06ca30dc0d92">
           {heroTitle}
@@ -27,8 +29,9 @@ export default async function HomePage() {
       <Hero />
       <ImpactNumbers />
       <UpcomingEvents />
-      <Partners />
+      {/* <Partners /> */}
       <Footer />
     </ScrollRevealWrapper>
+    </div>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Committee } from '@/types';
+import { HybridMember } from '@/lib/hybridMembers';
 import { useI18n } from '@/i18n';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -105,41 +106,53 @@ const getCommitteeStyle = (committeeName: string) => {
 
 interface CommitteeCardProps {
   committee: Committee;
+  hybridMembers: HybridMember[];
   className?: string;
 }
 
 export const CommitteeCard: React.FC<CommitteeCardProps> = ({ 
   committee,
+  hybridMembers,
   className = '' 
 }) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const router = useRouter();
   const style = getCommitteeStyle(committee.name);
+
+  // Count hybrid members for this committee
+  const memberCount = hybridMembers.filter(member => 
+    member.committeeName === committee.name
+  ).length;
 
   const handleViewCommittee = () => {
     router.push(`/team/committee/${committee.id}`);
   };
 
+  const isArabic = lang === 'ar';
+  const formattedCount = new Intl.NumberFormat(isArabic ? 'ar' : 'en').format(memberCount);
+  const memberLabel = isArabic ? (memberCount === 1 ? 'عضو' : 'أعضاء') : (memberCount === 1 ? 'member' : 'members');
+  const viewDetailsLabel = isArabic ? 'عرض التفاصيل' : 'View Details';
+
   return (
-    <Card className={`group overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer bg-gradient-to-br ${style.bgGradient} border ${style.border} ${className}`} onClick={handleViewCommittee}>
+    <Card className={`group overflow-hidden transition-all duration-500 ease-out hover:shadow-xl hover:scale-[1.03] cursor-pointer bg-gradient-to-br ${style.bgGradient} border ${style.border} md:filter md:grayscale transition-[filter] duration-700 ease-in-out md:hover:grayscale-0 ${className}`} onClick={handleViewCommittee}>
       <div className="p-12 h-80 flex flex-col justify-center items-center text-center">
         {/* Centered Committee Name */}
         <div className="mb-8">
-          <h3 className={`text-4xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-300`}>
+          <h3 className={`text-4xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out`}>
             {committee.name}
           </h3>
         </div>
         
         {/* Footer Section */}
         <div className="flex items-center justify-between w-full">
-          <div className={`flex items-center space-x-2 ${style.iconColor} ${style.hoverIconColor} transition-colors duration-300`}>
+          <div className={`flex items-center space-x-2 ${style.iconColor} ${style.hoverIconColor} transition-colors duration-700 ease-in-out`}>
             <Users className="w-7 h-7" />
             <span className="text-lg font-medium">
-              {committee.members.length} {committee.members.length === 1 ? 'member' : 'members'}
+              {formattedCount} {memberLabel}
             </span>
           </div>
-          <div className={`px-4 py-2 ${style.buttonBg} rounded-full ${style.buttonHover} transition-colors duration-200`}>
-            <span className={`text-sm font-medium ${style.buttonText}`}>View Details</span>
+          <div className={`px-4 py-2 ${style.buttonBg} rounded-full ${style.buttonHover} transition-colors duration-700 ease-in-out`}>
+            <span className={`text-sm font-medium ${style.buttonText}`}>{viewDetailsLabel}</span>
           </div>
         </div>
       </div>
@@ -149,11 +162,13 @@ export const CommitteeCard: React.FC<CommitteeCardProps> = ({
 
 interface CommitteesSectionProps {
   committees: Committee[];
+  hybridMembers: HybridMember[];
   className?: string;
 }
 
 export const CommitteesSection: React.FC<CommitteesSectionProps> = ({ 
   committees,
+  hybridMembers,
   className = '' 
 }) => {
   const { t } = useI18n();
@@ -168,7 +183,15 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
     return 0;
   });
 
-  if (committees.length === 0) {
+  // Filter out committees with no members
+  const committeesWithMembers = sortedCommittees.filter(committee => {
+    const memberCount = hybridMembers.filter(member => 
+      member.committeeName === committee.name
+    ).length;
+    return memberCount > 0;
+  });
+
+  if (committeesWithMembers.length === 0) {
     return (
       <section className={`py-16 ${className}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -192,7 +215,7 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
         {/* Section Header */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-4">
-            <Building2 className="w-8 h-8 text-blue-600 mr-3" />
+            <Building2 className="w-8 h-8 text-gray-600 mr-3" />
             <h2 className="text-4xl font-light text-gray-900">
               {t('team.committees.title')}
             </h2>
@@ -202,10 +225,11 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
 
         {/* Committees Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedCommittees.map((committee) => (
+          {committeesWithMembers.map((committee) => (
             <CommitteeCard
               key={committee.id}
               committee={committee}
+              hybridMembers={hybridMembers}
             />
           ))}
         </div>

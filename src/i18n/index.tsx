@@ -72,19 +72,19 @@ const messages: Record<Lang, MessageTree> = {
       },
       items: {
         energyWeek: {
-          title: "Energy Week (EW)",
+          title: "Energy Week 2025",
           short: "A flagship series uniting students, academia, and industry.",
           content:
             "Energy Week brings together thought leaders and innovators to explore the future of energy through talks, panels, and interactive showcases.",
         },
         sharkTank: {
-          title: "Shark Tank – 1st Edition",
+          title: "Engineering Shark Tank",
           short: "A launchpad for student entrepreneurs in energy innovation.",
           content:
             "The Engineers’ Shark Tank launched as a bold platform for students to pitch their groundbreaking ideas directly to experts and industry leaders.",
         },
         greenH2: {
-          title: "Green Hydrogen Workshop",
+          title: "Strategy& ME Hydrogen",
           short:
             "Deep dive into green hydrogen—technology, demand, and KSA roadmap.",
           content:
@@ -118,6 +118,7 @@ const messages: Record<Lang, MessageTree> = {
       signIn: "Sign In",
       openMenu: "Open main menu",
       applications: "Applications",
+      analytics: "Analytics",
     },
     login: {
       title: "Energy Hub",
@@ -229,7 +230,7 @@ const messages: Record<Lang, MessageTree> = {
       },
     },
     team: {
-      title: "Our Energy Week Team",
+      title: "Our Team",
       subtitle: "Meet the dedicated members who make our energy initiatives possible",
       leadership: {
         title: "Leaders",
@@ -246,6 +247,8 @@ const messages: Record<Lang, MessageTree> = {
       member: {
         role: "Role",
         linkedIn: "LinkedIn",
+        portfolio: "Portfolio",
+        noLinks: "No links",
         noProfilePicture: "No profile picture",
       },
       admin: {
@@ -405,6 +408,7 @@ const messages: Record<Lang, MessageTree> = {
       signIn: "تسجيل الدخول",
       openMenu: "فتح القائمة الرئيسية",
       applications: "الطلبات",
+      analytics: "التحليلات",
     },
     login: {
       title: "نادي الطاقة",
@@ -531,6 +535,8 @@ const messages: Record<Lang, MessageTree> = {
       member: {
         role: "الدور",
         linkedIn: "LinkedIn",
+        portfolio: "الموقع الشخصي",
+        noLinks: "لا توجد روابط",
         noProfilePicture: "لا توجد صورة شخصية",
       },
       admin: {

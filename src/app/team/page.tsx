@@ -1,12 +1,17 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
+import Image from 'next/image';
 import { Committee, LeadershipPosition } from '@/types';
 import { useI18n } from '@/i18n';
 import { teamApi } from '@/lib/firestore';
+import { getMembersUltraOptimized, HybridMember } from '@/lib/hybridMembers';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
 import Navigation from '@/components/Navigation';
-import { Users, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import Footer from "@/components/landingPageUi/Footer";
+import ScrollRevealWrapper from "@/components/landingPageUi/ScrollRevealWrapper";
+import { logTeamView } from '@/lib/analytics';
 
 // Lazy load heavy components for better performance
 const LeadershipSection = React.lazy(() => 
@@ -20,6 +25,7 @@ export default function TeamPage() {
   const { t } = useI18n();
   const [committees, setCommittees] = useState<Committee[]>([]);
   const [leadershipPositions, setLeadershipPositions] = useState<LeadershipPosition[]>([]);
+  const [hybridMembers, setHybridMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,14 +35,19 @@ export default function TeamPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch committees and leadership positions in parallel
-        const [committeesData, leadershipData] = await Promise.all([
-          teamApi.getCommittees(),
-          teamApi.getLeadershipPositions()
+        // Fetch committees, leadership positions, and hybrid members in parallel
+        const [committeesData, leadershipData, membersData] = await Promise.all([
+          teamApi.getCommitteesLight(),
+          teamApi.getLeadershipPositions(),
+          getMembersUltraOptimized()
         ]);
 
         setCommittees(committeesData);
         setLeadershipPositions(leadershipData);
+        setHybridMembers(membersData);
+        
+        // Log team page view for analytics
+        logTeamView();
       } catch (err) {
         console.error('Error fetching team data:', err);
         setError('Failed to load team data. Please try again later.');
@@ -54,9 +65,7 @@ export default function TeamPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <LoadingSpinner />
-            <p className="mt-4 text-gray-600 font-light">
-              {t('common.loading')}
-            </p>
+           
           </div>
         </div>
       </div>
@@ -89,16 +98,19 @@ export default function TeamPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      
       <Navigation />
+      <ScrollRevealWrapper>
       {/* Hero Section */}
       <section className="bg-white pt-16 md:pt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center">
-              <Users className="w-12 h-12 mr-4 text-gray-700" />
-              <h1 className="text-4xl md:text-5xl font-light text-gray-900">
+                            {/* <h1 className="text-4xl md:text-5xl font-light text-gray-900">
                 {t('team.title')}
-              </h1>
+              </h1> */}
+              <Image src="/energyWeekLogo.png" alt="KFUPM Energy Week" width={320} height={320} className="ml-4" />
+
             </div>
           </div>
         </div>
@@ -106,16 +118,23 @@ export default function TeamPage() {
 
       {/* Leadership Section */}
       <Suspense fallback={<LoadingSpinner />}>
-        <LeadershipSection leadershipPositions={leadershipPositions} committees={committees} />
+        <LeadershipSection 
+          leadershipPositions={leadershipPositions} 
+          committees={committees}
+          hybridMembers={hybridMembers}
+        />
       </Suspense>
 
       {/* Committees Section */}
       <Suspense fallback={<LoadingSpinner />}>
-        <CommitteesSection committees={committees} />
+        <CommitteesSection 
+          committees={committees}
+          hybridMembers={hybridMembers}
+        />
       </Suspense>
 
       {/* Footer Spacing */}
-      <div className="py-16"></div>
+      </ScrollRevealWrapper>
     </div>
   );
 }

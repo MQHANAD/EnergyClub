@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { LeadershipPosition, Committee } from '@/types';
+import { HybridMember } from '@/lib/hybridMembers';
 import { useI18n } from '@/i18n';
 import { MemberCard } from './MemberCard';
 import { Crown, Users, Star } from 'lucide-react';
@@ -9,12 +10,14 @@ import { Crown, Users, Star } from 'lucide-react';
 interface LeadershipSectionProps {
   leadershipPositions: LeadershipPosition[];
   committees: Committee[];
+  hybridMembers: HybridMember[];
   className?: string;
 }
 
 export const LeadershipSection: React.FC<LeadershipSectionProps> = ({ 
   leadershipPositions,
   committees,
+  hybridMembers,
   className = '' 
 }) => {
   const { t } = useI18n();
@@ -22,24 +25,37 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   const president = leadershipPositions.find(pos => pos.title === 'president');
   const vicePresident = leadershipPositions.find(pos => pos.title === 'vice_president');
 
-  // Find all members with "Leader" role (flexible matching)
-  const leaders = committees.flatMap(committee => 
-    committee.members
-      .filter(member => {
-        const role = member.role?.trim().toLowerCase();
-        return role === "leader" || role === "team leader" || role === "committee leader";
-      })
-      .map(member => ({
-        ...member,
-        committeeName: committee.name
-      }))
-  );
+  // Find all hybrid members with "Leader" role (flexible matching)
+  const leaders = hybridMembers.filter(member => {
+    const role = member.role?.trim().toLowerCase();
+    return role === "leader" || role === "team leader" || role === "committee leader";
+  });
 
-  // Get member IDs that are already in formal leadership positions
-  const formalLeadershipMemberIds = leadershipPositions.map(pos => pos.memberId);
+  // Get emails that are already in formal leadership positions (safer than ID, since hybrid id may differ)
+  const formalLeadershipEmails = leadershipPositions
+    .map(pos => pos.member?.email)
+    .filter((e): e is string => Boolean(e));
 
-  // Filter out leaders who are already in formal leadership positions
-  const uniqueLeaders = leaders.filter(leader => !formalLeadershipMemberIds.includes(leader.id));
+  // Filter out leaders who are already in formal leadership positions by email
+  const uniqueLeaders = leaders
+    .filter(leader => !formalLeadershipEmails.includes(leader.email))
+    // Deduplicate by email in case of duplicates in hybridMembers
+    .filter((leader, index, self) => index === self.findIndex(l => l.email === leader.email));
+
+  // Convert hybrid members to the format expected by MemberCard
+  const convertHybridToMember = (hybridMember: HybridMember) => ({
+    id: hybridMember.id,
+    fullName: hybridMember.fullName,
+    role: hybridMember.role,
+    committeeId: hybridMember.committeeId,
+    committeeName: hybridMember.committeeName,
+    profilePicture: hybridMember.profilePicture || undefined,
+    linkedInUrl: hybridMember.linkedInUrl || undefined,
+    email: hybridMember.email,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
 
   // Combine leadership positions and unique leaders
   const allLeadership = [
@@ -48,7 +64,7 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
       id: `leader-${leader.id}`, 
       title: 'leader' as any, 
       memberId: leader.id, 
-      member: leader, 
+      member: convertHybridToMember(leader), 
       isActive: true, 
       createdAt: new Date(), 
       updatedAt: new Date(),
@@ -56,6 +72,16 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
       committeeName: leader.committeeName
     }))
   ];
+
+  // Prioritize specific leadership id to appear first among non-president/vice
+  const PRIORITY_LEADERSHIP_ID = 'Z6XUlCj1HMEP41dtUEA7';
+  const sortedOtherLeadership = allLeadership
+    .filter(pos => pos.title !== 'president' && pos.title !== 'vice_president' && pos.member)
+    .sort((a, b) => {
+      const aPri = a.id === PRIORITY_LEADERSHIP_ID ? -1 : 0;
+      const bPri = b.id === PRIORITY_LEADERSHIP_ID ? -1 : 0;
+      return aPri - bPri;
+    });
 
   if (allLeadership.length === 0) {
     return null;
@@ -67,7 +93,7 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
         {/* Section Header */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-4">
-            <Crown className="w-8 h-8 text-yellow-500 mr-3" />
+            <Crown className="w-8 h-8 text-gray-600 mr-3" />
             <h2 className="text-4xl font-light text-gray-900">
               {t('team.leadership.title')}
             </h2>
@@ -93,9 +119,7 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
           )}
 
           {/* Other Leadership Positions */}
-          {allLeadership
-            .filter(pos => pos.title !== 'president' && pos.title !== 'vice_president')
-            .filter(position => position.member) // Only render if member exists
+          {sortedOtherLeadership
             .map((position) => (
               <MemberCard 
                 key={position.id}

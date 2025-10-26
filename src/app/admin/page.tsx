@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
 import { Event, Registration } from "@/types";
 import Navigation from "@/components/Navigation";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,7 +32,6 @@ import { useI18n, getLocale } from "@/i18n/index";
 import Input from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MemberSyncPanel } from "@/components/admin/MemberSyncPanel";
 import {
   Select,
   SelectContent,
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"events" | "registrations" | "members">("events");
+  const [view, setView] = useState<"events" | "registrations">("events");
   const [processingId, setProcessingId] = useState<string | null>(null);
   // Registrations search
   const [regQuery, setRegQuery] = useState<string>("");
@@ -365,10 +365,10 @@ export default function AdminDashboard() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <span className="loading loading-infinity loading-xl"></span>
-          <span>{t("common.loading")}</span>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -409,16 +409,6 @@ export default function AdminDashboard() {
                 }`}
               >
                 {t("admin.eventsTab", { count: events.length })}
-              </button>
-              <button
-                onClick={() => setView("members")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  view === "members"
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Member Sync
               </button>
               {selectedEvent && (
                 <button
@@ -534,8 +524,6 @@ export default function AdminDashboard() {
                 </div>
               )}
             </>
-          ) : view === "members" ? (
-            <MemberSyncPanel />
           ) : (
             <>
               {selectedEvent && (

@@ -30,10 +30,12 @@ import {
 function TeamAdminContent() {
   const { t } = useI18n();
   const { userProfile } = useAuth();
+  const NO_COMMITTEE = '__none__';
   
   // Data states
   const [committees, setCommittees] = useState<Committee[]>([]);
   const [leadershipPositions, setLeadershipPositions] = useState<LeadershipPosition[]>([]);
+  const [unassignedMembers, setUnassignedMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -48,11 +50,13 @@ function TeamAdminContent() {
   
   // Form data
   const [memberForm, setMemberForm] = useState<TeamFormData>({
+    email: '',
     fullName: '',
     role: '',
     profilePicture: '',
     linkedInUrl: '',
-    committeeId: ''
+    portfolioUrl: '',
+    committeeId: NO_COMMITTEE
   });
   const [committeeForm, setCommitteeForm] = useState<CommitteeFormData>({
     name: '',
@@ -73,13 +77,15 @@ function TeamAdminContent() {
       setIsLoading(true);
       setError(null);
 
-      const [committeesData, leadershipData] = await Promise.all([
+      const [committeesData, leadershipData, otherMembers] = await Promise.all([
         teamApi.getCommittees(),
-        teamApi.getLeadershipPositions()
+        teamApi.getLeadershipPositions(),
+        teamApi.getMembersWithoutCommittee()
       ]);
 
       setCommittees(committeesData);
       setLeadershipPositions(leadershipData);
+      setUnassignedMembers(otherMembers);
     } catch (err) {
       console.error('Error fetching team data:', err);
       setError('Failed to load team data. Please try again later.');
@@ -96,11 +102,13 @@ function TeamAdminContent() {
     }
     
     setMemberForm({
+      email: '',
       fullName: '',
       role: '',
       profilePicture: '',
       linkedInUrl: '',
-      committeeId: committees[0]?.id || ''
+      portfolioUrl: '',
+      committeeId: NO_COMMITTEE
     });
     setEditingMember(null);
     setShowMemberForm(true);
@@ -108,11 +116,13 @@ function TeamAdminContent() {
 
   const handleEditMember = (member: Member) => {
     setMemberForm({
+      email: member.email || '',
       fullName: member.fullName,
       role: member.role,
       profilePicture: member.profilePicture || '',
       linkedInUrl: member.linkedInUrl || '',
-      committeeId: member.committeeId
+      portfolioUrl: member.portfolioUrl || '',
+      committeeId: member.committeeId || NO_COMMITTEE
     });
     setEditingMember(member);
     setShowMemberForm(true);
@@ -123,30 +133,27 @@ function TeamAdminContent() {
       setIsSaving(true);
       setError(null);
       
-      // Validate required fields
-      if (!memberForm.fullName.trim()) {
+      // Validate required fields (Full Name, Email)
+      if (!memberForm.fullName?.trim()) {
         setError('Full name is required');
         return;
       }
-      if (!memberForm.role.trim()) {
-        setError('Role is required');
+      if (!editingMember && !memberForm.email?.trim()) {
+        setError('Email is required');
         return;
       }
-      if (!memberForm.committeeId) {
-        setError('Please select a committee');
-        return;
-      }
+      // Committee is optional; empty value means no committee
       
+      const payload = {
+        ...memberForm,
+        committeeId: memberForm.committeeId === NO_COMMITTEE ? '' : memberForm.committeeId,
+        isActive: true
+      } as any;
+
       if (editingMember) {
-        await teamApi.updateMember(editingMember.id, {
-          ...memberForm,
-          isActive: true
-        });
+        await teamApi.updateMember(editingMember.id, payload);
       } else {
-        await teamApi.createMember({
-          ...memberForm,
-          isActive: true
-        });
+        await teamApi.createMember(payload);
       }
       
       await fetchTeamData();
@@ -309,9 +316,7 @@ function TeamAdminContent() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner />
-          <p className="mt-4 text-gray-600 font-light">
-            {t('common.loading')}
-          </p>
+
         </div>
       </div>
     );
@@ -509,6 +514,62 @@ function TeamAdminContent() {
               )}
             </Card>
           ))}
+
+          {/* Other (no committee) */}
+          <Card className="p-6 bg-white border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Building2 className="w-6 h-6 text-gray-500 mr-2" />
+                <div>
+                  <h2 className="text-xl font-light text-gray-900">
+                    Other
+                  </h2>
+                  <p className="text-gray-600 text-sm font-light">Members without a committee</p>
+                </div>
+              </div>
+              <div className="flex space-x-2" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {unassignedMembers.map((member) => (
+                <div key={member.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-light text-gray-900">
+                        {member.fullName}
+                      </h3>
+                      <p className="text-gray-600 text-sm font-light">
+                        {member.role}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                        onClick={() => handleEditMember(member)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => handleDeleteMember(member.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {unassignedMembers.length === 0 && (
+              <p className="text-gray-500 text-center py-8 font-light">
+                No unassigned members.
+              </p>
+            )}
+          </Card>
         </div>
 
         {/* Member Form Dialog */}
@@ -522,6 +583,18 @@ function TeamAdminContent() {
             
             <div className="space-y-4">
               <div>
+              <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+              <Input
+                id="email"
+                value={memberForm.email || ''}
+                onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
+                placeholder="member@example.com"
+                className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                disabled={!!editingMember}
+              />
+            </div>
+
+            <div>
                 <Label htmlFor="fullName" className="text-gray-700 font-medium">{t('team.admin.memberForm.fullName')}</Label>
                 <Input
                   id="fullName"
@@ -534,25 +607,53 @@ function TeamAdminContent() {
               
               <div>
                 <Label htmlFor="role" className="text-gray-700 font-medium">{t('team.admin.memberForm.role')}</Label>
-                <Input
-                  id="role"
-                  value={memberForm.role}
-                  onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
-                  placeholder={t('team.admin.memberForm.rolePlaceholder')}
-                  className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                />
+                <Select
+                  value={(memberForm.role || '').toLowerCase() === 'leader' ? 'leader' : (memberForm.role ? (memberForm.role === 'Member' ? 'member' : (memberForm.role.toLowerCase() === 'member' ? 'member' : 'custom')) : 'member')}
+                  onValueChange={(value) => {
+                    if (value === 'leader') {
+                      setMemberForm({ ...memberForm, role: 'Leader' });
+                    } else if (value === 'member') {
+                      setMemberForm({ ...memberForm, role: 'Member' });
+                    } else {
+                      // custom: leave role as-is; user will type below
+                      setMemberForm({ ...memberForm, role: memberForm.role && memberForm.role !== 'Leader' && memberForm.role !== 'Member' ? memberForm.role : '' });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200">
+                    <SelectItem value="member" className="text-gray-900 hover:bg-gray-50">Member</SelectItem>
+                    <SelectItem value="leader" className="text-gray-900 hover:bg-gray-50">Leader (Committee Leader)</SelectItem>
+                    <SelectItem value="custom" className="text-gray-900 hover:bg-gray-50">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(!memberForm.role || (memberForm.role !== 'Leader' && memberForm.role !== 'Member')) && (
+                  <Input
+                    id="role"
+                    value={memberForm.role || ''}
+                    onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
+                    placeholder="Enter custom role (e.g., Designer)"
+                    className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                )}
+                <p className="text-xs text-gray-500 mt-1">Presidents and Vice Presidents are set in "Add Leadership Position".</p>
               </div>
               
               <div>
                 <Label htmlFor="committee" className="text-gray-700 font-medium">{t('team.admin.memberForm.committee')}</Label>
                 <Select
-                  value={memberForm.committeeId}
+                  value={memberForm.committeeId || NO_COMMITTEE}
                   onValueChange={(value) => setMemberForm({ ...memberForm, committeeId: value })}
                 >
                   <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="Select a committee" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200">
+                  <SelectItem value={NO_COMMITTEE} className="text-gray-900 hover:bg-gray-50">
+                    No committee
+                  </SelectItem>
                     {committees.map((committee) => (
                       <SelectItem key={committee.id} value={committee.id} className="text-gray-900 hover:bg-gray-50">
                         {committee.name}
@@ -583,6 +684,17 @@ function TeamAdminContent() {
                   className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
+
+            <div>
+              <Label htmlFor="portfolioUrl" className="text-gray-700 font-medium">Portfolio URL</Label>
+              <Input
+                id="portfolioUrl"
+                value={memberForm.portfolioUrl || ''}
+                onChange={(e) => setMemberForm({ ...memberForm, portfolioUrl: e.target.value })}
+                placeholder="https://yourportfolio.com"
+                className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
             </div>
             
             <DialogFooter className="mt-6">
@@ -706,6 +818,11 @@ function TeamAdminContent() {
                         </SelectItem>
                       ))
                     )}
+                    {unassignedMembers.map(member => (
+                      <SelectItem key={member.id} value={member.id} className="text-gray-900 hover:bg-gray-50">
+                        {member.fullName} - Other
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
