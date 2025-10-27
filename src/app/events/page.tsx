@@ -80,8 +80,12 @@ export default function EventsPage() {
 
   const filteredEvents = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    if (!q) return events;
-    return events.filter((e) => (e.title ?? "").toLowerCase().includes(q));
+    let filtered = events;
+    if (q) {
+      filtered = events.filter((e) => (e.title ?? "").toLowerCase().includes(q));
+    }
+    // Sort by date (closest first)
+    return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [events, debouncedQuery]);
 
   const handleLoadMore = () => {

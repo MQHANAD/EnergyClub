@@ -13,6 +13,7 @@ export interface Event {
   updatedAt: Date;
   tags: string[];
   imageUrls: string[];
+  requireStudentId?: boolean;
 }
 
 export interface Registration {
@@ -28,6 +29,7 @@ export interface Registration {
   attendance?: boolean;
   isFromUniversity?: boolean;
   universityEmail?: string;
+  studentId?: string;
 }
 
 export interface UserProfile {

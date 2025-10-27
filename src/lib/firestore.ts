@@ -53,7 +53,8 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     createdAt: timestampToDate(data.createdAt),
     updatedAt: timestampToDate(data.updatedAt),
     tags: data.tags || [],
-    imageUrls: data.imageUrls || []
+    imageUrls: data.imageUrls || [],
+    requireStudentId: data.requireStudentId || false
   };
 };
 
@@ -72,7 +73,8 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
     notes: data.notes,
     attendance: data.attendance,
     isFromUniversity: data.isFromUniversity,
-    universityEmail: data.universityEmail
+    universityEmail: data.universityEmail,
+    studentId: data.studentId
   };
 };
 
@@ -200,7 +202,7 @@ export const registrationsApi = {
   },
 
   // Register for an event
-  async registerForEvent(eventId: string, userId: string, userName: string, userEmail: string, reason?: string, isFromUniversity?: boolean, universityEmail?: string): Promise<string> {
+  async registerForEvent(eventId: string, userId: string, userName: string, userEmail: string, reason?: string, isFromUniversity?: boolean, universityEmail?: string, studentId?: string): Promise<string> {
     try {
       // Check if user is already registered
       const existingQuery = query(
@@ -223,7 +225,8 @@ export const registrationsApi = {
         status: 'waitlist',
         reason: reason || null,
         isFromUniversity: isFromUniversity || false,
-        universityEmail: universityEmail || null
+        universityEmail: universityEmail || null,
+        studentId: studentId || null
       });
 
       // Do not update event attendee count here; it will be incremented upon approval

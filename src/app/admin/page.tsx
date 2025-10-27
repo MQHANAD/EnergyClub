@@ -90,6 +90,7 @@ export default function AdminDashboard() {
     description: "",
     status: "active" as Event["status"],
     imageUrls: [] as string[],
+    requireStudentId: false,
   });
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -205,6 +206,7 @@ export default function AdminDashboard() {
       description: event.description,
       status: event.status,
       imageUrls: event.imageUrls || [],
+      requireStudentId: event.requireStudentId || false,
     });
     setEditModalOpen(true);
   };
@@ -279,6 +281,7 @@ export default function AdminDashboard() {
         description: editForm.description,
         status: editForm.status,
         imageUrls: editForm.imageUrls,
+        requireStudentId: editForm.requireStudentId,
       });
 
       // Refresh events
@@ -835,6 +838,24 @@ export default function AdminDashboard() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="requireStudentId"
+                checked={editForm.requireStudentId}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    requireStudentId: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <Label htmlFor="requireStudentId" className="text-sm font-medium text-gray-700">
+                Require Student ID for registration
+              </Label>
             </div>
           </div>
 

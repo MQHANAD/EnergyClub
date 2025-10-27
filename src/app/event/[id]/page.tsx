@@ -47,6 +47,8 @@ export default function EventDetailsPage() {
   const [universityEmailError, setUniversityEmailError] = useState<
     string | null
   >(null);
+  const [studentId, setStudentId] = useState("");
+  const [studentIdError, setStudentIdError] = useState<string | null>(null);
 
   const loadEvent = async () => {
     if (!id || typeof id !== "string") return;
@@ -96,6 +98,13 @@ export default function EventDetailsPage() {
     }
   }, [isFromUniversity]);
 
+  useEffect(() => {
+    if (!event?.requireStudentId) {
+      setStudentId("");
+      setStudentIdError(null);
+    }
+  }, [event?.requireStudentId]);
+
   const validateUniversityEmail = (email: string): string | null => {
     const value = (email || "").trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -140,6 +149,16 @@ export default function EventDetailsPage() {
         }
       }
 
+      if (event.requireStudentId) {
+        if (!studentId.trim()) {
+          setStudentIdError("Student ID is required for this event.");
+          setError("Student ID is required for this event.");
+          setRegistering(false);
+          return;
+        }
+        setStudentIdError(null);
+      }
+
       await registrationsApi.registerForEvent(
         event.id,
         user.uid,
@@ -147,7 +166,8 @@ export default function EventDetailsPage() {
         userProfile.email,
         registrationReason.trim() || undefined,
         isFromUniversity,
-        universityEmail || undefined
+        universityEmail || undefined,
+        event.requireStudentId ? studentId.trim() : undefined
       );
 
       // Reload event to get updated attendee count
@@ -555,9 +575,48 @@ export default function EventDetailsPage() {
                           </div>
                         )}
 
+                        {/* Student ID Field */}
+                        {event.requireStudentId && (
+                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                            <Label
+                              htmlFor="studentId"
+                              className="text-sm font-semibold text-gray-700"
+                            >
+                              {t("Student ID")}
+                              <span className="text-red-500 ml-1">*</span>
+                            </Label>
+                            <input
+                              type="text"
+                              id="studentId"
+                              placeholder={t("Enter you student ID")}
+                              value={studentId}
+                              onChange={(e) => {
+                                setStudentId(e.target.value);
+                                setStudentIdError(null);
+                              }}
+                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
+                                studentIdError
+                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                              }`}
+                              required
+                              aria-invalid={!!studentIdError}
+                              aria-describedby={studentIdError ? "student-id-error" : undefined}
+                            />
+                            {studentIdError && (
+                              <p
+                                id="student-id-error"
+                                className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
+                              >
+                                {studentIdError}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                         {/* Registration Reason */}
                         <div className="space-y-2">
-                          <Label 
+                          <Label
                             htmlFor="reason"
                             className="text-sm font-semibold text-gray-700"
                           >

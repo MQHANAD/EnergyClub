@@ -44,6 +44,7 @@ export default function CreateEventPage() {
     tags: [],
     imageUrls: [],
   });
+  const [requireStudentId, setRequireStudentId] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -294,6 +295,7 @@ export default function CreateEventPage() {
         status: "active" as const,
         tags: formData.tags,
         imageUrls: formData.imageUrls,
+        requireStudentId,
       };
 
       await withTimeout(eventsApi.createEvent(eventData), 30000);
@@ -491,6 +493,19 @@ export default function CreateEventPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="requireStudentId"
+                    checked={requireStudentId}
+                    onChange={(e) => setRequireStudentId(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <Label htmlFor="requireStudentId" className="text-sm font-medium text-gray-700">
+                    Require Student ID for registration
+                  </Label>
                 </div>
 
                 <div>
