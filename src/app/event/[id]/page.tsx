@@ -49,6 +49,8 @@ export default function EventDetailsPage() {
   const [universityEmailError, setUniversityEmailError] = useState<
     string | null
   >(null);
+  const [studentId, setStudentId] = useState("");
+  const [studentIdError, setStudentIdError] = useState<string | null>(null);
 
   const loadEvent = async () => {
     if (!id || typeof id !== "string") return;
@@ -106,6 +108,19 @@ export default function EventDetailsPage() {
     }
   }, [isFromUniversity]);
 
+  useEffect(() => {
+    if (!event?.requireStudentId) {
+      setStudentId("");
+      setStudentIdError(null);
+    }
+  }, [event?.requireStudentId]);
+
+  useEffect(() => {
+    if (event?.requireStudentId) {
+      setIsFromUniversity(true);
+    }
+  }, [event?.requireStudentId]);
+
   const validateUniversityEmail = (email: string): string | null => {
     const value = (email || "").trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -140,7 +155,7 @@ export default function EventDetailsPage() {
       setError(null);
 
       // Validation
-      if (isFromUniversity) {
+      if (isFromUniversity || event.requireStudentId) {
         const emailErr = validateUniversityEmail(universityEmail || "");
         setUniversityEmailError(emailErr);
         if (emailErr) {
@@ -150,14 +165,25 @@ export default function EventDetailsPage() {
         }
       }
 
+      if (event.requireStudentId) {
+        if (!studentId.trim()) {
+          setStudentIdError("Student ID is required for this event.");
+          setError("Student ID is required for this event.");
+          setRegistering(false);
+          return;
+        }
+        setStudentIdError(null);
+      }
+
       await registrationsApi.registerForEvent(
         event.id,
         user.uid,
         userProfile.displayName,
         userProfile.email,
         registrationReason.trim() || undefined,
-        isFromUniversity,
-        universityEmail || undefined
+        isFromUniversity || event.requireStudentId,
+        universityEmail || undefined,
+        event.requireStudentId ? studentId.trim() : undefined
       );
 
       // Log registration for analytics
@@ -507,29 +533,31 @@ export default function EventDetailsPage() {
                       </div>
                     ) : (
                       <div className="space-y-5">
-                        {/* University Checkbox */}
-                        <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            id="university"
-                            checked={isFromUniversity}
-                            onChange={(e) =>
-                              setIsFromUniversity(e.target.checked)
-                            }
-                            className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
-                          />
-                          <Label 
-                            htmlFor="university" 
-                            className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
-                          >
-                            {t("eventDetails.universityToggle")}
-                          </Label>
-                        </div>
+                        {/* University Checkbox - Only show if student ID is not required */}
+                        {!event.requireStudentId && (
+                          <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              id="university"
+                              checked={isFromUniversity}
+                              onChange={(e) =>
+                                setIsFromUniversity(e.target.checked)
+                              }
+                              className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
+                            />
+                            <Label
+                              htmlFor="university"
+                              className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
+                            >
+                              {t("eventDetails.universityToggle")}
+                            </Label>
+                          </div>
+                        )}
 
                         {/* University Email Field */}
-                        {isFromUniversity && (
+                        {(isFromUniversity || event.requireStudentId) && (
                           <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label 
+                            <Label
                               htmlFor="universityEmail"
                               className="text-sm font-semibold text-gray-700"
                             >
@@ -560,7 +588,7 @@ export default function EventDetailsPage() {
                               aria-describedby={universityEmailError ? "email-error" : undefined}
                             />
                             {universityEmailError && (
-                              <p 
+                              <p
                                 id="email-error"
                                 className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
                               >
@@ -570,9 +598,48 @@ export default function EventDetailsPage() {
                           </div>
                         )}
 
+                        {/* Student ID Field */}
+                        {event.requireStudentId && (
+                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                            <Label
+                              htmlFor="studentId"
+                              className="text-sm font-semibold text-gray-700"
+                            >
+                              {t("Student ID")}
+                              <span className="text-red-500 ml-1">*</span>
+                            </Label>
+                            <input
+                              type="text"
+                              id="studentId"
+                              placeholder={t("Enter you student ID")}
+                              value={studentId}
+                              onChange={(e) => {
+                                setStudentId(e.target.value);
+                                setStudentIdError(null);
+                              }}
+                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
+                                studentIdError
+                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                              }`}
+                              required
+                              aria-invalid={!!studentIdError}
+                              aria-describedby={studentIdError ? "student-id-error" : undefined}
+                            />
+                            {studentIdError && (
+                              <p
+                                id="student-id-error"
+                                className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
+                              >
+                                {studentIdError}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                         {/* Registration Reason */}
                         <div className="space-y-2">
-                          <Label 
+                          <Label
                             htmlFor="reason"
                             className="text-sm font-semibold text-gray-700"
                           >
@@ -596,7 +663,7 @@ export default function EventDetailsPage() {
                           onClick={handleRegister}
                           disabled={
                             registering ||
-                            (isFromUniversity && !!universityEmailError)
+                            ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
                           }
                           className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
                         >
