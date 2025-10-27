@@ -105,6 +105,12 @@ export default function EventDetailsPage() {
     }
   }, [event?.requireStudentId]);
 
+  useEffect(() => {
+    if (event?.requireStudentId) {
+      setIsFromUniversity(true);
+    }
+  }, [event?.requireStudentId]);
+
   const validateUniversityEmail = (email: string): string | null => {
     const value = (email || "").trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -139,7 +145,7 @@ export default function EventDetailsPage() {
       setError(null);
 
       // Validation
-      if (isFromUniversity) {
+      if (isFromUniversity || event.requireStudentId) {
         const emailErr = validateUniversityEmail(universityEmail || "");
         setUniversityEmailError(emailErr);
         if (emailErr) {
@@ -165,7 +171,7 @@ export default function EventDetailsPage() {
         userProfile.displayName,
         userProfile.email,
         registrationReason.trim() || undefined,
-        isFromUniversity,
+        isFromUniversity || event.requireStudentId,
         universityEmail || undefined,
         event.requireStudentId ? studentId.trim() : undefined
       );
@@ -512,29 +518,31 @@ export default function EventDetailsPage() {
                       </div>
                     ) : (
                       <div className="space-y-5">
-                        {/* University Checkbox */}
-                        <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            id="university"
-                            checked={isFromUniversity}
-                            onChange={(e) =>
-                              setIsFromUniversity(e.target.checked)
-                            }
-                            className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
-                          />
-                          <Label 
-                            htmlFor="university" 
-                            className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
-                          >
-                            {t("eventDetails.universityToggle")}
-                          </Label>
-                        </div>
+                        {/* University Checkbox - Only show if student ID is not required */}
+                        {!event.requireStudentId && (
+                          <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              id="university"
+                              checked={isFromUniversity}
+                              onChange={(e) =>
+                                setIsFromUniversity(e.target.checked)
+                              }
+                              className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
+                            />
+                            <Label
+                              htmlFor="university"
+                              className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
+                            >
+                              {t("eventDetails.universityToggle")}
+                            </Label>
+                          </div>
+                        )}
 
                         {/* University Email Field */}
-                        {isFromUniversity && (
+                        {(isFromUniversity || event.requireStudentId) && (
                           <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label 
+                            <Label
                               htmlFor="universityEmail"
                               className="text-sm font-semibold text-gray-700"
                             >
@@ -565,7 +573,7 @@ export default function EventDetailsPage() {
                               aria-describedby={universityEmailError ? "email-error" : undefined}
                             />
                             {universityEmailError && (
-                              <p 
+                              <p
                                 id="email-error"
                                 className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
                               >
@@ -640,7 +648,7 @@ export default function EventDetailsPage() {
                           onClick={handleRegister}
                           disabled={
                             registering ||
-                            (isFromUniversity && !!universityEmailError)
+                            ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
                           }
                           className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
                         >
