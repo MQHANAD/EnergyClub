@@ -2,7 +2,8 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date;
+  startDate: Date;
+  endDate: Date;
   location: string;
   maxAttendees: number;
   currentAttendees: number;
@@ -49,12 +50,14 @@ export interface UserProfile {
 export interface EventFormData {
   title: string;
   description: string;
-  date: string;
+  startDate: string;
+  endDate?: string;
   location: string;
   maxAttendees: number;
   tags: string[];
   imageUrls: string[];
 }
+
 
 export interface RegistrationFormData {
   reason?: string;

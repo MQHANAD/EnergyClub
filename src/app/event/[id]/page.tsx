@@ -207,15 +207,21 @@ export default function EventDetailsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -438,10 +444,18 @@ export default function EventDetailsPage() {
                     <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
                       <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
                       <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {formatDate(event.date)}
+                        {event.startDate && event.endDate ? (
+                          <>
+                            {formatDate(new Date(event.startDate))} — {formatDate(new Date(event.endDate))}
+                          </>
+                        ) : event.startDate ? (
+                          formatDate(new Date(event.startDate))
+                        ) : (
+                          "No date available"
+                        )}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
                       <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
                       <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">

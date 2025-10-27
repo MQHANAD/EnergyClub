@@ -337,15 +337,23 @@ export default function AdminDashboard() {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+ const formatDate = (date: Date) => {
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -487,7 +495,15 @@ export default function AdminDashboard() {
                         <div className="space-y-3">
                           <div className="flex items-center text-sm text-gray-600">
                             <Calendar className="h-4 w-4 mr-2" />
-                            {formatDate(event.date)}
+                            {event.startDate && event.endDate ? (
+                              <>
+                                {formatDate(new Date(event.startDate))} — {formatDate(new Date(event.endDate))}
+                              </>
+                            ) : event.startDate ? (
+                              formatDate(new Date(event.startDate))
+                            ) : (
+                              "No date available"
+                            )}
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <Users className="h-4 w-4 mr-2" />

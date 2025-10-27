@@ -43,7 +43,8 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     id: doc.id,
     title: data.title,
     description: data.description,
-    date: timestampToDate(data.date),
+    startDate: timestampToDate(data.startDate),
+    endDate: data?.endDate ? timestampToDate(data.endDate) : null,
     location: data.location,
     maxAttendees: data.maxAttendees,
     currentAttendees: data.currentAttendees,
@@ -54,9 +55,10 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     updatedAt: timestampToDate(data.updatedAt),
     tags: data.tags || [],
     imageUrls: data.imageUrls || [],
-    requireStudentId: data.requireStudentId || false
+    requireStudentId: data.requireStudentId || false,
   };
 };
+
 
 // Convert Registration document to Registration object
 const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
@@ -164,7 +166,7 @@ export const eventsApi = {
       let eventsQuery = query(
         collection(db, 'events'),
         where('status', 'in', ['active', 'completed']),
-        orderBy('date', 'asc'),
+        orderBy('startDate', 'asc'),
         limit(pageSize)
       );
 
@@ -209,30 +211,39 @@ export const eventsApi = {
 
   // Create new event
   async createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'currentAttendees'>): Promise<string> {
-    try {
-      const now = Timestamp.now();
-      const docRef = await addDoc(collection(db, 'events'), {
-        ...eventData,
-        date: Timestamp.fromDate(eventData.date),
-        currentAttendees: 0,
-        createdAt: now,
-        updatedAt: now
-      });
-      return docRef.id;
-    } catch (error) {
-      console.error('Error creating event:', error);
-      throw error;
-    }
-  },
+  try {
+    const now = Timestamp.now();
+    const docRef = await addDoc(collection(db, 'events'), {
+  ...eventData,
+  startDate: Timestamp.fromDate(eventData.startDate as Date),
+  endDate: eventData.endDate ? Timestamp.fromDate(eventData.endDate as Date) : null,
+  currentAttendees: 0,
+  createdAt: now,
+  updatedAt: now
+});
+
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating event:', error);
+    throw error;
+  }
+},
 
   // Update event
   async updateEvent(eventId: string, updates: Partial<Event>): Promise<void> {
     try {
       const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
 
-      if (updates.date) {
-        updateData.date = Timestamp.fromDate(updates.date);
+      if (updates.startDate) {
+        updateData.startDate = Timestamp.fromDate(updates.startDate as Date);
       }
+      if (updates.endDate) {
+          updateData.endDate = Timestamp.fromDate(updates.endDate as Date);
+        } else if (updates.endDate === null) {
+          updateData.endDate = null;
+        }
+
+
 
       await updateDoc(doc(db, 'events', eventId), updateData);
     } catch (error) {

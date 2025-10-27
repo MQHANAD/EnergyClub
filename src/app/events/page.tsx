@@ -71,11 +71,10 @@ export default function EventsPage() {
   };
 
   useEffect(() => {
-    // Load events immediately, don't wait for auth
     loadEvents();
-  }, []); // Empty dependency array - run once on mount
+  }, []);
 
-  // Local search query debounce
+  // Debounce search
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(handle);
@@ -85,11 +84,15 @@ export default function EventsPage() {
     const q = debouncedQuery.trim().toLowerCase();
     let filtered = events;
     if (q) {
-      filtered = events.filter((e) => (e.title ?? "").toLowerCase().includes(q));
+      filtered = events.filter((e) =>
+        (e.title ?? "").toLowerCase().includes(q)
+      );
     }
-    // Sort by date (closest first)
-    return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [events, debouncedQuery]);
+    // Sort by newest date first
+     return filtered.sort(
+    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+  );
+}, [events, debouncedQuery]);
 
   const handleLoadMore = () => {
     if (hasMore && !loadingMore) {
@@ -98,30 +101,33 @@ export default function EventsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
       case "cancelled":
-        return "bg-red-100 text-red-800";
       case "completed":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  // No need to block on authLoading, events can load independently
 
   return (
     <div className="min-h-screen bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed pt-16">
@@ -155,7 +161,9 @@ export default function EventsPage() {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <LoadingSpinner size="lg" />
-                <p className="mt-4 text-gray-600">{t("eventsPage.loadingEvents")}</p>
+                <p className="mt-4 text-gray-600">
+                  {t("eventsPage.loadingEvents")}
+                </p>
               </div>
             </div>
           ) : filteredEvents.length === 0 ? (
@@ -176,7 +184,7 @@ export default function EventsPage() {
                     key={event.id}
                     className="flex flex-col h-full overflow-hidden rounded-lg hover:shadow-lg transition-shadow"
                   >
-                    {/* Image and Status Badge Section */}
+                    {/* Image + Status */}
                     <div className="relative">
                       <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
                         {event.imageUrls && event.imageUrls.length > 0 ? (
@@ -212,14 +220,23 @@ export default function EventsPage() {
                       <CardTitle className="text-xl font-bold leading-tight">
                         {event.title}
                       </CardTitle>
+
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 pt-2">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1.5" />
-                          <span>{formatDate(event.date)}</span>
+                          {event.startDate && event.endDate ? (
+                            <span>
+                              {formatDate(new Date(event.startDate))} —{" "}
+                              {formatDate(new Date(event.endDate))}
+                            </span>
+                          ) : event.startDate ? (
+                            <span>{formatDate(new Date(event.startDate))}</span>
+                          ) : (
+                            <span>No date available</span>
+                          )}
                         </div>
+
                         <div className="flex items-center min-w-0">
-                          {" "}
-                          {/* min-w-0 helps truncation */}
                           <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
                           <span className="truncate">{event.location}</span>
                         </div>
@@ -233,7 +250,6 @@ export default function EventsPage() {
                     </CardContent>
 
                     <div className="flex flex-col items-start gap-4 pt-4">
-                      {/* Tags */}
                       {event.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {event.tags.slice(0, 3).map((tag) => (
@@ -252,7 +268,6 @@ export default function EventsPage() {
                         </div>
                       )}
 
-                      {/* Action Button */}
                       <Button
                         className="w-full"
                         size="sm"
