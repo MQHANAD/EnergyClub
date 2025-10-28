@@ -310,7 +310,7 @@ export default function CreateEventPage() {
       };
 
 
-      await withTimeout(eventsApi.createEvent(eventData), 30000);
+      await withTimeout(eventsApi.createEvent(eventData as any), 30000);
       router.push("/admin");
     } catch (error: any) {
       console.error("🔥 Error creating event:", error.code, error.message);

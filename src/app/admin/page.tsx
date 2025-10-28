@@ -143,6 +143,7 @@ export default function AdminDashboard() {
 
       // Load all events (including cancelled/completed for admin view)
       const { events: allEvents } = await eventsApi.getEvents(undefined, 100);
+      console.log("🔥 Admin fetched events:", allEvents); // <--- ADD THIS
       setEvents(allEvents);
     } catch (error) {
       console.error("Error loading events:", error);
@@ -494,17 +495,29 @@ export default function AdminDashboard() {
                       <CardContent>
                         <div className="space-y-3">
                           <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {event.startDate && event.endDate ? (
-                              <>
-                                {formatDate(new Date(event.startDate))} — {formatDate(new Date(event.endDate))}
-                              </>
-                            ) : event.startDate ? (
-                              formatDate(new Date(event.startDate))
-                            ) : (
-                              "No date available"
-                            )}
-                          </div>
+                                <Calendar className="h-4 w-4 mr-2" />
+                                {(() => {
+                                  const start = event.startDate || event.date; // ✅ fallback to old field
+                                  const end = event.endDate;
+
+                                  if (start && end) {
+                                  return (
+                                    <div className="text-left w-full">
+                                      <div>
+                                        {formatDate(new Date(start))} – {formatDate(new Date(end))}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                else if (start) {
+                                    return <>{formatDate(new Date(start))}</>;
+                                  } else {
+                                    return <>No date available</>;
+                                  }
+                                })()}
+                              </div>
+
                           <div className="flex items-center text-sm text-gray-600">
                             <Users className="h-4 w-4 mr-2" />
                             {event.currentAttendees} / {event.maxAttendees}{" "}

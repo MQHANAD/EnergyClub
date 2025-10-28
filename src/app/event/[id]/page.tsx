@@ -444,15 +444,26 @@ export default function EventDetailsPage() {
                     <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
                       <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
                       <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {event.startDate && event.endDate ? (
-                          <>
-                            {formatDate(new Date(event.startDate))} — {formatDate(new Date(event.endDate))}
-                          </>
-                        ) : event.startDate ? (
-                          formatDate(new Date(event.startDate))
-                        ) : (
-                          "No date available"
-                        )}
+                        {(() => {
+                          const start = event.startDate || event.date; // ✅ fallback to legacy date
+                          const end = event.endDate;
+
+                         if (start && end) {
+                              return (
+                                <div className="text-left w-full">
+                                  <div>
+                                    {formatDate(new Date(start))} – {formatDate(new Date(end))}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                          else if (start) {
+                            return <>{formatDate(new Date(start))}</>;
+                          } else {
+                            return <>No date available</>;
+                          }
+                        })()}
                       </span>
                     </div>
 

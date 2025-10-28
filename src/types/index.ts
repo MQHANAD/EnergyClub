@@ -2,20 +2,18 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  startDate: Date;
-  endDate: Date;
-  location: string;
-  maxAttendees: number;
-  currentAttendees: number;
-  organizerId: string;
-  organizerName: string;
-  status: 'active' | 'cancelled' | 'completed';
-  createdAt: Date;
-  updatedAt: Date;
+  status: "active" | "cancelled" | "completed";
+  date?: string; 
+  startDate?: string; 
+  endDate?: string; 
+  location?: string;
   tags: string[];
+  currentAttendees: number;
+  maxAttendees: number;
   imageUrls: string[];
   requireStudentId?: boolean;
 }
+
 
 export interface Registration {
   id: string;

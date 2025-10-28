@@ -53,6 +53,9 @@ export default function EventsPage() {
           9 // Load 9 events at a time (3x3 grid)
         );
 
+        console.log("🔥 Public fetched events:", newEvents); // <--- ADD THIS
+
+
       if (loadMore) {
         setEvents((prev) => [...prev, ...newEvents]);
       } else {
@@ -89,9 +92,13 @@ export default function EventsPage() {
       );
     }
     // Sort by newest date first
-     return filtered.sort(
-    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-  );
+    return filtered.sort((a, b) => {
+  const dateA = new Date((a.startDate || a.date) as any).getTime();
+  const dateB = new Date((b.startDate || b.date) as any).getTime();
+  return dateB - dateA;
+});
+
+
 }, [events, debouncedQuery]);
 
   const handleLoadMore = () => {
@@ -224,16 +231,25 @@ export default function EventsPage() {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 pt-2">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1.5" />
-                          {event.startDate && event.endDate ? (
-                            <span>
-                              {formatDate(new Date(event.startDate))} —{" "}
-                              {formatDate(new Date(event.endDate))}
-                            </span>
-                          ) : event.startDate ? (
-                            <span>{formatDate(new Date(event.startDate))}</span>
-                          ) : (
-                            <span>No date available</span>
-                          )}
+                          {(() => {
+                          const start = event.startDate || event.date; // ✅ fallback to legacy 'date' field
+                          const end = event.endDate;
+                        if (start && end) {
+                          return (
+                            <div className="text-left w-full">
+                              <div>
+                                {formatDate(new Date(start))} – {formatDate(new Date(end))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        else if (start) {
+                            return <span>{formatDate(new Date(start))}</span>;
+                          } else {
+                            return <span>No date available</span>;
+                          }
+                        })()}
                         </div>
 
                         <div className="flex items-center min-w-0">
