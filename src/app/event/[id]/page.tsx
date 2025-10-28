@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 
@@ -441,48 +442,47 @@ export default function EventDetailsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {(() => {
-                          const start = event.startDate || event.date; // ✅ fallback to legacy date
-                          const end = event.endDate;
+                  {/* Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700">
+                      {formatDate(new Date(event.startDate || event.date))}
+                    </span>
+                  </div>
 
-                         if (start && end) {
-                              return (
-                                <div className="text-left w-full">
-                                  <div>
-                                    {formatDate(new Date(start))} – {formatDate(new Date(end))}
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                          else if (start) {
-                            return <>{formatDate(new Date(start))}</>;
-                          } else {
-                            return <>No date available</>;
-                          }
+                  {/* Duration (only show if endDate exists) */}
+                  {event.endDate && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                      <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-sm md:text-base text-gray-700">
+                        Duration: {(() => {
+                          const start = new Date(event.startDate || event.date);
+                          const end = new Date(event.endDate);
+                          const diffMs = (end.getTime() - start.getTime())+1;
+                          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                          return diffDays === 1 ? "1 day" : `${diffDays} days`;
                         })()}
                       </span>
                     </div>
+                  )}
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {event.location}
-                      </span>
-                    </div>
+                  {/* Location */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {event.location}
+                    </span>
+                  </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <User className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {t("eventDetails.created", {
-                          date: formatDate(event.createdAt),
-                        })}
-                      </span>
-                    </div>
-                  </CardContent>
+                  {/* Created Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <User className="h-5 w-5 text-gray-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {t("eventDetails.created", { date: formatDate(event.createdAt) })}
+                    </span>
+                  </div>
+                </CardContent>
+
                 </Card>
 
                 {/* Registration Card */}

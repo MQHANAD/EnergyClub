@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, MapPin, Users, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ChevronRight } from "lucide-react";
 import Input from "@/components/ui/input";
 import { useI18n, getLocale } from "@/i18n/index";
 import type { DocumentSnapshot } from "firebase/firestore";
@@ -121,6 +121,17 @@ export default function EventsPage() {
   const hasTime = /\d{1,2}:\d{2}/.test(formatted);
   return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
 };
+
+const getDuration = (start: Date, end: Date) => {
+  if (!start || !end) return null;
+
+  const diffMs = (end.getTime() - start.getTime())+1;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 1) return "1 day";
+  return `${diffDays} days`;
+};
+
 
 
 
@@ -228,35 +239,28 @@ export default function EventsPage() {
                         {event.title}
                       </CardTitle>
 
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 pt-2">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1.5" />
-                          {(() => {
-                          const start = event.startDate || event.date; // ✅ fallback to legacy 'date' field
-                          const end = event.endDate;
-                        if (start && end) {
-                          return (
-                            <div className="text-left w-full">
-                              <div>
-                                {formatDate(new Date(start))} – {formatDate(new Date(end))}
-                              </div>
+                      <div className="flex flex-col gap-2 text-sm text-gray-600 pt-2">
+                          {/* Row 1: Date */}
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1.5" />
+                            <span>{formatDate(new Date(event.startDate || event.date))}</span>
+                          </div>
+
+                          {/* Row 2: Duration (only if end date exists) */}
+                          {event.endDate && (
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1.5" />
+                              <span>Duration: {getDuration(new Date(event.startDate), new Date(event.endDate))}</span>
                             </div>
-                          );
-                        }
+                          )}
 
-                        else if (start) {
-                            return <span>{formatDate(new Date(start))}</span>;
-                          } else {
-                            return <span>No date available</span>;
-                          }
-                        })()}
+                          {/* Row 3: Location */}
+                          <div className="flex items-center min-w-0">
+                            <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                            <span className="truncate">{event.location}</span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center min-w-0">
-                          <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
-                          <span className="truncate">{event.location}</span>
-                        </div>
-                      </div>
                     </CardHeader>
 
                     <CardContent className="flex-grow">

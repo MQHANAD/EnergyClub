@@ -27,6 +27,8 @@ import {
   X,
   Pencil,
   Upload,
+  Clock,
+  MapPin,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 import Input from "@/components/ui/input";
@@ -348,11 +350,19 @@ export default function AdminDashboard() {
     hour12: true,
   }).format(date);
 
+ 
+
+
   // Add "at" between date and time (for English locales)
   const hasTime = /\d{1,2}:\d{2}/.test(formatted);
   return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
 };
 
+ const getDuration = (start: Date, end: Date) => {
+  const diffMs = (end.getTime() - start.getTime())+1;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return diffDays === 1 ? "1 day" : `${diffDays} days`;
+};
 
 
 
@@ -494,29 +504,35 @@ export default function AdminDashboard() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
-                          <div className="flex items-center text-sm text-gray-600">
-                                <Calendar className="h-4 w-4 mr-2" />
-                                {(() => {
-                                  const start = event.startDate || event.date; // ✅ fallback to old field
-                                  const end = event.endDate;
+                          {/* Event Date */}
+                          <div className="flex flex-col gap-2 text-sm text-gray-600">
+                            {/* Start Date */}
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                              <span>
+                                {event.startDate
+                                  ? formatDate(new Date(event.startDate))
+                                  : "No date available"}
+                              </span>
+                            </div>
 
-                                  if (start && end) {
-                                  return (
-                                    <div className="text-left w-full">
-                                      <div>
-                                        {formatDate(new Date(start))} – {formatDate(new Date(end))}
-                                      </div>
-                                    </div>
-                                  );
-                                }
-
-                                else if (start) {
-                                    return <>{formatDate(new Date(start))}</>;
-                                  } else {
-                                    return <>No date available</>;
-                                  }
-                                })()}
+                            {/* Duration (if both start and end exist) */}
+                            {event.startDate && event.endDate && (
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                                <span>Duration: {getDuration(new Date(event.startDate), new Date(event.endDate))}</span>
                               </div>
+                            )}
+
+                            {/* Location */}
+                            {event.location && (
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-red-600 flex-shrink-0" />
+                                <span>{event.location}</span>
+                              </div>
+                            )}
+                          </div>
+
 
                           <div className="flex items-center text-sm text-gray-600">
                             <Users className="h-4 w-4 mr-2" />
