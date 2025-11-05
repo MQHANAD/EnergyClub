@@ -1,7 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics, type Analytics, isSupported } from 'firebase/analytics';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 
@@ -31,7 +33,17 @@ if (process.env.NODE_ENV !== 'production') {
 
 let appCheckInited = false;
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Initialize Firebase app
+let app;
+try {
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Firebase app initialized:', app.name);
+  }
+} catch (error) {
+  console.error('Firebase app initialization failed:', error);
+  throw error;
+}
 
 // Initialize App Check on the client if available
 if (typeof window !== 'undefined' && !appCheckInited) {
@@ -77,11 +89,39 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 });
 
 // Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-if (process.env.NODE_ENV !== 'production') {
-  console.log('Storage bucket (env-provided):', firebaseConfig.storageBucket);
+import type { FirebaseStorage } from 'firebase/storage';
+
+let db: Firestore;
+let storage: FirebaseStorage;
+try {
+  db = getFirestore(app);
+  storage = getStorage(app);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Storage bucket (env-provided):', firebaseConfig.storageBucket);
+    console.log('Firebase app initialized:', app.name);
+    console.log('Firestore db initialized:', db ? 'Yes' : 'No');
+  }
+} catch (error) {
+  console.error('Firestore initialization failed:', error);
+  throw error;
 }
+
+export { db, storage };
+
+// Initialize Analytics (client-side only)
+let analytics: Analytics | null = null;
+if (typeof window !== 'undefined') {
+  isSupported().then(yes => {
+    if (yes) {
+      analytics = getAnalytics(app);
+      console.log('Firebase Analytics initialized');
+    }
+  }).catch(err => {
+    console.warn('Analytics not supported:', err);
+  });
+}
+
+export { analytics };
 
 // Google Auth Provider
 // Google provider removed - now using email/password authentication

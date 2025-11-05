@@ -2,18 +2,18 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date;
-  location: string;
-  maxAttendees: number;
-  currentAttendees: number;
-  organizerId: string;
-  organizerName: string;
-  status: 'active' | 'cancelled' | 'completed';
-  createdAt: Date;
-  updatedAt: Date;
+  status: "active" | "cancelled" | "completed";
+  date?: string; 
+  startDate?: string; 
+  endDate?: string; 
+  location?: string;
   tags: string[];
+  currentAttendees: number;
+  maxAttendees: number;
   imageUrls: string[];
+  requireStudentId?: boolean;
 }
+
 
 export interface Registration {
   id: string;
@@ -28,6 +28,7 @@ export interface Registration {
   attendance?: boolean;
   isFromUniversity?: boolean;
   universityEmail?: string;
+  studentId?: string;
 }
 
 export interface UserProfile {
@@ -47,12 +48,14 @@ export interface UserProfile {
 export interface EventFormData {
   title: string;
   description: string;
-  date: string;
+  startDate: string;
+  endDate?: string;
   location: string;
   maxAttendees: number;
   tags: string[];
   imageUrls: string[];
 }
+
 
 export interface RegistrationFormData {
   reason?: string;
@@ -92,4 +95,55 @@ export interface Application {
   decidedAt: Date | null;
   decidedBy: string | null;
   adminNotes: string | null;
+}
+
+export interface Member {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  profilePicture?: string;
+  linkedInUrl?: string;
+  portfolioUrl?: string;
+  committeeId: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Committee {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  members: Member[];
+}
+
+export interface LeadershipPosition {
+  id: string;
+  title: 'president' | 'vice_president' | 'leader';
+  memberId: string;
+  member: Member;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeamFormData {
+  email?: string;
+  fullName: string;
+  role: string;
+  profilePicture?: string;
+  linkedInUrl?: string;
+  portfolioUrl?: string;
+  committeeId: string;
+}
+
+export interface CommitteeFormData {
+  name: string;
+  description?: string;
+  order: number;
 }

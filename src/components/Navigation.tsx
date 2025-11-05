@@ -9,7 +9,8 @@ import { LogOut, User, Menu, X } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
-
+import { VideoText } from "./landingPageUi/videotext";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 export default function Navigation() {
   const { user, userProfile, logout, loading, isOrganizer, isAdmin } =
     useAuth();
@@ -22,17 +23,23 @@ export default function Navigation() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hoveredPath, setHoveredPath] = useState("");
 
-  // Define navigation links dynamically
+  // Define main navigation links (public and always visible)
   const navLinks = [
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
-    ...(canSeeAdmin
-      ? [
-          { href: "/admin", label: t("nav.admin") },
-          { href: "/admin/applications", label: t("nav.applications") },
-        ]
-      : []),
+    { href: "/team", label: t("navigation.team") },
+    { href: "/register", label: t("navigation.joinUs") },
   ];
+
+  // Define admin links (shown in user dropdown)
+  const adminLinks = canSeeAdmin
+    ? [
+        { href: "/admin", label: t("nav.admin") },
+        { href: "/admin/applications", label: t("nav.applications") },
+        { href: "/admin/team", label: "Team Management" },
+        { href: "/admin/analytics", label: t("nav.analytics") },
+      ]
+    : [];
 
   // Handle scroll effect for navbar
   useEffect(() => {
@@ -79,13 +86,6 @@ export default function Navigation() {
             : "bg-white/10 backdrop-blur-md border-white/20"
         }`}
       >
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <span className="font-bold text-[#25818a] text-2xl">
-            {t("brand.short")}
-          </span>
-        </Link>
-
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2">
           {navLinks.map((link) => (
@@ -117,17 +117,14 @@ export default function Navigation() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2 focus:outline-none"
               >
-                {userProfile?.photoURL ? (
-                  <img
-                    src={userProfile.photoURL}
-                    alt={userProfile.displayName}
-                    className="h-8 w-8 rounded-full object-cover cursor-pointer"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="h-4 w-4 text-gray-600" />
-                  </div>
-                )}
+                <OptimizedImage
+                  src={userProfile?.photoURL}
+                  alt={userProfile?.displayName || 'User'}
+                  className="h-8 w-8 rounded-full object-cover cursor-pointer"
+                  fallbackText={userProfile?.displayName || 'User'}
+                  size={32}
+                  loading="lazy"
+                />
               </button>
               <AnimatePresence>
                 {dropdownOpen && (
@@ -135,12 +132,44 @@ export default function Navigation() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 mt-3 w-40 bg-white/80 backdrop-blur-lg border border-white/30 rounded-xl shadow-lg"
+                    className="absolute right-0 mt-3 w-56 bg-white/80 backdrop-blur-lg border border-white/30 rounded-xl shadow-lg"
                   >
                     <div className="p-1">
                       <p className="px-3 py-2 text-sm font-semibold text-gray-800 truncate">
                         {userProfile?.displayName || user.email}
                       </p>
+                      <div className="h-px bg-gray-200 my-1"></div>
+                      
+                      {/* Profile Link */}
+                      <Link
+                        href="/profile"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        My Profile
+                      </Link>
+                      
+                      {/* Admin Links */}
+                      {adminLinks.length > 0 && (
+                        <>
+                          <div className="h-px bg-gray-200 my-1"></div>
+                          <div className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">
+                            Admin
+                          </div>
+                          {adminLinks.map((link) => (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setDropdownOpen(false)}
+                              className="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                            >
+                              {link.label}
+                            </Link>
+                          ))}
+                        </>
+                      )}
+                      
                       <div className="h-px bg-gray-200 my-1"></div>
                       <button
                         onClick={handleLogout}
@@ -155,8 +184,11 @@ export default function Navigation() {
               </AnimatePresence>
             </div>
           ) : (
-            <Link href="/login">
-              <Button size="sm">{t("nav.signIn")}</Button>
+            <Link
+              href="/login"
+              className="relative px-4 py-2 text-sm font-medium text-slate-800 hover:text-black transition-colors"
+            >
+              {t("nav.signIn")}
             </Link>
           )}
         </div>
@@ -182,34 +214,82 @@ export default function Navigation() {
             className="md:hidden fixed top-20 left-4 right-4 mt-2 p-4 bg-white/80 backdrop-blur-xl border border-white/30 rounded-2xl shadow-xl"
           >
             <div className="flex flex-col gap-2">
+              {/* Main Navigation Links */}
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="h-px bg-gray-200 my-2"></div>
+              
               {user ? (
-                <div className="flex flex-col items-center gap-3">
-                  <p className="font-semibold text-slate-800">
-                    {userProfile?.displayName || user.email}
-                  </p>
+                <>
+                  <div className="h-px bg-gray-200 my-2"></div>
+                  
+                  {/* User Info */}
+                  <div className="px-4 py-2 text-center">
+                    <p className="font-semibold text-slate-800 truncate">
+                      {userProfile?.displayName || user.email}
+                    </p>
+                  </div>
+                  
+                  {/* Profile Link */}
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center px-4 py-3 text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    My Profile
+                  </Link>
+                  
+                  {/* Admin Links */}
+                  {adminLinks.length > 0 && (
+                    <>
+                      <div className="h-px bg-gray-200 my-2"></div>
+                      <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase text-center">
+                        Admin
+                      </div>
+                      {adminLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </>
+                  )}
+                  
+                  <div className="h-px bg-gray-200 my-2"></div>
                   <Button
                     onClick={handleLogout}
                     variant="destructive"
                     className="w-full"
                   >
+                    <LogOut className="h-4 w-4 mr-2" />
                     {t("nav.logout")}
                   </Button>
-                </div>
+                </>
               ) : (
-                <Link href="/login" className="w-full">
-                  <Button className="w-full">{t("nav.signIn")}</Button>
-                </Link>
+                <>
+                  <div className="h-px bg-gray-200 my-2"></div>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                  >
+                    {t("nav.signIn")}
+                  </Link>
+                </>
               )}
+              
               <div className="mt-3 flex justify-center">
                 <LanguageSwitcher />
               </div>
@@ -220,3 +300,4 @@ export default function Navigation() {
     </header>
   );
 }
+

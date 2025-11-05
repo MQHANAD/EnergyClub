@@ -47,7 +47,16 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <I18nProvider lang={lang}>{children}</I18nProvider>
+          <I18nProvider lang={lang}>
+            {children}
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  console.timeEnd('App Startup');
+                `,
+              }}
+            />
+          </I18nProvider>
         </AuthProvider>
       </body>
     </html>

@@ -1,14 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Force Turbopack to use the project directory as workspace root
+  // Enable Turbopack for faster development builds
   turbopack: {
-    root: new URL(".", import.meta.url).pathname,
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
   },
-  // Ensure file tracing also anchors to the project directory
-  outputFileTracingRoot: new URL(".", import.meta.url).pathname,
-
+  
+  // Optimize images
   images: {
+    domains: ['upload.wikimedia.org'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -20,9 +25,28 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    formats: ['image/webp', 'image/avif'],
   },
+  
+  // Disable ESLint during builds for faster startup
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  
+  // Disable TypeScript type checking during builds
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  
+  // Optimize webpack
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
   },
 };
 

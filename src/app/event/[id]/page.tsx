@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
 import { Event, Registration } from "@/types";
 import Navigation from "@/components/Navigation";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
+import { logEventView, logEventRegistration } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +27,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 
@@ -47,6 +50,8 @@ export default function EventDetailsPage() {
   const [universityEmailError, setUniversityEmailError] = useState<
     string | null
   >(null);
+  const [studentId, setStudentId] = useState("");
+  const [studentIdError, setStudentIdError] = useState<string | null>(null);
 
   const loadEvent = async () => {
     if (!id || typeof id !== "string") return;
@@ -62,21 +67,9 @@ export default function EventDetailsPage() {
       }
 
       setEvent(eventData);
-
-      // Check if user is already registered
-      if (user) {
-        try {
-          const userRegistrations = await registrationsApi.getUserRegistrations(
-            user.uid
-          );
-          const existingRegistration = userRegistrations.find(
-            (reg) => reg.eventId === id
-          );
-          setUserRegistration(existingRegistration || null);
-        } catch (error) {
-          console.error("Error checking registration status:", error);
-        }
-      }
+      
+      // Log event view for analytics
+      logEventView(id, eventData.title);
     } catch (error) {
       console.error("Error loading event:", error);
       setError("Failed to load event details. Please try again.");
@@ -85,9 +78,29 @@ export default function EventDetailsPage() {
     }
   };
 
+  // Load event immediately on mount
   useEffect(() => {
     loadEvent();
-  }, [id, user]);
+  }, [id]);
+
+  // Check registration status separately when user is available
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (user && id && typeof id === "string") {
+        try {
+          // Use optimized single-event registration check
+          const registration = await registrationsApi.getUserEventRegistration(
+            user.uid,
+            id
+          );
+          setUserRegistration(registration);
+        } catch (error) {
+          console.error("Error checking registration status:", error);
+        }
+      }
+    };
+    checkRegistration();
+  }, [user, id]);
 
   useEffect(() => {
     if (!isFromUniversity) {
@@ -95,6 +108,19 @@ export default function EventDetailsPage() {
       setUniversityEmailError(null);
     }
   }, [isFromUniversity]);
+
+  useEffect(() => {
+    if (!event?.requireStudentId) {
+      setStudentId("");
+      setStudentIdError(null);
+    }
+  }, [event?.requireStudentId]);
+
+  useEffect(() => {
+    if (event?.requireStudentId) {
+      setIsFromUniversity(true);
+    }
+  }, [event?.requireStudentId]);
 
   const validateUniversityEmail = (email: string): string | null => {
     const value = (email || "").trim();
@@ -130,7 +156,7 @@ export default function EventDetailsPage() {
       setError(null);
 
       // Validation
-      if (isFromUniversity) {
+      if (isFromUniversity || event.requireStudentId) {
         const emailErr = validateUniversityEmail(universityEmail || "");
         setUniversityEmailError(emailErr);
         if (emailErr) {
@@ -140,15 +166,29 @@ export default function EventDetailsPage() {
         }
       }
 
+      if (event.requireStudentId) {
+        if (!studentId.trim()) {
+          setStudentIdError("Student ID is required for this event.");
+          setError("Student ID is required for this event.");
+          setRegistering(false);
+          return;
+        }
+        setStudentIdError(null);
+      }
+
       await registrationsApi.registerForEvent(
         event.id,
         user.uid,
         userProfile.displayName,
         userProfile.email,
         registrationReason.trim() || undefined,
-        isFromUniversity,
-        universityEmail || undefined
+        isFromUniversity || event.requireStudentId,
+        universityEmail || undefined,
+        event.requireStudentId ? studentId.trim() : undefined
       );
+
+      // Log registration for analytics
+      logEventRegistration(event.id, event.title);
 
       // Reload event to get updated attendee count
       await loadEvent();
@@ -168,15 +208,21 @@ export default function EventDetailsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -238,13 +284,15 @@ export default function EventDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-white">
         <Navigation />
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <div className="mb-6 md:mb-8">
-            <div className="h-10 w-32 bg-gray-300 rounded-lg animate-pulse"></div>
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <LoadingSpinner size="lg" />
+              <p className="mt-4 text-gray-600">{t("common.loading")}</p>
+            </div>
           </div>
-          <SkeletonLoader />
         </main>
       </div>
     );
@@ -394,29 +442,47 @@ export default function EventDetailsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {formatDate(event.date)}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {event.location}
-                      </span>
-                    </div>
+                  {/* Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700">
+                      {formatDate(new Date(event.startDate || event.date))}
+                    </span>
+                  </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <User className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {t("eventDetails.created", {
-                          date: formatDate(event.createdAt),
-                        })}
+                  {/* Duration (only show if endDate exists) */}
+                  {event.endDate && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                      <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-sm md:text-base text-gray-700">
+                        Duration: {(() => {
+                          const start = new Date(event.startDate || event.date);
+                          const end = new Date(event.endDate);
+                          const diffMs = (end.getTime() - start.getTime())+1;
+                          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                          return diffDays === 1 ? "1 day" : `${diffDays} days`;
+                        })()}
                       </span>
                     </div>
-                  </CardContent>
+                  )}
+
+                  {/* Location */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {event.location}
+                    </span>
+                  </div>
+
+                  {/* Created Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <User className="h-5 w-5 text-gray-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {t("eventDetails.created", { date: formatDate(event.createdAt) })}
+                    </span>
+                  </div>
+                </CardContent>
+
                 </Card>
 
                 {/* Registration Card */}
@@ -492,29 +558,31 @@ export default function EventDetailsPage() {
                       </div>
                     ) : (
                       <div className="space-y-5">
-                        {/* University Checkbox */}
-                        <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            id="university"
-                            checked={isFromUniversity}
-                            onChange={(e) =>
-                              setIsFromUniversity(e.target.checked)
-                            }
-                            className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
-                          />
-                          <Label 
-                            htmlFor="university" 
-                            className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
-                          >
-                            {t("eventDetails.universityToggle")}
-                          </Label>
-                        </div>
+                        {/* University Checkbox - Only show if student ID is not required */}
+                        {!event.requireStudentId && (
+                          <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              id="university"
+                              checked={isFromUniversity}
+                              onChange={(e) =>
+                                setIsFromUniversity(e.target.checked)
+                              }
+                              className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
+                            />
+                            <Label
+                              htmlFor="university"
+                              className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
+                            >
+                              {t("eventDetails.universityToggle")}
+                            </Label>
+                          </div>
+                        )}
 
                         {/* University Email Field */}
-                        {isFromUniversity && (
+                        {(isFromUniversity || event.requireStudentId) && (
                           <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label 
+                            <Label
                               htmlFor="universityEmail"
                               className="text-sm font-semibold text-gray-700"
                             >
@@ -545,7 +613,7 @@ export default function EventDetailsPage() {
                               aria-describedby={universityEmailError ? "email-error" : undefined}
                             />
                             {universityEmailError && (
-                              <p 
+                              <p
                                 id="email-error"
                                 className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
                               >
@@ -555,9 +623,48 @@ export default function EventDetailsPage() {
                           </div>
                         )}
 
+                        {/* Student ID Field */}
+                        {event.requireStudentId && (
+                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                            <Label
+                              htmlFor="studentId"
+                              className="text-sm font-semibold text-gray-700"
+                            >
+                              {t("Student ID")}
+                              <span className="text-red-500 ml-1">*</span>
+                            </Label>
+                            <input
+                              type="text"
+                              id="studentId"
+                              placeholder={t("Enter you student ID")}
+                              value={studentId}
+                              onChange={(e) => {
+                                setStudentId(e.target.value);
+                                setStudentIdError(null);
+                              }}
+                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
+                                studentIdError
+                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                              }`}
+                              required
+                              aria-invalid={!!studentIdError}
+                              aria-describedby={studentIdError ? "student-id-error" : undefined}
+                            />
+                            {studentIdError && (
+                              <p
+                                id="student-id-error"
+                                className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
+                              >
+                                {studentIdError}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                         {/* Registration Reason */}
                         <div className="space-y-2">
-                          <Label 
+                          <Label
                             htmlFor="reason"
                             className="text-sm font-semibold text-gray-700"
                           >
@@ -581,13 +688,13 @@ export default function EventDetailsPage() {
                           onClick={handleRegister}
                           disabled={
                             registering ||
-                            (isFromUniversity && !!universityEmailError)
+                            ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
                           }
                           className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
                         >
                           {registering ? (
                             <span className="flex items-center justify-center gap-2">
-                              <Loader2 className="h-5 w-5 animate-spin" />
+                              <LoadingSpinner size="sm" variant="white" />
                               <span>{t("eventDetails.registering")}</span>
                             </span>
                           ) : (

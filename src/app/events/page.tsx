@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { primeEventCache } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi } from "@/lib/firestore";
 import { Event } from "@/types";
 import Navigation from "@/components/Navigation";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,12 +18,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, MapPin, Users, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ChevronRight } from "lucide-react";
 import Input from "@/components/ui/input";
 import { useI18n, getLocale } from "@/i18n/index";
 import type { DocumentSnapshot } from "firebase/firestore";
 
 export default function EventsPage() {
+  const router = useRouter();
   const { user, loading: authLoading, isAdmin } = useAuth();
   const { t, lang } = useI18n();
   const [events, setEvents] = useState<Event[]>([]);
@@ -49,6 +53,9 @@ export default function EventsPage() {
           9 // Load 9 events at a time (3x3 grid)
         );
 
+        console.log("🔥 Public fetched events:", newEvents); // <--- ADD THIS
+
+
       if (loadMore) {
         setEvents((prev) => [...prev, ...newEvents]);
       } else {
@@ -67,12 +74,10 @@ export default function EventsPage() {
   };
 
   useEffect(() => {
-    if (!authLoading) {
-      loadEvents();
-    }
-  }, [authLoading]);
+    loadEvents();
+  }, []);
 
-  // Local search query debounce
+  // Debounce search
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(handle);
@@ -80,9 +85,21 @@ export default function EventsPage() {
 
   const filteredEvents = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    if (!q) return events;
-    return events.filter((e) => (e.title ?? "").toLowerCase().includes(q));
-  }, [events, debouncedQuery]);
+    let filtered = events;
+    if (q) {
+      filtered = events.filter((e) =>
+        (e.title ?? "").toLowerCase().includes(q)
+      );
+    }
+    // Sort by newest date first
+    return filtered.sort((a, b) => {
+  const dateA = new Date((a.startDate || a.date) as any).getTime();
+  const dateB = new Date((b.startDate || b.date) as any).getTime();
+  return dateB - dateA;
+});
+
+
+}, [events, debouncedQuery]);
 
   const handleLoadMore = () => {
     if (hasMore && !loadingMore) {
@@ -91,39 +108,44 @@ export default function EventsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+const getDuration = (start: Date, end: Date) => {
+  if (!start || !end) return null;
+
+  const diffMs = (end.getTime() - start.getTime())+1;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 1) return "1 day";
+  return `${diffDays} days`;
+};
+
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
       case "cancelled":
-        return "bg-red-100 text-red-800";
       case "completed":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <span className="loading loading-infinity loading-xl"></span>
-          <span>{t("common.loading")}</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed pt-16">
@@ -155,9 +177,11 @@ export default function EventsPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-2">
-                <span className="loading loading-infinity loading-xl"></span>
-                <span>{t("eventsPage.loadingEvents")}</span>
+              <div className="text-center">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-gray-600">
+                  {t("eventsPage.loadingEvents")}
+                </p>
               </div>
             </div>
           ) : filteredEvents.length === 0 ? (
@@ -178,7 +202,7 @@ export default function EventsPage() {
                     key={event.id}
                     className="flex flex-col h-full overflow-hidden rounded-lg hover:shadow-lg transition-shadow"
                   >
-                    {/* Image and Status Badge Section */}
+                    {/* Image + Status */}
                     <div className="relative">
                       <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
                         {event.imageUrls && event.imageUrls.length > 0 ? (
@@ -214,18 +238,29 @@ export default function EventsPage() {
                       <CardTitle className="text-xl font-bold leading-tight">
                         {event.title}
                       </CardTitle>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 pt-2">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1.5" />
-                          <span>{formatDate(event.date)}</span>
+
+                      <div className="flex flex-col gap-2 text-sm text-gray-600 pt-2">
+                          {/* Row 1: Date */}
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1.5" />
+                            <span>{formatDate(new Date(event.startDate || event.date))}</span>
+                          </div>
+
+                          {/* Row 2: Duration (only if end date exists) */}
+                          {event.endDate && (
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1.5" />
+                              <span>Duration: {getDuration(new Date(event.startDate), new Date(event.endDate))}</span>
+                            </div>
+                          )}
+
+                          {/* Row 3: Location */}
+                          <div className="flex items-center min-w-0">
+                            <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                            <span className="truncate">{event.location}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center min-w-0">
-                          {" "}
-                          {/* min-w-0 helps truncation */}
-                          <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
-                          <span className="truncate">{event.location}</span>
-                        </div>
-                      </div>
+
                     </CardHeader>
 
                     <CardContent className="flex-grow">
@@ -235,7 +270,6 @@ export default function EventsPage() {
                     </CardContent>
 
                     <div className="flex flex-col items-start gap-4 pt-4">
-                      {/* Tags */}
                       {event.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {event.tags.slice(0, 3).map((tag) => (
@@ -254,13 +288,19 @@ export default function EventsPage() {
                         </div>
                       )}
 
-                      {/* Action Button */}
-                      <Link href={`/event/${event.id}`} className="w-full">
-                        <Button className="w-full" size="sm">
-                          {t("eventsPage.viewDetails")}
-                          <ChevronRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
+                      <Button
+                        className="w-full"
+                        size="sm"
+                        onMouseEnter={() => primeEventCache(event)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          primeEventCache(event);
+                          router.push(`/event/${event.id}`);
+                        }}
+                      >
+                        {t("eventsPage.viewDetails")}
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Button>
                     </div>
                   </Card>
                 ))}
@@ -272,12 +312,13 @@ export default function EventsPage() {
                     onClick={handleLoadMore}
                     disabled={loadingMore}
                     variant="outline"
+                    className="border-[#25818a] text-[#25818a] hover:bg-[#25818a] hover:text-white"
                   >
                     {loadingMore ? (
-                      <>
-                        <span className="loading loading-infinity loading-xl"></span>
+                      <div className="flex items-center gap-2">
+                        <LoadingSpinner size="sm" />
                         {t("eventsPage.loading")}
-                      </>
+                      </div>
                     ) : (
                       t("eventsPage.loadMore")
                     )}

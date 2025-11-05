@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi } from "@/lib/firestore";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
 import {
   ref,
   uploadBytesResumable,
@@ -36,14 +37,17 @@ export default function CreateEventPage() {
   const { t } = useI18n();
 
   const [formData, setFormData] = useState<EventFormData>({
-    title: "",
-    description: "",
-    date: "",
-    location: "",
-    maxAttendees: 50,
-    tags: [],
-    imageUrls: [],
-  });
+  title: "",
+  description: "",
+  startDate: "",
+  endDate: "",
+  location: "",
+  maxAttendees: 50,
+  tags: [],
+  imageUrls: [],
+});
+
+  const [requireStudentId, setRequireStudentId] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -237,7 +241,7 @@ export default function CreateEventPage() {
       if (
         !formData.title ||
         !formData.description ||
-        !formData.date ||
+        !formData.startDate ||
         !formData.location
       ) {
         setError("Please fill in all required fields.");
@@ -281,12 +285,20 @@ export default function CreateEventPage() {
         return;
       }
 
+      if (formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+  setError("End date cannot be before start date.");
+  return;
+}
+
+
+
       setLoading(true);
 
       const eventData = {
         title: formData.title,
         description: formData.description,
-        date: new Date(formData.date),
+        startDate: new Date(formData.startDate),
+        endDate: formData.endDate ? new Date(formData.endDate) : null,
         location: formData.location,
         maxAttendees: formData.maxAttendees,
         organizerId: user.uid,
@@ -294,9 +306,11 @@ export default function CreateEventPage() {
         status: "active" as const,
         tags: formData.tags,
         imageUrls: formData.imageUrls,
+        requireStudentId,
       };
 
-      await withTimeout(eventsApi.createEvent(eventData), 30000);
+
+      await withTimeout(eventsApi.createEvent(eventData as any), 30000);
       router.push("/admin");
     } catch (error: any) {
       console.error("🔥 Error creating event:", error.code, error.message);
@@ -383,20 +397,37 @@ export default function CreateEventPage() {
                     />
                   </div>
 
+          
+
                   <div>
-                    <Label htmlFor="date">
-                      {t("admin.createPage.labels.dateTime")}
+                    <Label htmlFor="startDate" className="block mb-1">
+                      Event Start Date
                     </Label>
                     <input
                       type="datetime-local"
-                      id="date"
-                      name="date"
-                      value={formData.date}
+                      id="startDate"
+                      name="startDate"
+                      value={formData.startDate}
                       onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       required
                     />
                   </div>
+
+                  <div>
+                    <Label htmlFor="endDate" className="block mb-1">
+                      Event End Date
+                    </Label>
+                    <input
+                      type="datetime-local"
+                      id="endDate"
+                      name="endDate"
+                      value={formData.endDate}
+                      onChange={handleInputChange}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
 
                   <div>
                     <Label htmlFor="location">
@@ -491,6 +522,19 @@ export default function CreateEventPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="requireStudentId"
+                    checked={requireStudentId}
+                    onChange={(e) => setRequireStudentId(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <Label htmlFor="requireStudentId" className="text-sm font-medium text-gray-700">
+                    Require Student ID for registration
+                  </Label>
                 </div>
 
                 <div>
