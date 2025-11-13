@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 
@@ -207,15 +208,21 @@ export default function EventDetailsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -435,29 +442,47 @@ export default function EventDetailsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {formatDate(event.date)}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {event.location}
-                      </span>
-                    </div>
+                  {/* Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700">
+                      {formatDate(new Date(event.startDate || event.date))}
+                    </span>
+                  </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <User className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {t("eventDetails.created", {
-                          date: formatDate(event.createdAt),
-                        })}
+                  {/* Duration (only show if endDate exists) */}
+                  {event.endDate && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                      <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-sm md:text-base text-gray-700">
+                        Duration: {(() => {
+                          const start = new Date(event.startDate || event.date);
+                          const end = new Date(event.endDate);
+                          const diffMs = (end.getTime() - start.getTime())+1;
+                          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                          return diffDays === 1 ? "1 day" : `${diffDays} days`;
+                        })()}
                       </span>
                     </div>
-                  </CardContent>
+                  )}
+
+                  {/* Location */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {event.location}
+                    </span>
+                  </div>
+
+                  {/* Created Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <User className="h-5 w-5 text-gray-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {t("eventDetails.created", { date: formatDate(event.createdAt) })}
+                    </span>
+                  </div>
+                </CardContent>
+
                 </Card>
 
                 {/* Registration Card */}
