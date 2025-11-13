@@ -7,6 +7,8 @@ import { useI18n } from "@/i18n";
 import Navigation from "@/components/Navigation";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar, CalendarCheck, Filter } from "lucide-react";
 
 // Dynamically import Recharts to handle missing package
 let RechartsComponents: any = null;
@@ -49,9 +51,15 @@ import {
 // Types for BigQuery analytics data
 interface BigQueryAnalyticsData {
   totalUsers: number;
+  weeklyActiveUsers?: number;
+  monthlyActiveUsers?: number;
+  newUsers?: number;
+  returningUsers?: number;
   activeUsersByDay: Array<{ date: string; count: number }>;
   eventsFrequency: Array<{ eventName: string; count: number }>;
   screenViews: Array<{ screenName: string; count: number }>;
+  devices?: Array<{ deviceCategory: string; os: string; platform: string; uniqueUsers: number; totalEvents: number }>;
+  geography?: Array<{ country: string; uniqueUsers: number; totalEvents: number; percentage: number }>;
 }
 
 // SWR fetcher function
@@ -111,6 +119,8 @@ export default function AnalyticsPage() {
   const [analyticsData, setAnalyticsData] = React.useState<BigQueryAnalyticsData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<any>(null);
+  const [selectedTab, setSelectedTab] = React.useState<'overview' | 'users' | 'devices' | 'geography'>('overview');
+  const [dateRange, setDateRange] = React.useState<number>(30);
 
   React.useEffect(() => {
     if (!canAccess) return;
@@ -119,7 +129,7 @@ export default function AnalyticsPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('/api/analytics?days=30');
+        const response = await fetch(`/api/analytics?days=${dateRange}`);
         if (!response.ok) throw new Error('Failed to fetch analytics');
         const data = await response.json();
         setAnalyticsData(data);
@@ -131,7 +141,7 @@ export default function AnalyticsPage() {
     };
 
     fetchData();
-  }, [canAccess]);
+  }, [canAccess, dateRange]);
 
   React.useEffect(() => {
     if (!authLoading && (!user || !canAccess)) {
@@ -162,13 +172,78 @@ export default function AnalyticsPage() {
         <div className="px-4 py-6 sm:px-0">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-              <BarChart3 className="w-8 h-8 mr-3 text-[#25818a]" />
-              {lang === 'ar' ? 'لوحة التحليلات' : 'Analytics Dashboard'}
-            </h1>
-            <p className="text-gray-600">
-              {lang === 'ar' ? 'نظرة عامة على أداء المنصة ونشاط المستخدمين' : 'Overview of platform performance and user activity'}
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
+                  <BarChart3 className="w-8 h-8 mr-3 text-[#25818a]" />
+                  {lang === 'ar' ? 'لوحة التحليلات' : 'Analytics Dashboard'}
+                </h1>
+                <p className="text-gray-600">
+                  {lang === 'ar' ? 'نظرة عامة على أداء المنصة ونشاط المستخدمين' : 'Overview of platform performance and user activity'}
+                </p>
+              </div>
+              
+              {/* Date Range Picker */}
+              <div className="flex items-center gap-2">
+                <Filter className="w-5 h-5 text-gray-500" />
+                <div className="flex gap-2">
+                  {[7, 30, 90, 365].map((days) => (
+                    <Button
+                      key={days}
+                      onClick={() => setDateRange(days)}
+                      variant={dateRange === days ? 'default' : 'outline'}
+                      className={`${dateRange === days ? 'bg-[#25818a] text-white' : ''}`}
+                    >
+                      {days === 7 ? '7d' : days === 30 ? '30d' : days === 90 ? '90d' : '365d'}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="flex gap-2 mb-6 border-b border-gray-200">
+              <button
+                onClick={() => setSelectedTab('overview')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  selectedTab === 'overview'
+                    ? 'border-b-2 border-[#25818a] text-[#25818a]'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {lang === 'ar' ? 'نظرة عامة' : 'Overview'}
+              </button>
+              <button
+                onClick={() => setSelectedTab('users')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  selectedTab === 'users'
+                    ? 'border-b-2 border-[#25818a] text-[#25818a]'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {lang === 'ar' ? 'المستخدمون' : 'Users'}
+              </button>
+              <button
+                onClick={() => setSelectedTab('devices')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  selectedTab === 'devices'
+                    ? 'border-b-2 border-[#25818a] text-[#25818a]'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {lang === 'ar' ? 'الأجهزة' : 'Devices'}
+              </button>
+              <button
+                onClick={() => setSelectedTab('geography')}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  selectedTab === 'geography'
+                    ? 'border-b-2 border-[#25818a] text-[#25818a]'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {lang === 'ar' ? 'الجغرافيا' : 'Geography'}
+              </button>
+            </div>
           </div>
 
           {isLoading ? (
@@ -185,7 +260,10 @@ export default function AnalyticsPage() {
               {lang === 'ar' ? 'خطأ في تحميل البيانات' : 'Error loading analytics data'}
             </div>
           ) : analyticsData ? (
-            <>
+            <div>
+              {/* Overview Tab */}
+              {selectedTab === 'overview' && (
+                <div className="space-y-8">
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Total Users */}
@@ -259,6 +337,93 @@ export default function AnalyticsPage() {
                     </p>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Additional Metrics Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Weekly Active Users */}
+                {analyticsData.weeklyActiveUsers && (
+                  <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-gray-600">
+                        {lang === 'ar' ? 'المستخدمون النشطون أسبوعياً' : 'Weekly Active Users'}
+                      </CardTitle>
+                      <Activity className="w-5 h-5 text-orange-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {analyticsData.weeklyActiveUsers.toLocaleString(lang === 'ar' ? 'ar' : 'en')}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {lang === 'ar' ? 'الأسبوع الحالي' : 'Current week'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Monthly Active Users */}
+                {analyticsData.monthlyActiveUsers && (
+                  <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-gray-600">
+                        {lang === 'ar' ? 'المستخدمون النشطون شهرياً' : 'Monthly Active Users'}
+                      </CardTitle>
+                      <TrendingUp className="w-5 h-5 text-indigo-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {analyticsData.monthlyActiveUsers.toLocaleString(lang === 'ar' ? 'ar' : 'en')}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {lang === 'ar' ? 'الشهر الحالي' : 'Current month'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* New Users */}
+                {analyticsData.newUsers && (
+                  <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-gray-600">
+                        {lang === 'ar' ? 'المستخدمون الجدد' : 'New Users'}
+                      </CardTitle>
+                      <Users className="w-5 h-5 text-green-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {analyticsData.newUsers.toLocaleString(lang === 'ar' ? 'ar' : 'en')}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {analyticsData.totalUsers > 0 
+                          ? `${Math.round((analyticsData.newUsers / analyticsData.totalUsers) * 100).toLocaleString(lang === 'ar' ? 'ar' : 'en')}% ${lang === 'ar' ? 'من إجمالي' : 'of total'}`
+                          : lang === 'ar' ? 'المستخدمون الجدد' : 'New users'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Returning Users */}
+                {analyticsData.returningUsers && (
+                  <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-gray-600">
+                        {lang === 'ar' ? 'المستخدمون المتكررون' : 'Returning Users'}
+                      </CardTitle>
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {analyticsData.returningUsers.toLocaleString(lang === 'ar' ? 'ar' : 'en')}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {analyticsData.totalUsers > 0
+                          ? `${Math.round((analyticsData.returningUsers / analyticsData.totalUsers) * 100).toLocaleString(lang === 'ar' ? 'ar' : 'en')}% ${lang === 'ar' ? 'من إجمالي' : 'of total'}`
+                          : lang === 'ar' ? 'المستخدمون المتكررون' : 'Returning users'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               {/* Charts Section */}
@@ -410,7 +575,217 @@ export default function AnalyticsPage() {
                     )}
                   </CardContent>
               </Card>
-            </>
+
+              {/* Devices & Platforms Section */}
+              {analyticsData.devices && analyticsData.devices.length > 0 && (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 mt-12">
+                    {lang === 'ar' ? 'الأجهزة والمنصات' : 'Devices & Platforms'}
+                  </h2>
+                  
+                  <Card className="bg-white border border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-gray-900">
+                        {lang === 'ar' ? 'توزيع الأجهزة' : 'Device Distribution'}
+                      </CardTitle>
+                      <CardDescription>
+                        {lang === 'ar' ? 'الأجهزة والأنظمة المستخدمة للوصول إلى المنصة' : 'Devices and operating systems used to access the platform'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {RechartsComponents ? (
+                        <RechartsComponents.ResponsiveContainer width="100%" height={400}>
+                          <RechartsComponents.BarChart data={analyticsData.devices} layout="vertical">
+                            <RechartsComponents.CartesianGrid strokeDasharray="3 3" />
+                            <RechartsComponents.XAxis type="number" tick={{ fontSize: 12 }} />
+                            <RechartsComponents.YAxis 
+                              dataKey="deviceCategory" 
+                              type="category" 
+                              tick={{ fontSize: 12 }}
+                              width={100}
+                            />
+                            <RechartsComponents.Tooltip 
+                              formatter={(value: any, payload: any) => [
+                                value,
+                                payload[0]?.payload?.os || ''
+                              ]}
+                            />
+                            <RechartsComponents.Legend />
+                            <RechartsComponents.Bar dataKey="uniqueUsers" fill="#3b82f6" name={lang === 'ar' ? 'المستخدمون' : 'Users'} />
+                            <RechartsComponents.Bar dataKey="totalEvents" fill="#10b981" name={lang === 'ar' ? 'الأحداث' : 'Events'} />
+                          </RechartsComponents.BarChart>
+                        </RechartsComponents.ResponsiveContainer>
+                      ) : (
+                        <div className="h-[400px] flex items-center justify-center text-gray-500">
+                          {lang === 'ar' ? 'تثبيت حزمة recharts لعرض البيانات' : 'Install recharts package to display data'}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+
+              {/* Geographic Distribution Section */}
+              {analyticsData.geography && analyticsData.geography.length > 0 && (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 mt-12">
+                    {lang === 'ar' ? 'التوزيع الجغرافي' : 'Geographic Distribution'}
+                  </h2>
+                  
+                  <Card className="bg-white border border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-gray-900">
+                        {lang === 'ar' ? 'المستخدمون حسب الدولة' : 'Users by Country'}
+                      </CardTitle>
+                      <CardDescription>
+                        {lang === 'ar' ? 'توزيع المستخدمين حسب البلدان' : 'Distribution of users by country'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {RechartsComponents ? (
+                        <RechartsComponents.ResponsiveContainer width="100%" height={400}>
+                          <RechartsComponents.BarChart data={analyticsData.geography}>
+                            <RechartsComponents.CartesianGrid strokeDasharray="3 3" />
+                            <RechartsComponents.XAxis 
+                              dataKey="country" 
+                              tick={{ fontSize: 12 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={100}
+                            />
+                            <RechartsComponents.YAxis tick={{ fontSize: 12 }} />
+                            <RechartsComponents.Tooltip 
+                              formatter={(value: any, payload: any) => [
+                                `${value} (${payload[0]?.payload?.percentage || 0}%)`,
+                                lang === 'ar' ? 'المستخدمون' : 'Users'
+                              ]}
+                            />
+                            <RechartsComponents.Legend />
+                            <RechartsComponents.Bar dataKey="uniqueUsers" fill="#f59e0b" name={lang === 'ar' ? 'المستخدمون' : 'Users'} />
+                          </RechartsComponents.BarChart>
+                        </RechartsComponents.ResponsiveContainer>
+                      ) : (
+                        <div className="h-[400px] flex items-center justify-center text-gray-500">
+                          {lang === 'ar' ? 'تثبيت حزمة recharts لعرض البيانات' : 'Install recharts package to display data'}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+                </div>
+              )}
+
+              {/* Users Tab */}
+              {selectedTab === 'users' && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {lang === 'ar' ? 'تحليل المستخدمين' : 'User Analytics'}
+                  </h2>
+                  <p className="text-gray-600">
+                    {lang === 'ar' ? 'تحليل دقيق لنشاط المستخدمين' : 'Detailed analysis of user activity'}
+                  </p>
+                </div>
+              )}
+
+              {/* Devices Tab */}
+              {selectedTab === 'devices' && analyticsData.devices && analyticsData.devices.length > 0 && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {lang === 'ar' ? 'تحليل الأجهزة' : 'Device Analytics'}
+                  </h2>
+                  
+                  <Card className="bg-white border border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-gray-900">
+                        {lang === 'ar' ? 'توزيع الأجهزة' : 'Device Distribution'}
+                      </CardTitle>
+                      <CardDescription>
+                        {lang === 'ar' ? 'الأجهزة والأنظمة المستخدمة للوصول إلى المنصة' : 'Devices and operating systems used to access the platform'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {RechartsComponents ? (
+                        <RechartsComponents.ResponsiveContainer width="100%" height={400}>
+                          <RechartsComponents.BarChart data={analyticsData.devices} layout="vertical">
+                            <RechartsComponents.CartesianGrid strokeDasharray="3 3" />
+                            <RechartsComponents.XAxis type="number" tick={{ fontSize: 12 }} />
+                            <RechartsComponents.YAxis 
+                              dataKey="deviceCategory" 
+                              type="category" 
+                              tick={{ fontSize: 12 }}
+                              width={100}
+                            />
+                            <RechartsComponents.Tooltip 
+                              formatter={(value: any, payload: any) => [
+                                value,
+                                payload[0]?.payload?.os || ''
+                              ]}
+                            />
+                            <RechartsComponents.Legend />
+                            <RechartsComponents.Bar dataKey="uniqueUsers" fill="#3b82f6" name={lang === 'ar' ? 'المستخدمون' : 'Users'} />
+                            <RechartsComponents.Bar dataKey="totalEvents" fill="#10b981" name={lang === 'ar' ? 'الأحداث' : 'Events'} />
+                          </RechartsComponents.BarChart>
+                        </RechartsComponents.ResponsiveContainer>
+                      ) : (
+                        <div className="h-[400px] flex items-center justify-center text-gray-500">
+                          {lang === 'ar' ? 'تثبيت حزمة recharts لعرض البيانات' : 'Install recharts package to display data'}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Geography Tab */}
+              {selectedTab === 'geography' && analyticsData.geography && analyticsData.geography.length > 0 && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {lang === 'ar' ? 'التحليل الجغرافي' : 'Geographic Analytics'}
+                  </h2>
+                  
+                  <Card className="bg-white border border-gray-200">
+                    <CardHeader>
+                      <CardTitle className="text-xl font-bold text-gray-900">
+                        {lang === 'ar' ? 'المستخدمون حسب الدولة' : 'Users by Country'}
+                      </CardTitle>
+                      <CardDescription>
+                        {lang === 'ar' ? 'توزيع المستخدمين حسب البلدان' : 'Distribution of users by country'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {RechartsComponents ? (
+                        <RechartsComponents.ResponsiveContainer width="100%" height={400}>
+                          <RechartsComponents.BarChart data={analyticsData.geography}>
+                            <RechartsComponents.CartesianGrid strokeDasharray="3 3" />
+                            <RechartsComponents.XAxis 
+                              dataKey="country" 
+                              tick={{ fontSize: 12 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={100}
+                            />
+                            <RechartsComponents.YAxis tick={{ fontSize: 12 }} />
+                            <RechartsComponents.Tooltip 
+                              formatter={(value: any, payload: any) => [
+                                `${value} (${payload[0]?.payload?.percentage || 0}%)`,
+                                lang === 'ar' ? 'المستخدمون' : 'Users'
+                              ]}
+                            />
+                            <RechartsComponents.Legend />
+                            <RechartsComponents.Bar dataKey="uniqueUsers" fill="#f59e0b" name={lang === 'ar' ? 'المستخدمون' : 'Users'} />
+                          </RechartsComponents.BarChart>
+                        </RechartsComponents.ResponsiveContainer>
+                      ) : (
+                        <div className="h-[400px] flex items-center justify-center text-gray-500">
+                          {lang === 'ar' ? 'تثبيت حزمة recharts لعرض البيانات' : 'Install recharts package to display data'}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
           ) : null}
         </div>
       </main>

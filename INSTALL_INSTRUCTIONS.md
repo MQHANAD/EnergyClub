@@ -36,6 +36,10 @@ To use BigQuery (optional - the dashboard works with fallback data), add these t
 BIGQUERY_SERVICE_ACCOUNT_KEY='{"type":"service_account","project_id":"...","private_key_id":"...","private_key":"...","client_email":"...","client_id":"...","auth_uri":"...","token_uri":"...","auth_provider_x509_cert_url":"...","client_x509_cert_url":"..."}'
 GOOGLE_CLOUD_PROJECT_ID=your-firebase-project-id
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-firebase-project-id
+
+# Optional: If you know your analytics dataset ID, set it here
+# Otherwise, the system will try to discover it automatically
+# Example: ANALYTICS_DATASET_ID=analytics_123456789
 ```
 
 ## Current Implementation
@@ -88,6 +92,28 @@ The analytics dashboard is already configured to:
 - 🎨 **Modern UI**: Tailwind CSS with brand colors
 - 📱 **Responsive**: Works on all devices
 - ⚠️ **Graceful**: Works with or without BigQuery credentials
+
+## Finding Your Analytics Dataset ID
+
+If you're unsure of your Firebase Analytics dataset ID, you can find it in the BigQuery console:
+
+1. Go to [BigQuery Console](https://console.cloud.google.com/bigquery)
+2. Select your Firebase project
+3. Look for datasets that start with `analytics_` (e.g., `analytics_123456789`)
+4. Copy the exact dataset name and set it as `ANALYTICS_DATASET_ID` in your `.env.local`
+
+Alternatively, if you don't set `ANALYTICS_DATASET_ID`, the system will attempt to automatically discover the dataset from your BigQuery project.
+
+## Troubleshooting
+
+**Error: "Does not match any table"**
+- This means the analytics export is not set up or the dataset name is incorrect
+- Check that Firebase Analytics → BigQuery export is enabled
+- Verify the `ANALYTICS_DATASET_ID` matches your actual dataset name
+
+**Error: "BigQuery package not installed"**
+- Run `npm install @google-cloud/bigquery` to install the package
+- The dashboard will still work with fallback data if not installed
 
 ## Notes
 

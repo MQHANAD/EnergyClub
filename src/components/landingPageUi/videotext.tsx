@@ -28,13 +28,13 @@ export interface VideoTextProps {
   fontWeight?: string | number;
   textAnchor?: "start" | "middle" | "end";
   dominantBaseline?:
-    | "auto"
-    | "middle"
-    | "hanging"
-    | "alphabetic"
-    | "ideographic"
-    | "text-bottom"
-    | "text-top";
+  | "auto"
+  | "middle"
+  | "hanging"
+  | "alphabetic"
+  | "ideographic"
+  | "text-bottom"
+  | "text-top";
   fontFamily?: string;
   as?: ElementType;
   letterSpacing?: string | number;
@@ -208,7 +208,7 @@ export function VideoText({
     >
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center mb-6",
+          "absolute inset-0 flex items-center justify-center md:mb-6 mb-40",
           !isVideoLoaded && "opacity-0 transition-opacity duration-500"
         )}
         style={{
@@ -253,38 +253,47 @@ export function VideoText({
       )}
       <span className="sr-only">{content}</span>
 
+
       {/* Logos positioned under the text */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center space-x-6">
-      <Image
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 w-full px-4">
+        <Image
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/KFUPM.svg/1280px-KFUPM.svg.png"
-          alt="Energy Week Logo"
+          alt="KFUPM Logo"
           width={200}
           height={200}
-          className="object-contain"
+          className="h-10 w-auto sm:h-12 md:h-16 object-contain"
         />
         <Image
           src="/CEEELogo.png"
           alt="Energy Club Logo"
           width={270}
           height={270}
-          className="object-contain"
+          className="h-14 w-auto sm:h-16 md:h-20 object-contain"
         />
         <Image
-          src="/energyWeekLogo.png"
+          src="/EW.svg"
           alt="Energy Week Logo"
           width={200}
           height={200}
-          className="object-contain"
+          className="h-14 w-auto sm:h-16 md:h-20 object-contain"
         />
         <Image
           src="/energyClubLogo.png"
           alt="Energy Week Logo"
           width={200}
           height={200}
-          className="object-contain"
+          className="h-16 w-auto sm:h-18 md:h-22 object-contain"
         />
-        
+        {/* Hashtag text */}
+        <div className="flex flex-wrap items-center justify-center text-xl sm:text-5xl font-semibold tracking-wide md:mb-2" style={{ fontFamily: '"DGSahabah", sans-serif' }}>
+          <span className="text-[#989898]">#</span>
+          <span className="text-[#284f93] mr-1">Lets</span>
+          <span className="text-[#209eaa] mr-1">Energize</span>
+          <span className="text-[#f4bb12] mr-1">The</span>
+          <span className="text-[#f4bb12]">Future</span>
+        </div>
       </div>
+
     </Component>
   );
 }
