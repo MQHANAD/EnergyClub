@@ -28,13 +28,13 @@ export interface VideoTextProps {
   fontWeight?: string | number;
   textAnchor?: "start" | "middle" | "end";
   dominantBaseline?:
-  | "auto"
-  | "middle"
-  | "hanging"
-  | "alphabetic"
-  | "ideographic"
-  | "text-bottom"
-  | "text-top";
+    | "auto"
+    | "middle"
+    | "hanging"
+    | "alphabetic"
+    | "ideographic"
+    | "text-bottom"
+    | "text-top";
   fontFamily?: string;
   as?: ElementType;
   letterSpacing?: string | number;
@@ -95,9 +95,7 @@ export function VideoText({
     const computedFont = isArabic
       ? "Tahoma, Arial, system-ui, sans-serif"
       : fontFamily;
-    const rtlAttrs = isArabic
-      ? "direction='rtl' unicode-bidi='plaintext'"
-      : "";
+    const rtlAttrs = isArabic ? "direction='rtl' unicode-bidi='plaintext'" : "";
 
     const svgString = `
       <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>
@@ -248,11 +246,12 @@ export function VideoText({
 
       {!isVideoLoaded && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-opacity-50">{t("common.loading")}</div>
+          <div className="text-white text-opacity-50">
+            {t("common.loading")}
+          </div>
         </div>
       )}
       <span className="sr-only">{content}</span>
-
 
       {/* Logos positioned under the text */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 w-full px-4">
@@ -285,7 +284,10 @@ export function VideoText({
           className="h-16 w-auto sm:h-18 md:h-22 object-contain"
         />
         {/* Hashtag text */}
-        <div className="flex flex-wrap items-center justify-center text-xl sm:text-5xl font-semibold tracking-wide md:mb-2" style={{ fontFamily: '"DGSahabah", sans-serif' }}>
+        <div
+          className="flex flex-wrap items-center justify-center text-xl sm:text-5xl font-semibold tracking-wide md:mb-2"
+          style={{ fontFamily: '"DGSahabah", sans-serif', direction: "ltr" }}
+        >
           <span className="text-[#989898]">#</span>
           <span className="text-[#284f93] mr-1">Lets</span>
           <span className="text-[#209eaa] mr-1">Energize</span>
@@ -293,7 +295,6 @@ export function VideoText({
           <span className="text-[#f4bb12]">Future</span>
         </div>
       </div>
-
     </Component>
   );
 }

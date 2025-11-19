@@ -16,43 +16,46 @@ export default function ScrollRevealWrapper({
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end end"],
+    offset: ["start end", "end end"],
   });
 
- // Transform values for the sliding effect
-const mainContentY = useTransform(scrollYProgress, [0, 1], [0, -100]);
-const bgOpacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1.1, 1]);
+  const titleOpacity = useTransform(scrollYProgress, [0.5, 1], [0, 1]);
 
-return (
-  <div className="relative sm:mb-50">
-    {/* Fixed Background + Title Layer */}
-    <motion.div className="fixed inset-0 z-0 flex items-end justify-center md:pb-12 pb-3 pointer-events-none">
-      {/* Blurry / Transparent Background Image */}
-      <motion.div
-        className="absolute inset-0 bg-[url('/VisualIdentity.svg')] bg-bottom bg-contain bg-no-repeat blur-lg"
-        style={{ opacity: bgOpacity }}
-      />
+  return (
+    <div ref={containerRef} className="relative w-full bg-transparent">
+      {/* === LAYER 1: CONTENT === 
+          mb-[30dvh]: This sets the "Reveal Window" height.
+      */}
+      <div className="relative z-10 w-full bg-white shadow-xl mb-[30dvh]">
+        {children}
+      </div>
 
-      {/* Title on top of the background */}
-      <div className="relative z-10 mb-2">
-        <h1
-          className="text-white [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] font-bold text-center leading-none select-none"
-          style={{ fontSize: "clamp(3rem, 17vw, 17rem)" }}
+      {/* === LAYER 2: REVEAL COMPONENT === 
+          h-[30dvh]: Matches the margin above exactly so there is no math gap.
+      */}
+      <div className="fixed bottom-0 left-0 right-0 z-0 flex h-[30dvh] w-full flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#25818a] via-[#1a6d75] to-[#0f5960]">
+        {/* IMAGE
+            1. Removed 'mt-10': This was pushing the image down and creating the gap.
+            2. top-[-1px]: Pulls the image up slightly to ensure it tucks under the white content.
+            3. h-full: Ensures the container fills the available space.
+        */}
+        <motion.div
+          className="absolute top-[-5px] w-[110%] h-23 bg-[url('/VisualIdentity4.svg')] bg-cover bg-top bg-no-repeat"
+          style={{ scale }}
+        />
+
+        {/* TITLE */}
+        <motion.h1
+          className="relative z-20 text-center font-bold leading-none text-white select-none drop-shadow-lg pb-15"
+          style={{
+            fontSize: "clamp(3rem, 15vw, 12rem)",
+            opacity: titleOpacity,
+          }}
         >
           {t("brand.short")}
-        </h1>
+        </motion.h1>
       </div>
-    </motion.div>
-
-    {/* Sliding Content Layer */}
-    <motion.div
-      ref={containerRef}
-      style={{ y: mainContentY }}
-      className="relative z-10 bg-white"
-    >
-      {children}
-    </motion.div>
-  </div>
-);
-
+    </div>
+  );
 }
