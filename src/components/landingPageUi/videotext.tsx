@@ -189,17 +189,12 @@ export function VideoText({
 
   return (
     <Component
-      // 1. CHANGED: Switch from block to flex-col.
-      // This ensures vertical stacking of (Video Area) and (Logos Area).
       className={cn(
         "relative w-full h-full overflow-hidden flex flex-col justify-between",
         className
       )}
     >
-      {/* 2. VIDEO CONTAINER AREA
-         - flex-1: Takes up all available height not used by the logos.
-         - relative: To contain the absolute video layer.
-      */}
+      {/* VIDEO CONTAINER (Unchanged) */}
       <div className="relative flex-1 w-full flex items-center justify-center min-h-0">
         <div
           className={cn(
@@ -251,43 +246,44 @@ export function VideoText({
         <span className="sr-only">{content}</span>
       </div>
 
-      {/* 3. LOGO AREA
-         - Removed 'absolute bottom-0'.
-         - Added 'flex-shrink-0' so it doesn't get crushed.
-         - Added 'py-2' for spacing.
-      */}
-      <div className="flex-shrink-0 w-full py-2 sm:py-4 flex flex-wrap justify-center items-center gap-2 sm:gap-4 md:gap-6 px-4 z-10">
+      {/* 3. LOGO AREA - UPDATED FOR LARGER MOBILE ICONS */}
+      <div className="flex-shrink-0 w-full py-3 sm:py-4 flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 px-2 z-10">
+        {/* KFUPM: Increased from h-8 to h-12 */}
         <Image
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/KFUPM.svg/1280px-KFUPM.svg.png"
           alt="KFUPM Logo"
           width={200}
           height={200}
-          className="h-8 w-auto sm:h-12 md:h-16 object-contain"
+          className="h-10 w-auto sm:h-16 md:h-20 object-contain"
         />
+        {/* CEEE: Increased from h-10 to h-14 */}
         <Image
           src="/CEEELogo.png"
           alt="Energy Club Logo"
-          width={270}
-          height={270}
-          className="h-10 w-auto sm:h-16 md:h-20 object-contain"
+          width={200}
+          height={200}
+          className="h-14 w-auto sm:h-16 md:h-20 object-contain pb-2"
         />
+        {/* EW: Increased from h-10 to h-14 */}
         <Image
           src="/EW.svg"
           alt="Energy Week Logo"
           width={200}
           height={200}
-          className="h-10 w-auto sm:h-16 md:h-20 object-contain"
+          className="h-14 w-auto sm:h-16 md:h-20 object-contain"
         />
+        {/* Energy Club: Increased from h-12 to h-16 */}
         <Image
           src="/energyClubLogo.png"
           alt="Energy Week Logo"
           width={200}
           height={200}
-          className="h-12 w-auto sm:h-18 md:h-22 object-contain"
+          className="h-16 w-auto sm:h-18 md:h-22 object-contain"
         />
-        {/* Hashtag text */}
+
+        {/* Hashtag text: Increased base text size from text-sm to text-lg */}
         <div
-          className="flex flex-wrap items-center justify-center text-sm sm:text-xl md:text-5xl font-semibold tracking-wide"
+          className="flex flex-wrap items-center justify-center text-2xl md:text-5xl font-semibold tracking-wide"
           style={{ fontFamily: '"DGSahabah", sans-serif', direction: "ltr" }}
         >
           <span className="text-[#989898]">#</span>
