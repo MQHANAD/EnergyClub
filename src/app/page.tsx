@@ -20,7 +20,7 @@ export default async function HomePage() {
     <div dir={getDirFromLang(lang)}>
       <Navigation />
       <ScrollRevealWrapper>
-        <div className="relative md:h-[80vh] h-[35dvh] w-[80%] overflow-hidden mx-auto pt-20 mt-1">
+        <div className="relative md:h-[80vh] h-[50dvh] w-[80%] overflow-hidden mx-auto pt-20 mt-1">
           <VideoText src="https://firebasestorage.googleapis.com/v0/b/university-club-platform.firebasestorage.app/o/5180_Wind_Turbine_Wind_Turbines_1920x1080.mp4?alt=media&token=86106837-780e-4ce9-a9bc-06ca30dc0d92">
             {heroTitle}
           </VideoText>
