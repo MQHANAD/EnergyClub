@@ -215,7 +215,7 @@ export default function Events({
 
                     <button
                       onClick={() => setActive(null)}
-                      className="px-6 py-3 font-medium text-gray-700 border border-gray-300 rounded-lg transition-all hover:border-gray-400 hover:text-gray-900"
+                      className="px-6 py-3 font-medium text-gray-700 border border-gray-300 rounded-lg transition-all hover:border-gray-400 hover:text-gray-900 cursor-pointer"
                     >
                       {t("events.modal.close")}
                     </button>
@@ -266,7 +266,7 @@ export default function Events({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6 }}
-        className="mb-12 sm:mb-16 text-3xl sm:text-4xl font-light text-gray-900 text-center"
+        className="mb-12 sm:mb-16 text-3xl sm:text-4xl font-bold text-gray-900 text-center"
       >
         {titleText}
       </motion.h2>
@@ -303,7 +303,7 @@ export default function Events({
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-light text-gray-900 group-hover:text-gray-700 transition-colors">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
                   {e.title}
                 </h3>
                 <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
@@ -327,7 +327,7 @@ export default function Events({
         >
           <Link
             href="/events"
-            className="w-full sm:w-auto px-6 sm:px-8 py-3 font-light text-white tracking-wide transition-all hover:opacity-90 text-center rounded-lg"
+            className="w-full sm:w-auto px-6 sm:px-8 py-3 font-bold text-white tracking-wide transition-all hover:opacity-90 text-center rounded-lg"
             style={{ backgroundColor: primary }}
           >
             {t("events.ctaRegister")}
@@ -335,7 +335,7 @@ export default function Events({
 
           <button
             onClick={() => setShowAll(!showAll)}
-            className="w-full sm:w-auto px-6 sm:px-8 py-3 font-light text-gray-700 border border-gray-300 tracking-wide transition-all hover:border-gray-400 hover:text-gray-900 rounded-lg"
+            className="w-full sm:w-auto px-6 sm:px-8 py-3 font-bold text-gray-700 border border-gray-300 tracking-wide transition-all hover:border-gray-400 hover:text-gray-900 rounded-lg cursor-pointer"
           >
             {showAll ? t("events.showLess") : t("events.showMore")}
           </button>

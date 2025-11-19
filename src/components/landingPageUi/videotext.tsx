@@ -247,7 +247,7 @@ export function VideoText({
       </div>
 
       {/* 3. LOGO AREA - UPDATED FOR LARGER MOBILE ICONS */}
-      <div className="flex-shrink-0 w-full py-3 sm:py-4 flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 px-2 z-10">
+      <div className="flex-shrink-0 w-full py-3 sm:py-4 flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 px-2 z-10 mb-16">
         {/* KFUPM: Increased from h-8 to h-12 */}
         <Image
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/KFUPM.svg/1280px-KFUPM.svg.png"

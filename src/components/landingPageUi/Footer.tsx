@@ -17,37 +17,37 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
     {
       name: "Female Energy Club",
       links: [
-        { 
-          platform: "LinkedIn", 
-          icon: Linkedin, 
+        {
+          platform: "LinkedIn",
+          icon: Linkedin,
           href: "https://www.linkedin.com/company/female-energy-club21/",
-          color: "#0077b5"
+          color: "#0077b5",
         },
-        { 
-          platform: "Instagram", 
-          icon: Instagram, 
+        {
+          platform: "Instagram",
+          icon: Instagram,
           href: "https://www.instagram.com/fec_kfupm?igsh=aG5keWp0enkyM2Jx",
-          color: "#E4405F"
+          color: "#E4405F",
         },
-        { 
-          platform: "X", 
-          icon: X, 
+        {
+          platform: "X",
+          icon: X,
           href: "https://x.com/f_energyclub?s=21",
-          color: "#000000"
-        }
-      ]
+          color: "#000000",
+        },
+      ],
     },
     {
       name: "KFUPM Energy Week",
       links: [
-        { 
-          platform: "LinkedIn", 
-          icon: Linkedin, 
+        {
+          platform: "LinkedIn",
+          icon: Linkedin,
           href: "https://www.linkedin.com/company/kfupm-energy-week/",
-          color: "#0077b5"
-        }
-      ]
-    }
+          color: "#0077b5",
+        },
+      ],
+    },
   ];
 
   return (
@@ -57,7 +57,7 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
           {/* Branding */}
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <span className="text-xl font-light text-gray-900">
+              <span className="text-xl font-bold text-gray-900">
                 {t("footer.brandName")}
               </span>
             </div>
@@ -68,14 +68,14 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
 
           {/* Quick Links */}
           <div>
-            <p className="mb-4 text-sm font-light text-gray-900 uppercase tracking-wide">
+            <p className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wide">
               {t("footer.quickLinks")}
             </p>
             <ul className="space-y-3">
               {navLinks.map(({ key, href }) => (
                 <li key={key}>
-                  <Link 
-                    href={href} 
+                  <Link
+                    href={href}
                     className="text-sm text-gray-500 hover:text-gray-900 transition-colors duration-200"
                   >
                     {t(`navigation.${key}`)}
@@ -87,7 +87,7 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
 
           {/* Contact & Social */}
           <div>
-            <p className="mb-4 text-sm font-light text-gray-900 uppercase tracking-wide">
+            <p className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wide">
               {t("footer.contact")}
             </p>
             <div className="space-y-4">
@@ -114,7 +114,7 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
               <div className="space-y-4 pt-2">
                 {socialLinks.map((group, index) => (
                   <div key={index}>
-                    <p className="text-xs font-light text-gray-500 mb-2">
+                    <p className="text-xs font-bold text-gray-500 mb-2">
                       {group.name}
                     </p>
                     <div className="flex gap-3">
@@ -141,7 +141,8 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
         <div className="mt-12 pt-8 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-gray-500 text-center md:text-left">
-              © {new Date().getFullYear()} {t("footer.brandName")}. {t("footer.rights")}
+              © {new Date().getFullYear()} {t("footer.brandName")}.{" "}
+              {t("footer.rights")}
             </p>
           </div>
         </div>
