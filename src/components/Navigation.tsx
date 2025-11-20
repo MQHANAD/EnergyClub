@@ -9,6 +9,8 @@ import { LogOut, User, Menu, X } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 export default function Navigation() {
   const { user, userProfile, logout, loading, isOrganizer, isAdmin } =
@@ -21,11 +23,41 @@ export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hoveredPath, setHoveredPath] = useState("");
+  const [isMember, setIsMember] = useState(false);
+
+  // Check if user is a member
+  useEffect(() => {
+    const checkMembership = async () => {
+      if (loading) {
+        return;
+      }
+
+      if (!user || !userProfile) {
+        setIsMember(false);
+        return;
+      }
+
+      try {
+        const membersRef = collection(db, "members");
+        const q = query(membersRef, where("userId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        setIsMember(!querySnapshot.empty);
+      } catch (error) {
+        console.error("Error checking membership:", error);
+        setIsMember(false);
+      }
+    };
+
+    checkMembership();
+  }, [user, userProfile, loading]);
 
   // Define navigation links dynamically
   const navLinks = [
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
+    ...(isMember
+      ? [{ href: "/membership", label: t("nav.membership") }]
+      : []),
     ...(canSeeAdmin
       ? [
           { href: "/admin", label: t("nav.admin") },

@@ -114,6 +114,7 @@ const messages: Record<Lang, MessageTree> = {
       signIn: "Sign In",
       openMenu: "Open main menu",
       applications: "Applications",
+      membership: "Membership",
     },
     login: {
       title: "Energy Hub",
@@ -328,6 +329,7 @@ const messages: Record<Lang, MessageTree> = {
       signIn: "تسجيل الدخول",
       openMenu: "فتح القائمة الرئيسية",
       applications: "الطلبات",
+      membership: "العضوية",
     },
     login: {
       title: "نادي الطاقة",
