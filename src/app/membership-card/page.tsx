@@ -71,8 +71,14 @@ function MembershipCardContent() {
           </div>
 
           {/* Membership Card */}
-          <Card className="p-8 bg-white border-2 border-gray-200 shadow-xl">
-            <div className="flex flex-col items-center">
+          <Card className="p-8 bg-white border-2 border-gray-200 shadow-xl relative overflow-hidden">
+            {/* SVG Background - uncomment and update path if you want a background SVG */}
+            {/* <img 
+              src="/membership-card.svg" 
+              alt="" 
+              className="absolute inset-0 w-full h-full object-cover opacity-5 pointer-events-none"
+            /> */}
+            <div className="flex flex-col items-center relative z-10">
               {/* Badge Icon/Logo Area */}
               <div className="mb-6 relative">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg relative">
@@ -88,6 +94,12 @@ function MembershipCardContent() {
                     <Award className="w-16 h-16 text-white" />
                   )}
                 </div>
+                {/* SVG Badge - uncomment and update path to use your SVG */}
+                {/* <img 
+                  src="/membership-badge.svg" 
+                  alt="Membership Badge" 
+                  className="absolute -top-2 -right-2 w-16 h-16"
+                /> */}
               </div>
 
               {/* Member Name */}
