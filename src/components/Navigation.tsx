@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMember } from "@/hooks/useMember";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, X } from "lucide-react";
+import { LogOut, User, Menu, X, Award } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
@@ -14,6 +15,7 @@ import { OptimizedImage } from "@/components/ui/OptimizedImage";
 export default function Navigation() {
   const { user, userProfile, logout, loading, isOrganizer, isAdmin } =
     useAuth();
+  const { isMember } = useMember();
   const canSeeAdmin = Boolean(isOrganizer || isAdmin);
   const router = useRouter();
   const { t } = useI18n();
@@ -150,6 +152,18 @@ export default function Navigation() {
                         My Profile
                       </Link>
                       
+                      {/* Membership Card Link - Only visible to members */}
+                      {isMember && (
+                        <Link
+                          href="/membership-card"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                        >
+                          <Award className="h-4 w-4 mr-2" />
+                          Membership Card
+                        </Link>
+                      )}
+                      
                       {/* Admin Links */}
                       {adminLinks.length > 0 && (
                         <>
@@ -246,6 +260,18 @@ export default function Navigation() {
                     <User className="h-4 w-4 mr-2" />
                     My Profile
                   </Link>
+                  
+                  {/* Membership Card Link - Only visible to members */}
+                  {isMember && (
+                    <Link
+                      href="/membership-card"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-3 text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                    >
+                      <Award className="h-4 w-4 mr-2" />
+                      Membership Card
+                    </Link>
+                  )}
                   
                   {/* Admin Links */}
                   {adminLinks.length > 0 && (
