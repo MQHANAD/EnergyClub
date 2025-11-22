@@ -148,7 +148,7 @@ const getDuration = (start: Date, end: Date) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed pt-16">
+    <div className="min-h-screen bg-gray-50 pt-12">
       <Navigation />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -197,19 +197,20 @@ const getDuration = (start: Date, end: Date) => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {filteredEvents.map((event) => (
+                {filteredEvents.map((event, idx) => (
                   <Card
                     key={event.id}
-                    className="flex flex-col h-full overflow-hidden rounded-lg hover:shadow-lg transition-shadow"
+                    className="group flex flex-col h-full overflow-hidden rounded-lg border border-gray-200 shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:scale-105 hover:-translate-y-2 cursor-pointer animate-fade-in-up"
+                    style={{ animationDelay: `${idx * 80}ms`, animationFillMode: "both" }}
                   >
                     {/* Image + Status */}
                     <div className="relative">
-                      <div className="aspect-video w-full bg-gray-100 flex items-center justify-center">
+                      <div className="aspect-video w-full bg-gray-100 flex items-center justify-center overflow-hidden">
                         {event.imageUrls && event.imageUrls.length > 0 ? (
                           <img
                             src={event.imageUrls[0]}
                             alt={event.title}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src =
                                 "/file.svg";
@@ -243,14 +244,14 @@ const getDuration = (start: Date, end: Date) => {
                           {/* Row 1: Date */}
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1.5" />
-                            <span>{formatDate(new Date(event.startDate || event.date))}</span>
+                            <span>{(event.startDate || event.date) ? formatDate(new Date((event.startDate || event.date) as any)) : ""}</span>
                           </div>
 
                           {/* Row 2: Duration (only if end date exists) */}
                           {event.endDate && (
                             <div className="flex items-center">
                               <Clock className="h-4 w-4 mr-1.5" />
-                              <span>Duration: {getDuration(new Date(event.startDate), new Date(event.endDate))}</span>
+                              <span>Duration: {getDuration(new Date((event.startDate || event.date) as any), new Date(event.endDate as any))}</span>
                             </div>
                           )}
 
@@ -289,7 +290,7 @@ const getDuration = (start: Date, end: Date) => {
                       )}
 
                       <Button
-                        className="w-full"
+                        className="w-full bg-[#209EAA] hover:bg-[#197f87] text-white rounded-none transform-gpu transition duration-150 ease-out hover:-translate-y-1 hover:shadow-lg active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#209EAA] focus:ring-offset-2 inline-flex items-center justify-center"
                         size="sm"
                         onMouseEnter={() => primeEventCache(event)}
                         onClick={(e) => {
@@ -299,7 +300,7 @@ const getDuration = (start: Date, end: Date) => {
                         }}
                       >
                         {t("eventsPage.viewDetails")}
-                        <ChevronRight className="h-4 w-4 ml-2" />
+                        <ChevronRight className="h-4 w-4 ml-2 text-white" />
                       </Button>
                     </div>
                   </Card>
