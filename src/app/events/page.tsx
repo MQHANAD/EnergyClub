@@ -200,7 +200,7 @@ const getDuration = (start: Date, end: Date) => {
                 {filteredEvents.map((event, idx) => (
                   <Card
                     key={event.id}
-                    className="group flex flex-col h-full overflow-hidden rounded-lg border border-gray-200 shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:scale-105 hover:-translate-y-2 cursor-pointer animate-fade-in-up"
+                    className="group flex flex-col h-full overflow-hidden rounded-lg border border-gray-200 shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:scale-101 hover:-translate-y-2 cursor-pointer animate-fade-in-up"
                     style={{ animationDelay: `${idx * 80}ms`, animationFillMode: "both" }}
                   >
                     {/* Image + Status */}
@@ -290,7 +290,7 @@ const getDuration = (start: Date, end: Date) => {
                       )}
 
                       <Button
-                        className="w-full bg-[#209EAA] hover:bg-[#197f87] text-white rounded-none transform-gpu transition duration-150 ease-out hover:-translate-y-1 hover:shadow-lg active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#209EAA] focus:ring-offset-2 inline-flex items-center justify-center"
+                        className="w-full text-white rounded-none inline-flex items-center justify-center border-transparent shadow-none py-2 px-3 text-sm"
                         size="sm"
                         onMouseEnter={() => primeEventCache(event)}
                         onClick={(e) => {
@@ -298,6 +298,8 @@ const getDuration = (start: Date, end: Date) => {
                           primeEventCache(event);
                           router.push(`/event/${event.id}`);
                         }}
+                        // Inline style to override any internal hover/active styles from the Button component
+                        style={{ backgroundColor: "#209EAA", transition: "none", transform: "none", WebkitTapHighlightColor: "transparent" }}
                       >
                         {t("eventsPage.viewDetails")}
                         <ChevronRight className="h-4 w-4 ml-2 text-white" />
