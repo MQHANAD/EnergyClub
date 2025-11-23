@@ -369,14 +369,14 @@ export default function EventDetailsPage() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
+            <div className="grid gap-6 md:gap-8 lg:grid-cols-3 items-start">
               {/* Main Event Info - Takes 2 columns on large screens */}
               <div className="lg:col-span-2 space-y-6">
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden self-start mb-[12px]">
                   <CardHeader className="space-y-4 pb-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="space-y-3 flex-1">
-                        <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-gray-900">
                           {event.title}
                         </CardTitle>
                         <CardDescription className="text-base md:text-lg flex items-center gap-2">
@@ -435,7 +435,7 @@ export default function EventDetailsPage() {
               {/* Sidebar - Takes 1 column on large screens */}
               <div className="space-y-6 lg:col-span-1">
                 {/* Event Details Card */}
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 self-start mb-[12px]">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl font-semibold">
                       {t("eventDetails.detailsTitle")}
@@ -486,7 +486,7 @@ export default function EventDetailsPage() {
                 </Card>
 
                 {/* Registration Card */}
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 self-start mb-[12px]">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl font-semibold">
                       {t("eventDetails.registrationTitle")}
