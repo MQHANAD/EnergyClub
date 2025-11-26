@@ -5,7 +5,7 @@ import RegisterTabs from '@/components/register/RegisterTabs';
 import EnergyWeekForm from '@/components/register/EnergyWeekForm';
 import FemaleEnergyClubForm from '@/components/register/FemaleEnergyClubForm';
 import type { Program } from '@/lib/registrationSchemas';
-import { Users, Calendar, Award, ArrowRight } from 'lucide-react';
+import { Users, Calendar, Award, ArrowRight, Clock, CloudLightning, Trophy, Lightbulb } from 'lucide-react';
 
 import { db, auth } from '@/lib/firebase';
 import {
@@ -134,31 +134,41 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#25818a] to-[#f8cd5c] text-white">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#0E3B83] via-[#1A42E3] via-[#209EAA] to-[#00CAE6] py-15 text-white">
+        {/* <img src="/Logo.png" alt="Icon" className="h-48 w-48 "/> */}
+        <img src="/JoinUsPattern3.png" alt="Pattern" className="absolute bottom-0 left-0 w-full h-auto "/>
+        <img src="/JoinUsPattern3.png" alt="Pattern" className="absolute bottom-28 left-0 w-full h-auto "/>
+        <img 
+          src="/WhiteHashtag.png" 
+          alt="Hashtag" 
+          className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-300px h-auto"
+        />
+
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative mx-auto max-w-6xl px-4 py-16">
           <div className="text-center">
-            <div className="mb-6 inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full animate-bounce-custom">
-              <Users className="h-8 w-8" />
+            <div className="mb-6 inline-flex items-center justify-center">
+                <img src="/JoinusIcon.png" alt="Icon" className="h-28 w-28 -translate-y-25"/>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-down">
+
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-down -translate-y-33">
               Join Our Energy Community
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in-up">
+            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in-up -translate-y-30">
               Be part of innovative programs that shape the future of energy.
               Apply now to contribute your skills and passion to meaningful projects.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 stagger-animation">
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105">
-                <Calendar className="h-5 w-5 flex-shrink-0" />
+              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-34">
+                <Clock className="h-5 w-5 flex-shrink-0" />
                 <span>Flexible Timeline</span>
               </div>
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105">
-                <Award className="h-5 w-5 flex-shrink-0" />
+              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-34">
+                <Trophy className="h-5 w-5 flex-shrink-0" />
                 <span>Leadership Opportunities</span>
               </div>
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105">
-                <Users className="h-5 w-5 flex-shrink-0" />
+              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-34">
+                <Lightbulb className="h-5 w-5 flex-shrink-0" />
                 <span>Collaborative Community</span>
               </div>
             </div>
