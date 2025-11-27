@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, X } from "lucide-react";
+import { LogOut, User, Menu, X, LayoutDashboard } from "lucide-react";
 import { useI18n } from "@/i18n/index";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
 import { VideoText } from "./landingPageUi/videotext";
@@ -22,6 +24,27 @@ export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hoveredPath, setHoveredPath] = useState("");
+  const [isMember, setIsMember] = useState(false);
+
+  useEffect(() => {
+    const checkMembership = async () => {
+      if (user?.email) {
+        try {
+          const membersRef = collection(db, "members");
+          const q = query(membersRef, where("email", "==", user.email));
+          const snapshot = await getDocs(q);
+          setIsMember(!snapshot.empty);
+        } catch (error) {
+          console.error("Error checking membership:", error);
+          setIsMember(false);
+        }
+      } else {
+        setIsMember(false);
+      }
+    };
+
+    checkMembership();
+  }, [user]);
 
   // Define main navigation links (public and always visible)
   const navLinks = [
@@ -34,11 +57,11 @@ export default function Navigation() {
   // Define admin links (shown in user dropdown)
   const adminLinks = canSeeAdmin
     ? [
-        { href: "/admin", label: t("nav.admin") },
-        { href: "/admin/applications", label: t("nav.applications") },
-        { href: "/admin/team", label: "Team Management" },
-        { href: "/admin/analytics", label: t("nav.analytics") },
-      ]
+      { href: "/admin", label: t("nav.admin") },
+      { href: "/admin/applications", label: t("nav.applications") },
+      { href: "/admin/team", label: "Team Management" },
+      { href: "/admin/analytics", label: t("nav.analytics") },
+    ]
     : [];
 
   // Handle scroll effect for navbar
@@ -80,11 +103,10 @@ export default function Navigation() {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex justify-between items-center rounded-full border transition-all duration-300 ${
-          isScrolled
+        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex justify-between items-center rounded-full border transition-all duration-300 ${isScrolled
             ? "bg-white/20 backdrop-blur-lg border-white/30 shadow-xl"
             : "bg-white/10 backdrop-blur-md border-white/20"
-        }`}
+          }`}
       >
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2">
@@ -139,7 +161,7 @@ export default function Navigation() {
                         {userProfile?.displayName || user.email}
                       </p>
                       <div className="h-px bg-gray-200 my-1"></div>
-                      
+
                       {/* Profile Link */}
                       <Link
                         href="/profile"
@@ -149,7 +171,19 @@ export default function Navigation() {
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </Link>
-                      
+
+                      {/* Member Dashboard Link */}
+                      {isMember && (
+                        <Link
+                          href="/member"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                        >
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          Member Dashboard
+                        </Link>
+                      )}
+
                       {/* Admin Links */}
                       {adminLinks.length > 0 && (
                         <>
@@ -169,7 +203,7 @@ export default function Navigation() {
                           ))}
                         </>
                       )}
-                      
+
                       <div className="h-px bg-gray-200 my-1"></div>
                       <button
                         onClick={handleLogout}
@@ -225,18 +259,18 @@ export default function Navigation() {
                   {link.label}
                 </Link>
               ))}
-              
+
               {user ? (
                 <>
                   <div className="h-px bg-gray-200 my-2"></div>
-                  
+
                   {/* User Info */}
                   <div className="px-4 py-2 text-center">
                     <p className="font-semibold text-slate-800 truncate">
                       {userProfile?.displayName || user.email}
                     </p>
                   </div>
-                  
+
                   {/* Profile Link */}
                   <Link
                     href="/profile"
@@ -246,7 +280,19 @@ export default function Navigation() {
                     <User className="h-4 w-4 mr-2" />
                     My Profile
                   </Link>
-                  
+
+                  {/* Member Dashboard Link */}
+                  {isMember && (
+                    <Link
+                      href="/member"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center px-4 py-3 text-slate-800 font-medium rounded-lg hover:bg-white/30"
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Member Dashboard
+                    </Link>
+                  )}
+
                   {/* Admin Links */}
                   {adminLinks.length > 0 && (
                     <>
@@ -266,7 +312,7 @@ export default function Navigation() {
                       ))}
                     </>
                   )}
-                  
+
                   <div className="h-px bg-gray-200 my-2"></div>
                   <Button
                     onClick={handleLogout}
@@ -289,7 +335,7 @@ export default function Navigation() {
                   </Link>
                 </>
               )}
-              
+
               <div className="mt-3 flex justify-center">
                 <LanguageSwitcher />
               </div>
