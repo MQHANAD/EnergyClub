@@ -8,7 +8,7 @@ export interface Event {
   currentAttendees: number;
   organizerId: string;
   organizerName: string;
-  status: 'active' | 'cancelled' | 'completed';
+  status: 'active' | 'cancelled' | 'completed';  
   createdAt: Date;
   updatedAt: Date;
   tags: string[];

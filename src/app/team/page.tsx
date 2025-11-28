@@ -14,10 +14,10 @@ import ScrollRevealWrapper from "@/components/landingPageUi/ScrollRevealWrapper"
 import { logTeamView } from '@/lib/analytics';
 
 // Lazy load heavy components for better performance
-const LeadershipSection = React.lazy(() => 
+const LeadershipSection = React.lazy(() =>
   import('@/components/team/LeadershipSection').then(module => ({ default: module.LeadershipSection }))
 );
-const CommitteesSection = React.lazy(() => 
+const CommitteesSection = React.lazy(() =>
   import('@/components/team/CommitteesSection').then(module => ({ default: module.CommitteesSection }))
 );
 
@@ -45,7 +45,7 @@ export default function TeamPage() {
         setCommittees(committeesData);
         setLeadershipPositions(leadershipData);
         setHybridMembers(membersData);
-        
+
         // Log team page view for analytics
         logTeamView();
       } catch (err) {
@@ -65,7 +65,7 @@ export default function TeamPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <LoadingSpinner />
-           
+
           </div>
         </div>
       </div>
@@ -98,42 +98,123 @@ export default function TeamPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      
+
       <Navigation />
       <ScrollRevealWrapper>
-      {/* Hero Section */}
-      <section className="bg-white pt-16 md:pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center">
-                            {/* <h1 className="text-4xl md:text-5xl font-light text-gray-900">
+        {/* Hero Section */}
+        <section className="bg-white pt-16 md:pt-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <div className="flex items-center justify-center">
+                {/* <h1 className="text-4xl md:text-5xl font-light text-gray-900">
                 {t('team.title')}
               </h1> */}
-              <Image src="/energyWeekLogo.png" alt="KFUPM Energy Week" width={320} height={320} className="ml-4" />
+                <Image src="/energyWeekLogo.png" alt="KFUPM Energy Week" width={320} height={320} className="ml-4" />
 
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Leadership Section */}
-      <Suspense fallback={<LoadingSpinner />}>
-        <LeadershipSection 
-          leadershipPositions={leadershipPositions} 
-          committees={committees}
-          hybridMembers={hybridMembers}
+        {/* Decorative Banner */}
+        {/* Decorative Banner */}
+        <div
+          className="w-full h-12 md:h-16 relative my-8"
+          style={{
+            backgroundImage: 'url(/energy-week-banner.png?v=2)',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center'
+          }}
         />
-      </Suspense>
 
-      {/* Committees Section */}
-      <Suspense fallback={<LoadingSpinner />}>
-        <CommitteesSection 
-          committees={committees}
-          hybridMembers={hybridMembers}
+
+        {/* Regional Sections */}
+        {/* Eastern Province (Default) */}
+        <Suspense fallback={<LoadingSpinner />}>
+          <CommitteesSection
+            committees={[
+              {
+                id: 'leaders',
+                name: 'Leaders',
+                order: 0,
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                members: []
+              },
+              ...committees
+            ]}
+            hybridMembers={[
+              // Create dummy members for the Leaders committee to make the count work
+              ...leadershipPositions.map(p => ({
+                id: p.memberId,
+                email: p.member?.email || '',
+                fullName: p.member?.fullName || '',
+                role: p.title,
+                committeeId: 'leaders',
+                committeeName: 'Leaders',
+                status: 'active',
+                profilePicture: p.member?.profilePicture || null,
+                linkedInUrl: p.member?.linkedInUrl || null
+              } as HybridMember)),
+              ...hybridMembers.filter(m => {
+                const role = m.role?.trim().toLowerCase();
+                return role === "leader" || role === "team leader" || role === "committee leader";
+              }).map(m => ({
+                ...m,
+                committeeName: 'Leaders'
+              })),
+              ...hybridMembers
+            ]}
+            title="Eastern Province"
+            sectionLogo="/eastern-logo.png"
+          />
+        </Suspense>
+
+        {/* Decorative Banner */}
+        <div
+          className="w-full h-12 md:h-16 relative my-8"
+          style={{
+            backgroundImage: 'url(/energy-week-banner.png?v=3)',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center'
+          }}
         />
-      </Suspense>
 
-      {/* Footer Spacing */}
+        {/* Riyadh Region */}
+        <Suspense fallback={<LoadingSpinner />}>
+          <CommitteesSection
+            committees={[]}
+            hybridMembers={hybridMembers}
+            title="Riyadh Region"
+            sectionLogo="/riyadh-logo.png"
+          />
+        </Suspense>
+
+        {/* Decorative Banner */}
+        <div
+          className="w-full h-12 md:h-16 relative my-8"
+          style={{
+            backgroundImage: 'url(/energy-week-banner.png?v=3)',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center'
+          }}
+        />
+
+        {/* Western Region */}
+        <Suspense fallback={<LoadingSpinner />}>
+          <CommitteesSection
+            committees={[]}
+            hybridMembers={hybridMembers}
+            title="Western Region"
+            sectionLogo="/western-logo.png"
+          />
+        </Suspense>
+
+        {/* Footer Spacing */}
       </ScrollRevealWrapper>
     </div>
   );
