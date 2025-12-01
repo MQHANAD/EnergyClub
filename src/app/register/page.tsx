@@ -23,6 +23,8 @@ export default function RegisterPage() {
   // Registration open flags
   const [openEW2, setOpenEW2] = useState<boolean | null>(null);
   const [openFEC, setOpenFEC] = useState<boolean | null>(null);
+  const [openEW2V2, setOpenEW2V2] = useState<boolean | null>(null);
+  const [openFECV2, setOpenFECV2] = useState<boolean | null>(null);
 
   // Auth + admin
   const [user, setUser] = useState<User | null>(null);
@@ -57,19 +59,47 @@ export default function RegisterPage() {
       const data = snap.exists() ? (snap.data() as any) : {};
       setOpenEW2(Boolean(data.energy_week_2_open));
       setOpenFEC(Boolean(data.female_energy_club_open));
+      setOpenEW2V2(Boolean(data.energy_week_2_v2_open));
+      setOpenFECV2(Boolean(data.female_energy_club_v2_open));
     });
     return () => unsub();
   }, []);
 
   useEffect(() => {
-    console.log('openEW2 =', openEW2, 'openFEC =', openFEC);
-  }, [openEW2, openFEC]);
+    console.log('openEW2 =', openEW2, 'openFEC =', openFEC, 'openEW2V2 =', openEW2V2, 'openFECV2 =', openFECV2);
+  }, [openEW2, openFEC, openEW2V2, openFECV2]);
+
+  // Debug responsiveness
+  useEffect(() => {
+    const logResponsiveness = () => {
+      console.log('[DEBUG] Window width:', window.innerWidth, 'height:', window.innerHeight);
+      const heroText = document.querySelector('p.absolute');
+      if (heroText) {
+        const style = window.getComputedStyle(heroText);
+        console.log('[DEBUG] Hero text font-size:', style.fontSize, 'line-height:', style.lineHeight);
+      }
+      const grid = document.querySelector('.grid.grid-cols-1');
+      if (grid) {
+        console.log('[DEBUG] Grid rect:', grid.getBoundingClientRect());
+        const items = grid.querySelectorAll('div.flex.items-center');
+        items.forEach((item, i) => {
+          console.log(`[DEBUG] Grid item ${i} rect:`, item.getBoundingClientRect());
+        });
+      }
+    };
+    logResponsiveness();
+    window.addEventListener('resize', logResponsiveness);
+    return () => window.removeEventListener('resize', logResponsiveness);
+  }, []);
 
  
 
   // Is a given program open right now?
   const isOpenFor = (id: Program) =>
-    id === 'energy_week_2' ? !!openEW2 : !!openFEC;
+    id === 'energy_week_2' ? !!openEW2 :
+    id === 'female_energy_club' ? !!openFEC :
+    id === 'energy_week_2_v2' ? !!openEW2V2 :
+    !!openFECV2;
 
   // Guarded tab change (block if closed)
   const handleTabChange = (next: Program) => {
@@ -82,17 +112,24 @@ export default function RegisterPage() {
 
 useEffect(() => {
   // still loading? do nothing
-  if (openEW2 === null || openFEC === null) return;
+  if (openEW2 === null || openFEC === null || openEW2V2 === null || openFECV2 === null) return;
 
   // if the currently selected tab is closed, switch to one that's open
   const activeIsClosed =
     (active === 'energy_week_2' && !openEW2) ||
-    (active === 'female_energy_club' && !openFEC);
+    (active === 'female_energy_club' && !openFEC) ||
+    (active === 'energy_week_2_v2' && !openEW2V2) ||
+    (active === 'female_energy_club_v2' && !openFECV2);
 
   if (activeIsClosed) {
-    setActive(openEW2 ? 'energy_week_2' : (openFEC ? 'female_energy_club' : active));
+    const openPrograms = [];
+    if (openEW2) openPrograms.push('energy_week_2');
+    if (openFEC) openPrograms.push('female_energy_club');
+    if (openEW2V2) openPrograms.push('energy_week_2_v2');
+    if (openFECV2) openPrograms.push('female_energy_club_v2');
+    setActive((openPrograms[0] as Program) || active);
   }
-}, [active, openEW2, openFEC]);
+}, [active, openEW2, openFEC, openEW2V2, openFECV2]);
 
 
   // === Admin toggle write ===
@@ -108,17 +145,20 @@ useEffect(() => {
       }
 
       const ref = doc(db, 'config', 'registration');
-      const payload =
-        program === 'energy_week_2'
-          ? { energy_week_2_open: open, updatedAt: Timestamp.now() }
-          : { female_energy_club_open: open, updatedAt: Timestamp.now() };
+      let payload: any = { updatedAt: Timestamp.now() };
+      if (program === 'energy_week_2') payload.energy_week_2_open = open;
+      else if (program === 'female_energy_club') payload.female_energy_club_open = open;
+      else if (program === 'energy_week_2_v2') payload.energy_week_2_v2_open = open;
+      else if (program === 'female_energy_club_v2') payload.female_energy_club_v2_open = open;
 
       await setDoc(ref, payload, { merge: true });
 
-       if (program === 'energy_week_2') setOpenEW2(open);
-         else setOpenFEC(open);
+      if (program === 'energy_week_2') setOpenEW2(open);
+      else if (program === 'female_energy_club') setOpenFEC(open);
+      else if (program === 'energy_week_2_v2') setOpenEW2V2(open);
+      else if (program === 'female_energy_club_v2') setOpenFECV2(open);
 
-    if (open) setActive(program);
+      if (open) setActive(program);
 
       console.log('[toggle ok]', program, open);
     } catch (e: any) {
@@ -129,45 +169,60 @@ useEffect(() => {
   };
 
   // While we haven't loaded toggles yet
-  const togglesLoading = openEW2 === null || openFEC === null;
+  const togglesLoading = openEW2 === null || openFEC === null || openEW2V2 === null || openFECV2 === null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0E3B83] via-[#1A42E3] via-[#209EAA] to-[#00CAE6] py-15 text-white">
-        {/* <img src="/Logo.png" alt="Icon" className="h-48 w-48 "/> */}
-        <img src="/JoinUsPattern3.png" alt="Pattern" className="absolute bottom-0 left-0 w-full h-auto "/>
-        <img src="/JoinUsPattern3.png" alt="Pattern" className="absolute bottom-28 left-0 w-full h-auto "/>
-        <img 
-          src="/WhiteHashtag.png" 
-          alt="Hashtag" 
-          className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-300px h-auto"
-        />
+      <div className="relative overflow-hidden bg-[#0f5960] text-white">
+        <div className="relative w-full overflow-hidden bottom-0 -translate-y-">
+          <img 
+            src="/JoinusPattern.png" 
+            alt="Pattern" 
+            className="
+              w-[120%] sm:w-[100%] 
+              h-auto 
+              scale-[1.2] sm:scale-100
+              origin-bottom-left
+              block
+            "
+          />
+          <p className="
+            absolute inset-0 flex items-center justify-center
+            text-white font-bold text-center
+            text-[clamp(24px,6vw,120px)]
+            px-4
+          ">
+            #Lets Energize The Future
+          </p>
+        </div>
+
+                
 
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative mx-auto max-w-6xl px-4 py-16">
           <div className="text-center">
             <div className="mb-6 inline-flex items-center justify-center">
-                <img src="/JoinusIcon.png" alt="Icon" className="h-28 w-28 -translate-y-25"/>
+                <img src="/JoinusIcon.png" alt="Icon" className="h-28 w-28 -translate-y-13"/>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-down -translate-y-33">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-down -translate-y-17">
               Join Our Energy Community
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in-up -translate-y-30">
+            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in-up -translate-y-14">
               Be part of innovative programs that shape the future of energy.
               Apply now to contribute your skills and passion to meaningful projects.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 stagger-animation">
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-34">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 stagger-animation justify-items-center md:justify-items-start">
+              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-0 md:-translate-y-13">
                 <Clock className="h-5 w-5 flex-shrink-0" />
                 <span>Flexible Timeline</span>
               </div>
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-34">
+              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-0 md:-translate-y-13">
                 <Trophy className="h-5 w-5 flex-shrink-0" />
                 <span>Leadership Opportunities</span>
               </div>
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-34">
+              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105 -translate-y-0 md:-translate-y-13">
                 <Lightbulb className="h-5 w-5 flex-shrink-0" />
                 <span>Collaborative Community</span>
               </div>
@@ -217,6 +272,8 @@ useEffect(() => {
                   availability={{
                     energy_week_2: !!openEW2,
                     female_energy_club: !!openFEC,
+                    energy_week_2_v2: !!openEW2V2,
+                    female_energy_club_v2: !!openFECV2,
                   }}
                   showAdmin={isAdmin}
                   onAdminToggle={toggleProgram}
@@ -238,7 +295,11 @@ useEffect(() => {
                   <h3 className="font-medium text-gray-900 form-transition">
                     {active === 'energy_week_2'
                       ? 'Energy Week 2 Application'
-                      : 'Female Energy Club Application'}
+                      : active === 'female_energy_club'
+                      ? 'Female Energy Club Application'
+                      : active === 'energy_week_2_v2'
+                      ? 'Energy Week 2 v2 Application'
+                      : 'Female Energy Club v2 Application'}
                   </h3>
                   <p className="text-sm text-gray-600">Estimated completion time: 5-10 minutes</p>
                 </div>
@@ -262,11 +323,19 @@ useEffect(() => {
             <div className="transition-all duration-500 ease-in-out">
               {active === 'energy_week_2' ? (
                 <div className="animate-fade-in-up">
-                  <EnergyWeekForm isOpen={!!openEW2} />
+                  <EnergyWeekForm isOpen={!!openEW2} program="energy_week_2" />
+                </div>
+              ) : active === 'female_energy_club' ? (
+                <div className="animate-fade-in-up">
+                  <FemaleEnergyClubForm isOpen={!!openFEC} program="female_energy_club" />
+                </div>
+              ) : active === 'energy_week_2_v2' ? (
+                <div className="animate-fade-in-up">
+                  <EnergyWeekForm isOpen={!!openEW2V2} program="energy_week_2_v2" />
                 </div>
               ) : (
                 <div className="animate-fade-in-up">
-                 <FemaleEnergyClubForm isOpen={!!openFEC} />
+                  <FemaleEnergyClubForm isOpen={!!openFECV2} program="female_energy_club_v2" />
                 </div>
               )}
             </div>

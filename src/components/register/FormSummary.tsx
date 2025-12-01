@@ -48,7 +48,7 @@ export interface FormSummaryData {
   designLink?: string;
   
   // Program info
-  program: 'energy_week_2' | 'female_energy_club';
+  program: 'energy_week_2' | 'female_energy_club' | 'energy_week_2_v2' | 'female_energy_club_v2';
 }
 
 interface FormSummaryProps {
@@ -351,8 +351,8 @@ export default function FormSummary({
           disabled={isSubmitting}
           className={cn(
             "min-w-[160px] text-white font-medium",
-            data.program === 'energy_week_2' 
-              ? "bg-blue-600 hover:bg-blue-700" 
+            (data.program === 'energy_week_2' || data.program === 'energy_week_2_v2')
+              ? "bg-blue-600 hover:bg-blue-700"
               : "bg-pink-600 hover:bg-pink-700"
           )}
         >

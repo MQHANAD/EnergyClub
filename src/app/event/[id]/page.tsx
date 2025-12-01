@@ -43,10 +43,6 @@ export default function EventDetailsPage() {
   const [registering, setRegistering] = useState(false);
   const [registrationReason, setRegistrationReason] = useState("");
   const [isFromUniversity, setIsFromUniversity] = useState(false);
-  const [universityEmail, setUniversityEmail] = useState("");
-  const [universityEmailError, setUniversityEmailError] = useState<
-    string | null
-  >(null);
   const [studentId, setStudentId] = useState("");
   const [studentIdError, setStudentIdError] = useState<string | null>(null);
 
@@ -92,50 +88,17 @@ export default function EventDetailsPage() {
   }, [id, user]);
 
   useEffect(() => {
-    if (!isFromUniversity) {
-      setUniversityEmail("");
-      setUniversityEmailError(null);
-    }
-  }, [isFromUniversity]);
-
-  useEffect(() => {
-    if (!event?.requireStudentId) {
+    if (!event?.requireStudentId && !isFromUniversity) {
       setStudentId("");
       setStudentIdError(null);
     }
-  }, [event?.requireStudentId]);
+  }, [event?.requireStudentId, isFromUniversity]);
 
   useEffect(() => {
     if (event?.requireStudentId) {
       setIsFromUniversity(true);
     }
   }, [event?.requireStudentId]);
-
-  const validateUniversityEmail = (email: string): string | null => {
-    const value = (email || "").trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) {
-      return "Please provide a valid university email address.";
-    }
-    const domain = value.split("@")[1]?.toLowerCase() || "";
-    const personalDomains = [
-      "gmail.com",
-      "yahoo.com",
-      "hotmail.com",
-      "outlook.com",
-      "live.com",
-      "icloud.com",
-    ];
-    if (personalDomains.includes(domain)) {
-      return "Please use your university email domain (no personal email domains).";
-    }
-    const isUniDomain =
-      /\.edu(\.[a-z]{2})?$/.test(domain) || /\.ac(\.[a-z]{2})?$/.test(domain);
-    if (!isUniDomain) {
-      return "Please use a university email domain (e.g., .edu or .ac).";
-    }
-    return null;
-  };
 
   const handleRegister = async () => {
     if (!event || !user || !userProfile) return;
@@ -144,18 +107,7 @@ export default function EventDetailsPage() {
       setRegistering(true);
       setError(null);
 
-      // Validation
-      if (isFromUniversity || event.requireStudentId) {
-        const emailErr = validateUniversityEmail(universityEmail || "");
-        setUniversityEmailError(emailErr);
-        if (emailErr) {
-          setError(emailErr);
-          setRegistering(false);
-          return;
-        }
-      }
-
-      if (event.requireStudentId) {
+      if (event.requireStudentId || isFromUniversity) {
         if (!studentId.trim()) {
           setStudentIdError("Student ID is required for this event.");
           setError("Student ID is required for this event.");
@@ -172,8 +124,8 @@ export default function EventDetailsPage() {
         userProfile.email,
         registrationReason.trim() || undefined,
         isFromUniversity || event.requireStudentId,
-        universityEmail || undefined,
-        event.requireStudentId ? studentId.trim() : undefined
+        undefined,
+        (event.requireStudentId || isFromUniversity) ? studentId.trim() : undefined
       );
 
       // Reload event to get updated attendee count
@@ -539,52 +491,8 @@ export default function EventDetailsPage() {
                           </div>
                         )}
 
-                        {/* University Email Field */}
-                        {(isFromUniversity || event.requireStudentId) && (
-                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label
-                              htmlFor="universityEmail"
-                              className="text-sm font-semibold text-gray-700"
-                            >
-                              {t("eventDetails.universityEmail")}
-                              <span className="text-red-500 ml-1">*</span>
-                            </Label>
-                            <input
-                              type="email"
-                              id="universityEmail"
-                              placeholder={t(
-                                "eventDetails.universityEmailPlaceholder"
-                              )}
-                              value={universityEmail}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                setUniversityEmail(v);
-                                setUniversityEmailError(
-                                  validateUniversityEmail(v)
-                                );
-                              }}
-                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
-                                universityEmailError
-                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
-                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
-                              }`}
-                              required
-                              aria-invalid={!!universityEmailError}
-                              aria-describedby={universityEmailError ? "email-error" : undefined}
-                            />
-                            {universityEmailError && (
-                              <p
-                                id="email-error"
-                                className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
-                              >
-                                {universityEmailError}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
                         {/* Student ID Field */}
-                        {event.requireStudentId && (
+                        {(event.requireStudentId || isFromUniversity) && (
                           <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                             <Label
                               htmlFor="studentId"
@@ -646,10 +554,7 @@ export default function EventDetailsPage() {
                         {/* Register Button */}
                         <Button
                           onClick={handleRegister}
-                          disabled={
-                            registering ||
-                            ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
-                          }
+                          disabled={registering}
                           className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
                         >
                           {registering ? (

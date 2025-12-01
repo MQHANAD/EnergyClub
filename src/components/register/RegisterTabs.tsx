@@ -45,11 +45,33 @@ const tabs: {
     features: ['Skill Development', 'Community Building', 'Career Guidance'],
     duration: 'Ongoing',
   },
+  {
+    key: 'energy_week_2_v2',
+    label: 'Energy Week 2 v2',
+    title: 'Energy Week 2 v2 Program',
+    description:
+      'Join our flagship energy event with hands-on workshops, competitions, and networking opportunities.',
+    icon: Zap,
+    features: ['Industry Networking', 'Leadership Roles'],
+    duration: '1 Week',
+  },
+  {
+    key: 'female_energy_club_v2',
+    label: 'Female Energy Club v2',
+    title: 'Female Energy Club v2 Program',
+    description:
+      'Empowering students in energy through mentorship, skill development, and community building initiatives.',
+    icon: Star,
+    features: ['Skill Development', 'Community Building', 'Career Guidance'],
+    duration: 'Ongoing',
+  },
 ];
 
 const tabImages: Record<Program, { src: string; alt: string }> = {
   energy_week_2: { src: '/energyWeekLogo.png', alt: 'Energy Week preview' },
   female_energy_club: { src: '/energyClubLogo.png', alt: 'Female Energy Club preview' },
+  energy_week_2_v2: { src: '/energyWeekLogo.png', alt: 'Energy Week v2 preview' },
+  female_energy_club_v2: { src: '/energyClubLogo.png', alt: 'Female Energy Club v2 preview' },
 };
 
 export default function RegisterTabs({
@@ -59,8 +81,6 @@ export default function RegisterTabs({
   showAdmin = false,
   onAdminToggle,
 }: Props) {
-  const ew2Open = availability.energy_week_2 !== false;
-  const fecOpen = availability.female_energy_club !== false;
 
   const handleKey = (e: React.KeyboardEvent, disabled: boolean, key: Program) => {
     if (disabled) return;
@@ -78,7 +98,7 @@ export default function RegisterTabs({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {tabs.map((tab) => {
             const isActive = active === tab.key;
-            const isDisabled = tab.key === 'energy_week_2' ? !ew2Open : !fecOpen;
+            const isDisabled = availability[tab.key] === false;
             const cardDisabled = isDisabled && !showAdmin;
 
             return (
@@ -196,7 +216,7 @@ export default function RegisterTabs({
       <div className="hidden lg:grid lg:grid-cols-2 gap-6">
         {tabs.map((tab) => {
           const isActive = active === tab.key;
-          const isDisabled = tab.key === 'energy_week_2' ? !ew2Open : !fecOpen;
+          const isDisabled = availability[tab.key] === false;
           const cardDisabled = isDisabled && !showAdmin;
 
           const Icon = tab.icon;

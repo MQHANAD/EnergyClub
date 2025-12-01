@@ -9,6 +9,7 @@ import {
   EnergyWeekSchema,
   EW2_COMMITTEES,
   ApplicationEnergyWeek,
+  ApplicationSchema,
 } from '@/lib/registrationSchemas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SharedFields from '@/components/register/SharedFields';
@@ -32,9 +33,9 @@ import {
 import { auth } from '@/lib/firebase';
 import { signInAnonymously, signOut, setPersistence, inMemoryPersistence } from 'firebase/auth';
 
-type FormValues = z.infer<typeof EnergyWeekSchema>;
+type FormValues = z.infer<typeof ApplicationSchema>;
 
-type Props = { isOpen?: boolean };
+type Props = { isOpen?: boolean; program?: 'energy_week_2' | 'energy_week_2_v2' };
 
 function CommitteesMultiSelect({
   options,
@@ -88,7 +89,7 @@ function CommitteesMultiSelect({
   );
 }
 
-export default function EnergyWeekForm({ isOpen = true }: Props) {
+export default function EnergyWeekForm({ isOpen = true, program = 'energy_week_2' }: Props) {
   const [activeTab, setActiveTab] = useState<'energy_week_2' | 'female_energy_club'>('energy_week_2');
 
   if (!isOpen) return null;
@@ -103,10 +104,10 @@ export default function EnergyWeekForm({ isOpen = true }: Props) {
     formState: { errors, isValid, isSubmitting },
     getValues,
   } = useForm<FormValues>({
-    resolver: zodResolver(EnergyWeekSchema) as any,
+    resolver: zodResolver(ApplicationSchema) as any,
     mode: 'onChange',
     defaultValues: {
-      program: 'energy_week_2',
+      program: program,
       fullName: '',
       email: '',
       kfupmId: '',
@@ -205,7 +206,7 @@ export default function EnergyWeekForm({ isOpen = true }: Props) {
     cvFile: formValues.cvFile || undefined,
     designFile: formValues.designFile || undefined,
     designLink: formValues.designLink || undefined,
-    program: 'energy_week_2'
+    program: program
   };
 
   const onToggleCommittee = useCallback(
@@ -446,7 +447,7 @@ export default function EnergyWeekForm({ isOpen = true }: Props) {
 
       // Reset form state (no network)
       reset({
-        program: 'energy_week_2',
+        program: program,
         fullName: '',
         email: '',
         kfupmId: '',

@@ -10,6 +10,7 @@ import {
   FEC_COMMITTEES_NO_ECE,
   FEC_TEAMS_WITH_ECE,
   ApplicationFemaleEnergyClub,
+  ApplicationSchema,
 } from '@/lib/registrationSchemas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SharedFields from '@/components/register/SharedFields';
@@ -33,7 +34,7 @@ import {
 import { auth } from '@/lib/firebase';
 import { signInAnonymously, signOut, setPersistence, inMemoryPersistence } from 'firebase/auth';
 
-type FormValues = z.infer<typeof FemaleEnergyClubSchema>;
+type FormValues = z.infer<typeof ApplicationSchema>;
 
 function CommitteesMultiSelect({
   options,
@@ -87,9 +88,9 @@ function CommitteesMultiSelect({
   );
 }
 
-type Props = { isOpen?: boolean };
+type Props = { isOpen?: boolean; program?: 'female_energy_club' | 'female_energy_club_v2' };
 
-export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
+export default function FemaleEnergyClubForm({ isOpen = true, program = 'female_energy_club' }: Props) {
 
   
   // Show registration closed message
@@ -174,10 +175,10 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
     formState: { errors, isValid, isSubmitting },
     getValues,
   } = useForm<FormValues>({
-    resolver: zodResolver(FemaleEnergyClubSchema) as any,
+    resolver: zodResolver(ApplicationSchema) as any,
     mode: 'onChange',
     defaultValues: {
-      program: 'female_energy_club',
+      program: program,
       fullName: '',
       email: '',
       kfupmId: '',
@@ -276,7 +277,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
     cvFile: formValues.cvFile || undefined,
     designFile: formValues.designFile || undefined,
     designLink: formValues.designLink || undefined,
-    program: 'female_energy_club'
+    program: program
   };
 
   const onToggleCommittee = useCallback(
@@ -533,7 +534,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
 
       // Reset form state (no network)
       reset({
-        program: 'female_energy_club',
+        program: program,
         fullName: '',
         email: '',
         kfupmId: '',
