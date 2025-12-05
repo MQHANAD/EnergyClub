@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import Navigation from '@/components/Navigation';
@@ -105,29 +106,38 @@ function MemberContent() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Navigation />
-            <div className="pt-32 pb-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-white px-4">
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="w-full max-w-md"
+                    className="w-full max-w-[90vw]"
+
                 >
-                    <div className="@container relative w-fit max-w-[90vw] max-h-[80vh] bg-[#282828] rounded-3xl overflow-hidden shadow-2xl">
-                        <img 
-                            src={bgImage} 
-                            alt="Membership Card" 
-                            className="w-auto h-auto max-w-full max-h-[80vh] object-contain block"
+                    <div className="relative w-full max-w-[90vw] aspect-[3/4] bg-[#282828] rounded-3xl overflow-hidden shadow-2xl">
+
+                        <Image
+                            src={bgImage}
+                            alt="Membership Card"
+                            fill
+                            className="object-contain"
+                            priority
                         />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-[8cqw] text-center">
-                            <h1 className="text-[8cqw] font-bold text-white mb-[2cqw] drop-shadow-md leading-tight">
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6">
+                            <h1 className="text-white font-bold drop-shadow-md
+                                text-[clamp(16px,5vw,28px)] mb-2">
                                 {memberData.fullName}
                             </h1>
-                            <p className="text-blue-400 font-semibold text-[5cqw] mb-[1cqw] drop-shadow-sm">
+
+
+                            <p className="text-blue-400 font-semibold drop-shadow-sm
+                                text-[clamp(14px,4vw,22px)] mb-1">
                                 {memberData.role}
                             </p>
                             {memberData.committeeName && (
-                                <p className="text-gray-300 font-medium text-[4cqw] drop-shadow-sm">
+                                <p className="text-cyan-400 font-medium drop-shadow-sm
+                                text-[clamp(12px,3.5vw,20px)]">
                                     {memberData.committeeName}
                                 </p>
                             )}
