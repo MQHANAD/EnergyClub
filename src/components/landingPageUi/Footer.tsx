@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Linkedin, Instagram, X, Mail, MapPin } from "lucide-react";
+import { Linkedin, Instagram, X, Mail, MapPin, TicketIcon, Music, Music2 } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 
 export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
@@ -44,6 +44,24 @@ export default function Footer({ primary = "#25818a", accent = "#f8cd5c" }) {
           platform: "LinkedIn",
           icon: Linkedin,
           href: "https://www.linkedin.com/company/kfupm-energy-week/",
+          color: "#0077b5",
+        },
+        {
+          platform: "Instagram",
+          icon: Instagram,
+          href: "https://www.instagram.com/energyweeksa",
+          color: "#0077b5",
+        },
+        {
+          platform: "X",
+          icon: X,
+          href: "https://x.com/Energyweek_sa",
+          color: "#0077b5",
+        },
+        {
+          platform: "Tiktok",
+          icon: Music2,
+          href: "https://www.tiktok.com/@energyweeksa?_r=1&_t=ZS-91kpnz6bCxs",
           color: "#0077b5",
         },
       ],
