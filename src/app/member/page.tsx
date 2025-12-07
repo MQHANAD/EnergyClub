@@ -106,38 +106,40 @@ function MemberContent() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Navigation />
-            <div className="min-h-screen flex items-center justify-center bg-white px-4">
+            <div className="min-h-screen flex items-center justify-center bg-[#242424] px-4">
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="w-full max-w-[90vw]"
-
+                    className="w-full h-full flex items-center justify-center p-4"
                 >
-                    <div className="relative w-full max-w-[90vw] aspect-[3/4] bg-[#282828] rounded-3xl overflow-hidden shadow-2xl">
-
+                    <div className="relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] rounded-3xl overflow-hidden shadow-2xl [container-type:size]">
                         <Image
                             src={bgImage}
                             alt="Membership Card"
                             fill
-                            className="object-contain"
+                            className="object-cover"
                             priority
                         />
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6">
-                            <h1 className="text-white font-bold drop-shadow-md
-                                text-[clamp(16px,5vw,28px)] mb-2">
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-[8%] mt-[0%]">
+                            {/* Spacer to push content down if needed, or just center it. 
+                                The original design had it centered. 
+                                We can use % of height for font size. */}
+
+                            <h1 className="text-white font-bold drop-shadow-md"
+                                style={{ fontSize: '5cqw' }}>
                                 {memberData.fullName}
                             </h1>
 
-
-                            <p className="text-blue-400 font-semibold drop-shadow-sm
-                                text-[clamp(14px,4vw,22px)] mb-1">
+                            {/* <p className="text-blue-400 font-semibold drop-shadow-sm mt-[5%]"
+                                style={{ fontSize: '3.5cqw' }}>
                                 {memberData.role}
-                            </p>
+                            </p> */}
+
                             {memberData.committeeName && (
-                                <p className="text-cyan-400 font-medium drop-shadow-sm
-                                text-[clamp(12px,3.5vw,20px)]">
+                                <p className="text-cyan-400 font-medium drop-shadow-sm mt-[35%]"
+                                    style={{ fontSize: '5cqw' }}>
                                     {memberData.committeeName}
                                 </p>
                             )}
