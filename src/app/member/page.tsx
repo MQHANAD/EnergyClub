@@ -76,17 +76,23 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
 
     return (
         <div ref={ref} className={containerClasses}>
-            {/* For export, we might want to usage standard img tag if next/image causes issues with html2canvas, 
-                but let's stick to Image for now with unoptimized if needed. 
-                next/image is usually fine if useCORS is true and domains are allowed. 
-            */}
-            <Image
-                src={bgImage}
-                alt="Membership Card"
-                fill
-                className="object-cover"
-                priority
-            />
+            {/* For export, usage standard img tag to avoid next/image optimization issues on mobile capture */}
+            {variant === 'export' ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={bgImage}
+                    alt="Membership Card"
+                    className="object-cover w-full h-full absolute inset-0"
+                />
+            ) : (
+                <Image
+                    src={bgImage}
+                    alt="Membership Card"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+            )}
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-[8%] mt-[0%]">
                 <h1 className="text-white font-bold drop-shadow-md"
                     style={{
@@ -171,7 +177,8 @@ function MemberContent() {
             const canvas = await html2canvas(exportCardRef.current, {
                 scale: 2, // High res export
                 backgroundColor: null,
-                useCORS: true
+                useCORS: true,
+                windowWidth: 1080 // Force desktop rendering context
             });
             const image = canvas.toDataURL("image/png");
             const link = document.createElement("a");
@@ -226,11 +233,6 @@ function MemberContent() {
                     {/* View Version (Responsive) */}
                     <MemberCard memberData={memberData} variant="view" />
 
-                    {/* Export Version (Hidden, Fixed Size) */}
-                    <div className="absolute top-0 left-[-9999px]">
-                        <MemberCard memberData={memberData} variant="export" ref={exportCardRef} />
-                    </div>
-
                     <button
                         onClick={handleDownload}
                         className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group mb-16 cursor-pointer"
@@ -239,6 +241,11 @@ function MemberContent() {
                         <span>Download Card</span>
                     </button>
                 </motion.div>
+
+                {/* Export Version (Hidden, Fixed Size, Outside Flow) */}
+                <div className="fixed top-0 left-[-9999px] w-[595px] h-[842px] z-[-50]">
+                    <MemberCard memberData={memberData} variant="export" ref={exportCardRef} />
+                </div>
 
             </div>
         </div>
