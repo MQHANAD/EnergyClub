@@ -71,7 +71,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
     const style = getStyle();
 
     const containerClasses = variant === 'view'
-        ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-20 mt-0"
+        ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-20 mt-8"
         : "relative w-[595px] h-[842px] overflow-hidden bg-[#181818]"; // Fixed size for export
 
     return (
@@ -175,9 +175,13 @@ function MemberContent() {
         if (!exportCardRef.current) return;
         try {
             const canvas = await html2canvas(exportCardRef.current, {
-                scale: 2, // High res export
+                scale: 1, // Reduced scale to avoid "too big" issues
                 backgroundColor: null,
                 useCORS: true,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0,
                 windowWidth: 1080 // Force desktop rendering context
             });
             const image = canvas.toDataURL("image/png");
@@ -243,7 +247,7 @@ function MemberContent() {
                 </motion.div>
 
                 {/* Export Version (Hidden, Fixed Size, Outside Flow) */}
-                <div className="fixed top-0 left-[-9999px] w-[595px] h-[842px] z-[-50]">
+                <div className="fixed top-0 left-0 w-[595px] h-[842px] z-[-50] opacity-0 pointer-events-none">
                     <MemberCard memberData={memberData} variant="export" ref={exportCardRef} />
                 </div>
 
