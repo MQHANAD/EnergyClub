@@ -19,6 +19,96 @@ interface MemberData {
     committeeName?: string;
 }
 
+const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, variant: 'view' | 'export' }>(({ memberData, variant }, ref) => {
+    const isLeader = memberData.role.toLowerCase().includes('leader');
+    const hasNoCommittee = !memberData.committeeName;
+    const bgImage = (isLeader || hasNoCommittee) ? '/leaders.svg' : '/members.svg';
+
+    let displayText = memberData.committeeName || memberData.role;
+    const isRole = !memberData.committeeName;
+
+    if (memberData.committeeName && memberData.role.toLowerCase().includes('leader')) {
+        displayText = `Leader of ${displayText}`;
+    }
+
+    const getStyle = () => {
+        if (isRole) {
+            const color = '#f9bc00';
+            return {
+                color,
+                textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
+                fontSize: variant === 'export' ? '20px' : '5cqw',
+                fontFamily: 'DGSahabah, sans-serif'
+            };
+        }
+
+        const lowerName = displayText.toLowerCase();
+
+        let color = '#22d3ee'; // Default cyan
+
+        if (lowerName.includes('pmo')) {
+            color = '#a6a6a6';
+        } else if (lowerName.includes('pr')) {
+            color = '#6f23c7';
+        } else if (lowerName.includes('tech')) {
+            color = '#ff3131';
+        } else if (lowerName.includes('operation') || lowerName.includes('logistic')) {
+            color = '#cc8d57';
+        } else if (lowerName.includes('event') || lowerName.includes('planing') || lowerName.includes('planning')) {
+            color = '#26928e';
+        } else if (lowerName.includes('market') || lowerName.includes('markting')) {
+            color = '#ff66c4';
+        }
+
+        return {
+            color,
+            textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
+            fontSize: variant === 'export' ? '20px' : '5cqw',
+            fontFamily: 'DGSahabah, sans-serif'
+        };
+    };
+
+    const style = getStyle();
+
+    const containerClasses = variant === 'view'
+        ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-20 mt-0"
+        : "relative w-[595px] h-[842px] overflow-hidden bg-[#181818]"; // Fixed size for export
+
+    return (
+        <div ref={ref} className={containerClasses}>
+            {/* For export, we might want to usage standard img tag if next/image causes issues with html2canvas, 
+                but let's stick to Image for now with unoptimized if needed. 
+                next/image is usually fine if useCORS is true and domains are allowed. 
+            */}
+            <Image
+                src={bgImage}
+                alt="Membership Card"
+                fill
+                className="object-cover"
+                priority
+            />
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-[8%] mt-[0%]">
+                <h1 className="text-white font-bold drop-shadow-md"
+                    style={{
+                        fontSize: variant === 'export' ? '24px' : '5cqw', // approx 5cqw of 842px height is ~42px? No, 5cqw is based on width usually if container-type is inline-size. 
+                        // If container-type: size, cqw is based on width. 595 * 0.05 = 29.75px. 
+                        // Let's use 30px for committee (which was 5cqw) and maybe same for name?
+                        // Original code had name at 5cqw too.
+                        fontFamily: 'DGSahabah, sans-serif'
+                    }}>
+                    {memberData.fullName}
+                </h1>
+
+                <p className="font-medium mt-[35%]"
+                    style={style}>
+                    {displayText}
+                </p>
+            </div>
+        </div>
+    );
+});
+MemberCard.displayName = "MemberCard";
+
 function MemberContent() {
     const { user, loading: authLoading } = useAuth();
     const [memberData, setMemberData] = useState<MemberData | null>(null);
@@ -72,13 +162,14 @@ function MemberContent() {
         }
     }, [user, authLoading]);
 
-    const cardRef = useRef<HTMLDivElement>(null);
+    // Ref for the export version of the card
+    const exportCardRef = useRef<HTMLDivElement>(null);
 
     const handleDownload = async () => {
-        if (!cardRef.current) return;
+        if (!exportCardRef.current) return;
         try {
-            const canvas = await html2canvas(cardRef.current, {
-                scale: 2,
+            const canvas = await html2canvas(exportCardRef.current, {
+                scale: 2, // High res export
                 backgroundColor: null,
                 useCORS: true
             });
@@ -121,11 +212,8 @@ function MemberContent() {
         );
     }
 
-    const isLeader = memberData.role.toLowerCase().includes('leader');
-    const bgImage = isLeader ? '/leaders.svg' : '/members.svg';
-
     return (
-        <div className="min-h-screen">
+        <div className="h-[100dvh]">
             <Navigation colorScheme="dark" />
             <div className="min-h-screen flex items-center justify-center bg-[#181818] px-4">
 
@@ -135,89 +223,17 @@ function MemberContent() {
                     transition={{ duration: 0.5 }}
                     className="w-full h-full flex items-center justify-center p-4 flex-col"
                 >
-                    <div ref={cardRef} className="relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-16 mt-0">
-                        <Image
-                            src={bgImage}
-                            alt="Membership Card"
-                            fill
-                            className="object-cover"
-                            priority
-                        />
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-[8%] mt-[0%]">
-                            {/* Spacer to push content down if needed, or just center it. 
-                                The original design had it centered. 
-                                We can use % of height for font size. */}
+                    {/* View Version (Responsive) */}
+                    <MemberCard memberData={memberData} variant="view" />
 
-                            <h1 className="text-white font-bold drop-shadow-md"
-                                style={{ fontSize: '5cqw', fontFamily: 'DGSahabah, sans-serif' }}>
-                                {memberData.fullName}
-                            </h1>
-
-                            {/* <p className="text-blue-400 font-semibold drop-shadow-sm mt-[5%]"
-                                style={{ fontSize: '3.5cqw' }}>
-                                {memberData.role}
-                            </p> */}
-
-                            {(memberData.committeeName || memberData.role) && (() => {
-                                let displayText = memberData.committeeName || memberData.role;
-                                const isRole = !memberData.committeeName;
-
-                                if (memberData.committeeName && memberData.role.toLowerCase().includes('leader')) {
-                                    displayText = `Leader of ${displayText}`;
-                                }
-
-                                const getStyle = () => {
-                                    if (isRole) {
-                                        const color = '#f9bc00';
-                                        return {
-                                            color,
-                                            textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-                                            fontSize: '5cqw',
-                                            fontFamily: 'DGSahabah, sans-serif'
-                                        };
-                                    }
-
-                                    const lowerName = displayText.toLowerCase();
-
-                                    let color = '#22d3ee'; // Default cyan
-
-                                    if (lowerName.includes('pmo')) {
-                                        color = '#a6a6a6';
-                                    } else if (lowerName.includes('pr')) {
-                                        color = '#6f23c7';
-                                    } else if (lowerName.includes('tech')) {
-                                        color = '#ff3131';
-                                    } else if (lowerName.includes('operation') || lowerName.includes('logistic')) {
-                                        color = '#cc8d57';
-                                    } else if (lowerName.includes('event') || lowerName.includes('planing') || lowerName.includes('planning')) {
-                                        color = '#26928e';
-                                    } else if (lowerName.includes('market') || lowerName.includes('markting')) {
-                                        color = '#ff66c4';
-                                    }
-
-                                    return {
-                                        color,
-                                        textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-                                        fontSize: '5cqw',
-                                        fontFamily: 'DGSahabah, sans-serif'
-                                    };
-                                };
-
-                                const style = getStyle();
-
-                                return (
-                                    <p className="font-medium mt-[35%]"
-                                        style={style}>
-                                        {displayText}
-                                    </p>
-                                );
-                            })()}
-                        </div>
+                    {/* Export Version (Hidden, Fixed Size) */}
+                    <div className="absolute top-0 left-[-9999px]">
+                        <MemberCard memberData={memberData} variant="export" ref={exportCardRef} />
                     </div>
 
                     <button
                         onClick={handleDownload}
-                        className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group"
+                        className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group mb-16 cursor-pointer"
                     >
                         <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         <span>Download Card</span>
