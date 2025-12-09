@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
@@ -9,8 +9,9 @@ import { Card } from '@/components/ui/card';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import html2canvas from 'html2canvas';
 
 interface MemberData {
     fullName: string;
@@ -71,6 +72,26 @@ function MemberContent() {
         }
     }, [user, authLoading]);
 
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    const handleDownload = async () => {
+        if (!cardRef.current) return;
+        try {
+            const canvas = await html2canvas(cardRef.current, {
+                scale: 2,
+                backgroundColor: null,
+                useCORS: true
+            });
+            const image = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = image;
+            link.download = `energy-club-card-${memberData?.fullName || 'member'}.png`;
+            link.click();
+        } catch (err) {
+            console.error("Download failed", err);
+        }
+    };
+
     if (authLoading || isLoading) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
@@ -104,17 +125,17 @@ function MemberContent() {
     const bgImage = isLeader ? '/leaders.svg' : '/members.svg';
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navigation />
-            <div className="min-h-screen flex items-center justify-center bg-[#242424] px-4">
+        <div className="min-h-screen">
+            <Navigation colorScheme="dark" />
+            <div className="min-h-screen flex items-center justify-center bg-[#181818] px-4">
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="w-full h-full flex items-center justify-center p-4"
+                    className="w-full h-full flex items-center justify-center p-4 flex-col"
                 >
-                    <div className="relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] rounded-3xl overflow-hidden shadow-2xl [container-type:size]">
+                    <div ref={cardRef} className="relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-16 mt-0">
                         <Image
                             src={bgImage}
                             alt="Membership Card"
@@ -128,7 +149,7 @@ function MemberContent() {
                                 We can use % of height for font size. */}
 
                             <h1 className="text-white font-bold drop-shadow-md"
-                                style={{ fontSize: '5cqw' }}>
+                                style={{ fontSize: '5cqw', fontFamily: 'DGSahabah, sans-serif' }}>
                                 {memberData.fullName}
                             </h1>
 
@@ -137,14 +158,70 @@ function MemberContent() {
                                 {memberData.role}
                             </p> */}
 
-                            {memberData.committeeName && (
-                                <p className="text-cyan-400 font-medium drop-shadow-sm mt-[35%]"
-                                    style={{ fontSize: '5cqw' }}>
-                                    {memberData.committeeName}
-                                </p>
-                            )}
+                            {(memberData.committeeName || memberData.role) && (() => {
+                                let displayText = memberData.committeeName || memberData.role;
+                                const isRole = !memberData.committeeName;
+
+                                if (memberData.committeeName && memberData.role.toLowerCase().includes('leader')) {
+                                    displayText = `Leader of ${displayText}`;
+                                }
+
+                                const getStyle = () => {
+                                    if (isRole) {
+                                        const color = '#f9bc00';
+                                        return {
+                                            color,
+                                            textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
+                                            fontSize: '5cqw',
+                                            fontFamily: 'DGSahabah, sans-serif'
+                                        };
+                                    }
+
+                                    const lowerName = displayText.toLowerCase();
+
+                                    let color = '#22d3ee'; // Default cyan
+
+                                    if (lowerName.includes('pmo')) {
+                                        color = '#a6a6a6';
+                                    } else if (lowerName.includes('pr')) {
+                                        color = '#6f23c7';
+                                    } else if (lowerName.includes('tech')) {
+                                        color = '#ff3131';
+                                    } else if (lowerName.includes('operation') || lowerName.includes('logistic')) {
+                                        color = '#cc8d57';
+                                    } else if (lowerName.includes('event') || lowerName.includes('planing') || lowerName.includes('planning')) {
+                                        color = '#26928e';
+                                    } else if (lowerName.includes('market') || lowerName.includes('markting')) {
+                                        color = '#ff66c4';
+                                    }
+
+                                    return {
+                                        color,
+                                        textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
+                                        fontSize: '5cqw',
+                                        fontFamily: 'DGSahabah, sans-serif'
+                                    };
+                                };
+
+                                const style = getStyle();
+
+                                return (
+                                    <p className="font-medium mt-[35%]"
+                                        style={style}>
+                                        {displayText}
+                                    </p>
+                                );
+                            })()}
                         </div>
                     </div>
+
+                    <button
+                        onClick={handleDownload}
+                        className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group"
+                    >
+                        <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <span>Download Card</span>
+                    </button>
                 </motion.div>
 
             </div>

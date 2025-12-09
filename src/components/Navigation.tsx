@@ -13,7 +13,11 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
 import { VideoText } from "./landingPageUi/videotext";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
-export default function Navigation() {
+interface NavigationProps {
+  colorScheme?: 'light' | 'dark';
+}
+
+export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
   const { user, userProfile, logout, loading, isOrganizer, isAdmin } =
     useAuth();
   const canSeeAdmin = Boolean(isOrganizer || isAdmin);
@@ -25,6 +29,12 @@ export default function Navigation() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hoveredPath, setHoveredPath] = useState("");
   const [isMember, setIsMember] = useState(false);
+
+  // Determine text colors based on colorScheme
+  // If dark scheme: text-white
+  // If light scheme: text-slate-800
+  const textColorClass = colorScheme === 'dark' ? 'text-white hover:text-gray-200' : 'text-slate-800 hover:text-black';
+  const iconColorClass = colorScheme === 'dark' ? 'text-white' : 'text-slate-800';
 
   useEffect(() => {
     const checkMembership = async () => {
@@ -104,8 +114,8 @@ export default function Navigation() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex justify-between items-center rounded-full border transition-all duration-300 ${isScrolled
-            ? "bg-white/20 backdrop-blur-lg border-white/30 shadow-xl"
-            : "bg-white/10 backdrop-blur-md border-white/20"
+          ? "bg-white/20 backdrop-blur-lg border-white/30 shadow-xl"
+          : "bg-white/10 backdrop-blur-md border-white/20"
           }`}
       >
         {/* Desktop Navigation */}
@@ -116,7 +126,7 @@ export default function Navigation() {
               href={link.href}
               onMouseOver={() => setHoveredPath(link.href)}
               onMouseLeave={() => setHoveredPath("")}
-              className="relative px-4 py-2 text-sm font-medium text-slate-800 hover:text-black transition-colors"
+              className={`relative px-4 py-2 text-sm font-medium transition-colors ${textColorClass}`}
             >
               {link.label}
               {hoveredPath === link.href && (
@@ -132,7 +142,7 @@ export default function Navigation() {
 
         {/* Desktop User Actions */}
         <div className="hidden md:flex items-center gap-4">
-          <LanguageSwitcher />
+          <LanguageSwitcher className={colorScheme === 'dark' ? 'text-white border-white/30 hover:bg-white/10' : ''} />
           {user ? (
             <div className="relative">
               <button
@@ -220,7 +230,7 @@ export default function Navigation() {
           ) : (
             <Link
               href="/login"
-              className="relative px-4 py-2 text-sm font-medium text-slate-800 hover:text-black transition-colors"
+              className={`relative px-4 py-2 text-sm font-medium transition-colors ${textColorClass}`}
             >
               {t("nav.signIn")}
             </Link>
@@ -231,7 +241,7 @@ export default function Navigation() {
         <div className="flex items-center md:hidden">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-full text-slate-800 hover:bg-white/30"
+            className={`p-2 rounded-full hover:bg-white/30 ${iconColorClass}`}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
