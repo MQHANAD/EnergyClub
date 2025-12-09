@@ -237,13 +237,13 @@ function MemberContent() {
                     {/* View Version (Responsive) */}
                     <MemberCard memberData={memberData} variant="view" />
 
-                    <button
+                    {/* <button
                         onClick={handleDownload}
                         className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group mb-16 cursor-pointer"
                     >
                         <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         <span>Download Card</span>
-                    </button>
+                    </button> */}
                 </motion.div>
 
                 {/* Export Version (Hidden, Fixed Size, Outside Flow) */}
