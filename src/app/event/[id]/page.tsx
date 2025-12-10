@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 
@@ -207,15 +208,21 @@ export default function EventDetailsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(getLocale(lang), {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+  // Add "at" between date and time (for English locales)
+  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+};
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -362,14 +369,14 @@ export default function EventDetailsPage() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
+            <div className="grid gap-6 md:gap-8 lg:grid-cols-3 items-start">
               {/* Main Event Info - Takes 2 columns on large screens */}
               <div className="lg:col-span-2 space-y-6">
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden self-start mb-[12px]">
                   <CardHeader className="space-y-4 pb-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="space-y-3 flex-1">
-                        <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                        <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-gray-900">
                           {event.title}
                         </CardTitle>
                         <CardDescription className="text-base md:text-lg flex items-center gap-2">
@@ -428,40 +435,58 @@ export default function EventDetailsPage() {
               {/* Sidebar - Takes 1 column on large screens */}
               <div className="space-y-6 lg:col-span-1">
                 {/* Event Details Card */}
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 self-start mb-[12px]">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl font-semibold">
                       {t("eventDetails.detailsTitle")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {formatDate(event.date)}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {event.location}
-                      </span>
-                    </div>
+                  {/* Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700">
+                      {formatDate(new Date(event.startDate || event.date))}
+                    </span>
+                  </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <User className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-sm md:text-base text-gray-700 leading-relaxed break-words">
-                        {t("eventDetails.created", {
-                          date: formatDate(event.createdAt),
-                        })}
+                  {/* Duration (only show if endDate exists) */}
+                  {event.endDate && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                      <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-sm md:text-base text-gray-700">
+                        Duration: {(() => {
+                          const start = new Date(event.startDate || event.date);
+                          const end = new Date(event.endDate);
+                          const diffMs = (end.getTime() - start.getTime())+1;
+                          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                          return diffDays === 1 ? "1 day" : `${diffDays} days`;
+                        })()}
                       </span>
                     </div>
-                  </CardContent>
+                  )}
+
+                  {/* Location */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {event.location}
+                    </span>
+                  </div>
+
+                  {/* Created Date */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                    <User className="h-5 w-5 text-gray-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm md:text-base text-gray-700 break-words">
+                      {t("eventDetails.created", { date: formatDate(event.createdAt) })}
+                    </span>
+                  </div>
+                </CardContent>
+
                 </Card>
 
                 {/* Registration Card */}
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 self-start mb-[12px]">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl font-semibold">
                       {t("eventDetails.registrationTitle")}

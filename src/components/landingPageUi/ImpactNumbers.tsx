@@ -47,7 +47,7 @@ export default function ImpactNumbers() {
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
-          className="text-4xl font-light text-gray-900 mb-16 text-center"
+          className="text-4xl font-bold text-gray-900 mb-16 text-center"
         >
           {t("impact.title")}
         </motion.h2>
@@ -60,7 +60,7 @@ export default function ImpactNumbers() {
         >
           {stats.map((s, i) => (
             <motion.div key={i} variants={item} className="group text-center">
-              <div className="text-5xl font-light text-gray-900 mb-3">
+              <div className="text-5xl font-bold text-gray-900 mb-3">
                 {inView ? (
                   <CountUp
                     start={0}
@@ -74,7 +74,7 @@ export default function ImpactNumbers() {
                 )}
                 <span className="text-3xl text-[#25818a]">+</span>
               </div>
-              <div className="text-sm text-gray-500 font-light tracking-wide uppercase">
+              <div className="text-sm text-gray-500 font-bold tracking-wide uppercase">
                 {t(`impact.stats.${s.key}`)}
               </div>
               <div className="w-8 h-0.5 bg-gray-300 mx-auto mt-4 group-hover:bg-[#25818a] transition-colors duration-300" />

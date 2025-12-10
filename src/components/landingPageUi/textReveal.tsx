@@ -85,7 +85,7 @@ export const TextReveal: FC<TextRevealProps> = ({ children, className }) => {
           {textWords.length > 0 && (
             <motion.div
               className={
-                "flex flex-wrap items-center justify-center gap-1 text-base font-light leading-snug md:gap-2 md:text-lg lg:gap-3 lg:text-xl xl:text-2xl font-serif"
+                "flex flex-wrap items-center justify-center gap-1 text-base font-bold leading-snug md:gap-2 md:text-lg lg:gap-3 lg:text-xl xl:text-2xl font-serif"
               }
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -131,7 +131,7 @@ const Word: FC<WordProps> = ({ children, progress, range }) => {
           y,
         }}
         className={
-          "absolute inset-0 text-black font-light tracking-wide font-serif"
+          "absolute inset-0 text-black font-bold tracking-wide font-serif"
         }
         transition={{
           type: "spring",

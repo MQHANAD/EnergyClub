@@ -14,11 +14,11 @@ const MarqueeRow = ({
   isRTL: boolean;
 }) => {
   // Calculate the width of one item including gap (w-48 = 192px + gap-8 = 32px = 224px per item)
-  const itemWidth = 224; // 192px width + 32px gap
+  const itemWidth = 124; // 192px width + 32px gap
   const totalWidth = items.length * itemWidth;
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden ">
       <motion.div
         className="flex gap-8"
         animate={{
@@ -45,7 +45,7 @@ const MarqueeRow = ({
             whileHover={{ scale: 1.05 }}
             className="flex-shrink-0 w-48 h-32 bg-gray-100 flex items-center justify-center p-6 transition-all duration-300 hover:bg-gray-200 border border-gray-200"
           >
-            <span className="text-sm text-gray-500 font-light">
+            <span className="text-sm text-gray-500 font-bold">
               <Image
                 src="/CEEELogo.png"
                 alt="Energy Club Logo"
@@ -63,7 +63,7 @@ const MarqueeRow = ({
             whileHover={{ scale: 1.05 }}
             className="flex-shrink-0 w-48 h-32 bg-gray-100 flex items-center justify-center p-6 transition-all duration-300 hover:bg-gray-200 border border-gray-200"
           >
-            <span className="text-sm text-gray-500 font-light">
+            <span className="text-sm text-gray-500 font-bold">
               <Image
                 src="/CEEELogo.png"
                 alt="Energy Club Logo"
@@ -86,7 +86,7 @@ export default function Partners() {
   return (
     <section id="partners" className="bg-white py-20" dir={dir}>
       <div
-        className={`mx-auto max-w-7xl px-6 ${
+        className={`mx-auto w-full ${
           dir === "rtl" ? "text-right" : "text-left"
         }`}
       >
@@ -97,7 +97,7 @@ export default function Partners() {
           transition={{ duration: 0.6 }}
           className={`mb-16 ${dir === "rtl" ? "text-right" : "text-center"}`}
         >
-          <h2 className="text-4xl font-light text-gray-900 mb-4">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">
             {t("partners.title")}
           </h2>
           <p

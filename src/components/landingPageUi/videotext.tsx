@@ -95,9 +95,7 @@ export function VideoText({
     const computedFont = isArabic
       ? "Tahoma, Arial, system-ui, sans-serif"
       : fontFamily;
-    const rtlAttrs = isArabic
-      ? "direction='rtl' unicode-bidi='plaintext'"
-      : "";
+    const rtlAttrs = isArabic ? "direction='rtl' unicode-bidi='plaintext'" : "";
 
     const svgString = `
       <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>
@@ -143,37 +141,27 @@ export function VideoText({
     [onVideoError]
   );
 
-  // ✅ Safari-safe autoplay logic
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !autoPlay) return;
 
     const tryPlay = async () => {
       try {
-        // Set all Safari-specific attributes
         video.muted = true;
         video.playsInline = true;
         video.setAttribute("playsinline", "true");
         video.setAttribute("webkit-playsinline", "true");
         video.setAttribute("x-webkit-airplay", "allow");
-
-        // Try to play
         await video.play();
-        console.log("Video autoplay successful");
       } catch (error) {
         console.warn("Autoplay prevented:", error);
-
-        // Set up user interaction handlers for Safari
         const enableAutoplay = async () => {
           try {
             await video.play();
-            console.log("Video started after user interaction");
           } catch (err) {
             console.warn("Still unable to play video:", err);
           }
         };
-
-        // Listen for any user interaction
         const events = ["click", "touchstart", "keydown"];
         const handleUserInteraction = () => {
           enableAutoplay();
@@ -181,7 +169,6 @@ export function VideoText({
             document.removeEventListener(event, handleUserInteraction);
           });
         };
-
         events.forEach((event) => {
           document.addEventListener(event, handleUserInteraction, {
             once: true,
@@ -190,13 +177,11 @@ export function VideoText({
       }
     };
 
-    // Wait for video to be ready
     if (video.readyState >= 3) {
       tryPlay();
     } else {
       video.addEventListener("canplay", tryPlay, { once: true });
     }
-
     return () => {
       video.removeEventListener("canplay", tryPlay);
     };
@@ -204,86 +189,109 @@ export function VideoText({
 
   return (
     <Component
-      className={cn("relative w-full h-full overflow-hidden", className)}
+      className={cn(
+        "relative w-full h-full overflow-hidden flex flex-col justify-between",
+        className
+      )}
     >
-      <div
-        className={cn(
-          "absolute inset-0 flex items-center justify-center mb-6",
-          !isVideoLoaded && "opacity-0 transition-opacity duration-500"
-        )}
-        style={{
-          maskImage: svgMask,
-          WebkitMaskImage: svgMask,
-          maskSize: "contain",
-          WebkitMaskSize: "contain",
-          maskRepeat: "no-repeat",
-          WebkitMaskRepeat: "no-repeat",
-          maskPosition: "center",
-          WebkitMaskPosition: "center",
-          opacity: isVideoLoaded ? 1 : 0,
-          transition: "opacity 0.5s ease-in-out",
-        }}
-      >
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          autoPlay={autoPlay}
-          muted={muted}
-          loop={loop}
-          preload={preload}
-          playsInline
-          webkit-playsinline="true"
-          x-webkit-airplay="allow"
-          poster={poster}
-          onLoadedData={handleVideoLoad}
-          onError={handleVideoError}
+      {/* VIDEO CONTAINER (Unchanged) */}
+      <div className="relative flex-1 w-full flex items-center justify-center min-h-0">
+        <div
+          className={cn(
+            "absolute inset-0 w-full h-full flex items-center justify-center",
+            !isVideoLoaded && "opacity-0 transition-opacity duration-500"
+          )}
+          style={{
+            maskImage: svgMask,
+            WebkitMaskImage: svgMask,
+            maskSize: "contain",
+            WebkitMaskSize: "contain",
+            maskRepeat: "no-repeat",
+            WebkitMaskRepeat: "no-repeat",
+            maskPosition: "center",
+            WebkitMaskPosition: "center",
+            opacity: isVideoLoaded ? 1 : 0,
+            transition: "opacity 0.5s ease-in-out",
+          }}
         >
-          <source src={src} type="video/mp4" />
-          {sources.map((source, index) => (
-            <source key={index} src={source.src} type={source.type} />
-          ))}
-          Your browser does not support the video tag.
-        </video>
+          <video
+            ref={videoRef}
+            className="w-full h-full object-cover"
+            autoPlay={autoPlay}
+            muted={muted}
+            loop={loop}
+            preload={preload}
+            playsInline
+            webkit-playsinline="true"
+            x-webkit-airplay="allow"
+            poster={poster}
+            onLoadedData={handleVideoLoad}
+            onError={handleVideoError}
+          >
+            <source src={src} type="video/mp4" />
+            {sources.map((source, index) => (
+              <source key={index} src={source.src} type={source.type} />
+            ))}
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        {!isVideoLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-white text-opacity-50">
+              {t("common.loading")}
+            </div>
+          </div>
+        )}
+        <span className="sr-only">{content}</span>
       </div>
 
-      {!isVideoLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-opacity-50">{t("common.loading")}</div>
-        </div>
-      )}
-      <span className="sr-only">{content}</span>
-
-      {/* Logos positioned under the text */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center space-x-6">
-      <Image
+      {/* 3. LOGO AREA - UPDATED FOR LARGER MOBILE ICONS */}
+      <div className="flex-shrink-0 w-full py-3 sm:py-4 flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 px-2 z-10 mb-16">
+        {/* KFUPM: Increased from h-8 to h-12 */}
+        <Image
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/KFUPM.svg/1280px-KFUPM.svg.png"
-          alt="Energy Week Logo"
+          alt="KFUPM Logo"
           width={200}
           height={200}
-          className="object-contain"
+          className="h-10 w-auto sm:h-16 md:h-20 object-contain"
         />
+        {/* CEEE: Increased from h-10 to h-14 */}
         <Image
           src="/CEEELogo.png"
           alt="Energy Club Logo"
-          width={270}
-          height={270}
-          className="object-contain"
+          width={200}
+          height={200}
+          className="h-14 w-auto sm:h-16 md:h-20 object-contain pb-2"
         />
+        {/* EW: Increased from h-10 to h-14 */}
         <Image
-          src="/energyWeekLogo.png"
+          src="/EW.svg"
           alt="Energy Week Logo"
           width={200}
           height={200}
-          className="object-contain"
+          className="h-14 w-auto sm:h-16 md:h-20 object-contain"
         />
+        {/* Energy Club: Increased from h-12 to h-16 */}
         <Image
           src="/energyClubLogo.png"
           alt="Energy Week Logo"
           width={200}
           height={200}
-          className="object-contain"
+          className="h-16 w-auto sm:h-18 md:h-22 object-contain"
         />
-        
+
+        {/* Hashtag text: Increased base text size from text-sm to text-lg */}
+        <div
+          className="flex flex-wrap items-center justify-center text-2xl md:text-5xl font-semibold tracking-wide"
+          style={{ fontFamily: '"DGSahabah", sans-serif', direction: "ltr" }}
+        >
+          <span className="text-[#989898]">#</span>
+          <span className="text-[#284f93] mr-1">Lets</span>
+          <span className="text-[#209eaa] mr-1">Energize</span>
+          <span className="text-[#f4bb12] mr-1">The</span>
+          <span className="text-[#f4bb12]">Future</span>
+        </div>
       </div>
     </Component>
   );

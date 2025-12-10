@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, Suspense } from 'react';
-import Image from 'next/image';
-import { Committee, LeadershipPosition } from '@/types';
-import { useI18n } from '@/i18n';
-import { teamApi } from '@/lib/firestore';
-import { getMembersUltraOptimized, HybridMember } from '@/lib/hybridMembers';
-import LoadingSpinner from '@/components/register/LoadingSpinner';
-import Navigation from '@/components/Navigation';
-import { AlertCircle } from 'lucide-react';
+import React, { useEffect, useState, Suspense } from "react";
+import Image from "next/image";
+import { Committee, LeadershipPosition } from "@/types";
+import { useI18n } from "@/i18n";
+import { teamApi } from "@/lib/firestore";
+import { getMembersUltraOptimized, HybridMember } from "@/lib/hybridMembers";
+import LoadingSpinner from "@/components/register/LoadingSpinner";
+import Navigation from "@/components/Navigation";
+import { AlertCircle } from "lucide-react";
 import Footer from "@/components/landingPageUi/Footer";
 import ScrollRevealWrapper from "@/components/landingPageUi/ScrollRevealWrapper";
-import { logTeamView } from '@/lib/analytics';
+import { logTeamView } from "@/lib/analytics";
 
 // Lazy load heavy components for better performance
 const LeadershipSection = React.lazy(() =>
@@ -24,7 +24,9 @@ const CommitteesSection = React.lazy(() =>
 export default function TeamPage() {
   const { t } = useI18n();
   const [committees, setCommittees] = useState<Committee[]>([]);
-  const [leadershipPositions, setLeadershipPositions] = useState<LeadershipPosition[]>([]);
+  const [leadershipPositions, setLeadershipPositions] = useState<
+    LeadershipPosition[]
+  >([]);
   const [hybridMembers, setHybridMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +38,13 @@ export default function TeamPage() {
         setError(null);
 
         // Fetch committees, leadership positions, and hybrid members in parallel
-        const [committeesData, leadershipData, membersData] = await Promise.all([
-          teamApi.getCommitteesLight(),
-          teamApi.getLeadershipPositions(),
-          getMembersUltraOptimized()
-        ]);
+        const [committeesData, leadershipData, membersData] = await Promise.all(
+          [
+            teamApi.getCommitteesLight(),
+            teamApi.getLeadershipPositions(),
+            getMembersUltraOptimized(),
+          ]
+        );
 
         setCommittees(committeesData);
         setLeadershipPositions(leadershipData);
@@ -49,8 +53,8 @@ export default function TeamPage() {
         // Log team page view for analytics
         logTeamView();
       } catch (err) {
-        console.error('Error fetching team data:', err);
-        setError('Failed to load team data. Please try again later.');
+        console.error("Error fetching team data:", err);
+        setError("Failed to load team data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -81,9 +85,7 @@ export default function TeamPage() {
             <h2 className="text-2xl font-light text-gray-900 mb-2">
               Error Loading Team
             </h2>
-            <p className="text-gray-600 mb-6 font-light">
-              {error}
-            </p>
+            <p className="text-gray-600 mb-6 font-light">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

@@ -7,7 +7,7 @@ export function ParallaxSection() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start end", "end start"]
+    offset: ["start end", "end start"],
   });
 
   const y = useTransform(scrollYProgress, [0, 1], [-100, 100]);
@@ -15,7 +15,7 @@ export function ParallaxSection() {
   const scale = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
 
   return (
-    <section 
+    <section
       ref={ref}
       className="relative h-screen bg-gradient-to-br from-[#25818a] via-[#1a6d75] to-[#0f5960] overflow-hidden"
     >
@@ -56,9 +56,9 @@ export function ParallaxSection() {
           >
             ENERGY HUB
           </motion.h1>
-          
+
           <motion.p
-            className="text-white/80 text-lg mt-8 font-light tracking-widest uppercase"
+            className="text-white/80 text-lg mt-8 font-bold tracking-widest uppercase"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}

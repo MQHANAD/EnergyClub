@@ -11,10 +11,18 @@ export interface Event {
   status: 'active' | 'cancelled' | 'completed';  
   createdAt: Date;
   updatedAt: Date;
+  status: "active" | "cancelled" | "completed";
+  date?: string; 
+  startDate?: string; 
+  endDate?: string; 
+  location?: string;
   tags: string[];
+  currentAttendees: number;
+  maxAttendees: number;
   imageUrls: string[];
   requireStudentId?: boolean;
 }
+
 
 export interface Registration {
   id: string;
@@ -49,12 +57,14 @@ export interface UserProfile {
 export interface EventFormData {
   title: string;
   description: string;
-  date: string;
+  startDate: string;
+  endDate?: string;
   location: string;
   maxAttendees: number;
   tags: string[];
   imageUrls: string[];
 }
+
 
 export interface RegistrationFormData {
   reason?: string;

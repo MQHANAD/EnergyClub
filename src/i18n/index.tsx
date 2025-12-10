@@ -231,7 +231,8 @@ const messages: Record<Lang, MessageTree> = {
     },
     team: {
       title: "Our Team",
-      subtitle: "Meet the dedicated members who make our energy initiatives possible",
+      subtitle:
+        "Meet the dedicated members who make our energy initiatives possible",
       leadership: {
         title: "Leaders",
         subtitle: "Leading the way in energy innovation and sustainability",
@@ -240,7 +241,8 @@ const messages: Record<Lang, MessageTree> = {
       },
       committees: {
         title: "Committees",
-        subtitle: "Our specialized teams working across different energy domains",
+        subtitle:
+          "Our specialized teams working across different energy domains",
         noMembers: "No members yet",
         viewLinkedIn: "View LinkedIn Profile",
       },
@@ -261,7 +263,8 @@ const messages: Record<Lang, MessageTree> = {
         deleteMember: "Delete Member",
         deleteCommittee: "Delete Committee",
         confirmDeleteMember: "Are you sure you want to delete this member?",
-        confirmDeleteCommittee: "Are you sure you want to delete this committee? This will also delete all members in this committee.",
+        confirmDeleteCommittee:
+          "Are you sure you want to delete this committee? This will also delete all members in this committee.",
         memberForm: {
           fullName: "Full Name",
           role: "Role/Title",
@@ -327,7 +330,7 @@ const messages: Record<Lang, MessageTree> = {
     },
     hero: {
       titlePrefix: "جامعة الملك فهد",
-      titleEnergyHub: "عن مركز الطاقة",
+      titleEnergyHub: "عن Energy Hub",
       tagline:
         " منصة تجمع أندية الطاقة وأسبوع الطاقة. نُعزز الابتكار والتعاون والقيادة في مجالات الطاقة والاستدامة، ونربط بين الطلاب والأكاديميا والصناعة. منبثقًا من جامعة الملك فهد للبترول والمعادن، إحدى المؤسسات الرائدة في المنطقة في مجالات العلوم والتقنية، يبني مركز الطاقة على إرث الجامعة العريق في التميز لتمكين الطلاب، وتعزيز الشراكات مع الصناعة، ودفع الحلول نحو مستقبل أنظف وأكثر استدامة ",
       ctaExplore: "استكشف فعاليات الطاقة",
@@ -519,7 +522,8 @@ const messages: Record<Lang, MessageTree> = {
     },
     team: {
       title: "فريقنا",
-      subtitle: "تعرف على الأعضاء المتفانين الذين يجعلون مبادراتنا في مجال الطاقة ممكنة",
+      subtitle:
+        "تعرف على الأعضاء المتفانين الذين يجعلون مبادراتنا في مجال الطاقة ممكنة",
       leadership: {
         title: "القيادة",
         subtitle: "نقود الطريق في الابتكار والاستدامة في مجال الطاقة",
@@ -549,7 +553,8 @@ const messages: Record<Lang, MessageTree> = {
         deleteMember: "حذف العضو",
         deleteCommittee: "حذف اللجنة",
         confirmDeleteMember: "هل أنت متأكد من حذف هذا العضو؟",
-        confirmDeleteCommittee: "هل أنت متأكد من حذف هذه اللجنة؟ سيتم حذف جميع الأعضاء في هذه اللجنة أيضًا.",
+        confirmDeleteCommittee:
+          "هل أنت متأكد من حذف هذه اللجنة؟ سيتم حذف جميع الأعضاء في هذه اللجنة أيضًا.",
         memberForm: {
           fullName: "الاسم الكامل",
           role: "الدور/المنصب",

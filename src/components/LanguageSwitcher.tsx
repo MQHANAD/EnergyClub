@@ -3,8 +3,9 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n/index";
+import { cn } from "@/lib/utils";
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ className }: { className?: string }) {
   const { lang, t } = useI18n();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -33,7 +34,10 @@ export default function LanguageSwitcher() {
       type="button"
       onClick={switchLang}
       disabled={pending}
-      className="rounded-md border border-black/30 bg-gray/10 text-black hover:bg-black/20 px-3 py-1.5 text-sm transition cursor-pointer"
+      className={cn(
+        "rounded-md border border-black/30 bg-gray/10 text-black hover:bg-black/20 px-3 py-1.5 text-sm transition cursor-pointer",
+        className
+      )}
       aria-label={t("langSwitcher.label")}
       title={t("langSwitcher.label")}
     >
