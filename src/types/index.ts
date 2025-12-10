@@ -2,6 +2,15 @@ export interface Event {
   id: string;
   title: string;
   description: string;
+  date: Date;
+  location: string;
+  maxAttendees: number;
+  currentAttendees: number;
+  organizerId: string;
+  organizerName: string;
+  status: 'active' | 'cancelled' | 'completed';  
+  createdAt: Date;
+  updatedAt: Date;
   status: "active" | "cancelled" | "completed";
   date?: string; 
   startDate?: string; 

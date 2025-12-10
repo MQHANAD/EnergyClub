@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Committee, Member } from '@/types';
-import { HybridMember, getCommitteeMembersDirect } from '@/lib/hybridMembers';
+import { HybridMember, getCommitteeMembersDirect, getMembersUltraOptimized } from '@/lib/hybridMembers';
 import { useI18n } from '@/i18n';
 import { teamApi } from '@/lib/firestore';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
@@ -19,7 +19,7 @@ export default function CommitteePage() {
   const params = useParams();
   const router = useRouter();
   const committeeId = params.id as string;
-  
+
   const [committee, setCommittee] = useState<Committee | null>(null);
   const [members, setMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,21 +30,82 @@ export default function CommitteePage() {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch committee data and members in parallel
-        const [committeeData, membersData] = await Promise.all([
-          teamApi.getCommitteeLight(committeeId),
-          committeeId ? getCommitteeMembersDirect(committeeId) : Promise.resolve([])
-        ]);
-        
-        if (committeeData) {
-          setCommittee(committeeData);
-          setMembers(membersData);
-          
-          // Log committee view for analytics
-          logCommitteeView(committeeId, committeeData.name);
+
+        if (committeeId === 'leaders') {
+          // Special handling for Leaders committee
+          const [leadershipPositions, allMembers] = await Promise.all([
+            teamApi.getLeadershipPositions(),
+            getMembersUltraOptimized() // We need all members to find committee leaders
+          ]);
+
+          // Construct Leaders committee object
+          setCommittee({
+            id: 'leaders',
+            name: 'Leaders',
+            order: 0,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            members: []
+          });
+
+          // Filter for President, VP, and Committee Leaders
+          const president = leadershipPositions.find((p: any) => p.title === 'president');
+          const vicePresident = leadershipPositions.find((p: any) => p.title === 'vice_president');
+
+          const leaders: HybridMember[] = [];
+
+          // Add President
+          if (president && president.member) {
+            leaders.push({
+              ...president.member,
+              role: 'President',
+              committeeName: 'Leaders',
+              status: 'active'
+            } as HybridMember);
+          }
+
+          // Add Vice President
+          if (vicePresident && vicePresident.member) {
+            leaders.push({
+              ...vicePresident.member,
+              role: 'Vice President',
+              committeeName: 'Leaders',
+              status: 'active'
+            } as HybridMember);
+          }
+
+          // Add Committee Leaders
+          const committeeLeaders = allMembers.filter((member: HybridMember) => {
+            const role = member.role?.trim().toLowerCase();
+            return role === "leader" || role === "team leader" || role === "committee leader";
+          });
+
+          // Filter out duplicates (if President/VP are also marked as leaders in their committees)
+          const uniqueCommitteeLeaders = committeeLeaders.filter((l: HybridMember) =>
+            !leaders.some(existing => existing.email === l.email)
+          );
+
+          setMembers([...leaders, ...uniqueCommitteeLeaders]);
+
+          // Log committee view
+          logCommitteeView('leaders', 'Leaders');
         } else {
-          setError('Committee not found');
+          // Standard committee fetching
+          const [committeeData, membersData] = await Promise.all([
+            teamApi.getCommitteeLight(committeeId),
+            committeeId ? getCommitteeMembersDirect(committeeId) : Promise.resolve([])
+          ]);
+
+          if (committeeData) {
+            setCommittee(committeeData);
+            setMembers(membersData);
+
+            // Log committee view for analytics
+            logCommitteeView(committeeId, committeeData.name);
+          } else {
+            setError('Committee not found');
+          }
         }
       } catch (err) {
         console.error('Error fetching committee:', err);
@@ -64,7 +125,7 @@ export default function CommitteePage() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner />
-         
+
         </div>
       </div>
     );
@@ -97,8 +158,8 @@ export default function CommitteePage() {
       <section className="bg-white pt-16 md:pt-24 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => router.push('/team')}
               className="mb-6 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
@@ -106,15 +167,15 @@ export default function CommitteePage() {
               Back to Team
             </Button>
           </div>
-          
+
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              
+
               <h1 className="text-4xl md:text-5xl font-light text-gray-900">
                 {committee.name}
               </h1>
             </div>
-           
+
           </div>
         </div>
       </section>
@@ -122,7 +183,7 @@ export default function CommitteePage() {
       {/* Members Section */}
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
 
           {/* Members Grid */}
           {members.length > 0 ? (
@@ -130,25 +191,25 @@ export default function CommitteePage() {
               {members
                 .sort((a, b) => {
                   // Check if member is a leader
-                  const aIsLeader = a.role?.trim().toLowerCase() === "leader" || 
-                                   a.role?.trim().toLowerCase() === "team leader" || 
-                                   a.role?.trim().toLowerCase() === "committee leader";
-                  const bIsLeader = b.role?.trim().toLowerCase() === "leader" || 
-                                   b.role?.trim().toLowerCase() === "team leader" || 
-                                   b.role?.trim().toLowerCase() === "committee leader";
-                  
+                  const aIsLeader = a.role?.trim().toLowerCase() === "leader" ||
+                    a.role?.trim().toLowerCase() === "team leader" ||
+                    a.role?.trim().toLowerCase() === "committee leader";
+                  const bIsLeader = b.role?.trim().toLowerCase() === "leader" ||
+                    b.role?.trim().toLowerCase() === "team leader" ||
+                    b.role?.trim().toLowerCase() === "committee leader";
+
                   // Leaders come first
                   if (aIsLeader && !bIsLeader) return -1;
                   if (!aIsLeader && bIsLeader) return 1;
-                  
+
                   // If both are leaders or both are not leaders, maintain original order
                   return 0;
                 })
                 .map((member) => {
-                  const isLeader = member.role?.trim().toLowerCase() === "leader" || 
-                                 member.role?.trim().toLowerCase() === "team leader" || 
-                                 member.role?.trim().toLowerCase() === "committee leader";
-                  
+                  const isLeader = member.role?.trim().toLowerCase() === "leader" ||
+                    member.role?.trim().toLowerCase() === "team leader" ||
+                    member.role?.trim().toLowerCase() === "committee leader";
+
                   // Convert hybrid member to Member format for MemberCard
                   const memberData = {
                     id: member.id,
@@ -163,11 +224,11 @@ export default function CommitteePage() {
                     createdAt: new Date(),
                     updatedAt: new Date()
                   };
-                  
+
                   return (
-                    <MemberCard 
-                      key={member.id} 
-                      member={memberData} 
+                    <MemberCard
+                      key={member.id}
+                      member={memberData}
                       isLeadership={isLeader}
                     />
                   );
