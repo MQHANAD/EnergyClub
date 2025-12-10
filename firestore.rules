@@ -222,6 +222,14 @@ service cloud.firestore {
        // Only admins can delete registrations
        allow delete: if isAdmin();
      }
+    // Config collection (registration toggles, etc.)
+    match /config/{configId} {
+      // Anyone can read config
+      allow read: if true;
+      // Only admins can write config
+      allow write: if isAdmin();
+    }
+
     // Applications collection
     match /applications/{document=**} {
       allow read, write: if request.auth != null;

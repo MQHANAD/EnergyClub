@@ -5,8 +5,10 @@ import Navigation from '@/components/Navigation';
 import RegisterTabs from '@/components/register/RegisterTabs';
 import EnergyWeekForm from '@/components/register/EnergyWeekForm';
 import FemaleEnergyClubForm from '@/components/register/FemaleEnergyClubForm';
+import RegionalTeamForm from '@/components/register/RegionalTeamForm';
 import type { Program } from '@/lib/registrationSchemas';
-import { Users, Calendar, Award, ArrowRight } from 'lucide-react';
+import { Users, Calendar, Award, ArrowRight, MapPin } from 'lucide-react';
+import Image from 'next/image';
 
 import { db, auth } from '@/lib/firebase';
 import {
@@ -24,6 +26,7 @@ export default function RegisterPage() {
   // Registration open flags
   const [openEW2, setOpenEW2] = useState<boolean | null>(null);
   const [openFEC, setOpenFEC] = useState<boolean | null>(null);
+  const [openRegionalTeam, setOpenRegionalTeam] = useState<boolean | null>(null);
 
   // Auth + admin
   const [user, setUser] = useState<User | null>(null);
@@ -58,6 +61,7 @@ export default function RegisterPage() {
       const data = snap.exists() ? (snap.data() as any) : {};
       setOpenEW2(Boolean(data.energy_week_2_open));
       setOpenFEC(Boolean(data.female_energy_club_open));
+      setOpenRegionalTeam(Boolean(data.regional_team_open));
     });
     return () => unsub();
   }, []);
@@ -66,11 +70,15 @@ export default function RegisterPage() {
     console.log('openEW2 =', openEW2, 'openFEC =', openFEC);
   }, [openEW2, openFEC]);
 
- 
+
 
   // Is a given program open right now?
-  const isOpenFor = (id: Program) =>
-    id === 'energy_week_2' ? !!openEW2 : !!openFEC;
+  const isOpenFor = (id: Program) => {
+    if (id === 'energy_week_2') return !!openEW2;
+    if (id === 'female_energy_club') return !!openFEC;
+    if (id === 'regional_team') return !!openRegionalTeam;
+    return false;
+  };
 
   // Guarded tab change (block if closed)
   const handleTabChange = (next: Program) => {
@@ -81,19 +89,22 @@ export default function RegisterPage() {
     setActive(next);
   };
 
-useEffect(() => {
-  // still loading? do nothing
-  if (openEW2 === null || openFEC === null) return;
+  useEffect(() => {
+    // still loading? do nothing
+    if (openEW2 === null || openFEC === null || openRegionalTeam === null) return;
 
-  // if the currently selected tab is closed, switch to one that's open
-  const activeIsClosed =
-    (active === 'energy_week_2' && !openEW2) ||
-    (active === 'female_energy_club' && !openFEC);
+    // if the currently selected tab is closed, switch to one that's open
+    const activeIsClosed =
+      (active === 'energy_week_2' && !openEW2) ||
+      (active === 'female_energy_club' && !openFEC) ||
+      (active === 'regional_team' && !openRegionalTeam);
 
-  if (activeIsClosed) {
-    setActive(openEW2 ? 'energy_week_2' : (openFEC ? 'female_energy_club' : active));
-  }
-}, [active, openEW2, openFEC]);
+    if (activeIsClosed) {
+      if (openEW2) setActive('energy_week_2');
+      else if (openFEC) setActive('female_energy_club');
+      else if (openRegionalTeam) setActive('regional_team');
+    }
+  }, [active, openEW2, openFEC, openRegionalTeam]);
 
 
   // === Admin toggle write ===
@@ -109,17 +120,23 @@ useEffect(() => {
       }
 
       const ref = doc(db, 'config', 'registration');
-      const payload =
-        program === 'energy_week_2'
-          ? { energy_week_2_open: open, updatedAt: Timestamp.now() }
-          : { female_energy_club_open: open, updatedAt: Timestamp.now() };
+      let payload: Record<string, any> = { updatedAt: Timestamp.now() };
+
+      if (program === 'energy_week_2') {
+        payload.energy_week_2_open = open;
+      } else if (program === 'female_energy_club') {
+        payload.female_energy_club_open = open;
+      } else if (program === 'regional_team') {
+        payload.regional_team_open = open;
+      }
 
       await setDoc(ref, payload, { merge: true });
 
-       if (program === 'energy_week_2') setOpenEW2(open);
-         else setOpenFEC(open);
+      if (program === 'energy_week_2') setOpenEW2(open);
+      else if (program === 'female_energy_club') setOpenFEC(open);
+      else if (program === 'regional_team') setOpenRegionalTeam(open);
 
-    if (open) setActive(program);
+      if (open) setActive(program);
 
       console.log('[toggle ok]', program, open);
     } catch (e: any) {
@@ -130,19 +147,16 @@ useEffect(() => {
   };
 
   // While we haven't loaded toggles yet
-  const togglesLoading = openEW2 === null || openFEC === null;
+  const togglesLoading = openEW2 === null || openFEC === null || openRegionalTeam === null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <Navigation />
       {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#25818a] to-[#f8cd5c] text-white pt-16 md:pt-20">
+      <div className="relative overflow-hidden bg-[#25818a] text-white pt-16 md:pt-20">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative mx-auto max-w-6xl px-4 py-16">
           <div className="text-center">
-            <div className="mb-6 inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full animate-bounce-custom">
-              <Users className="h-8 w-8" />
-            </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in-down">
               Join Our Energy Community
             </h1>
@@ -150,20 +164,6 @@ useEffect(() => {
               Be part of innovative programs that shape the future of energy.
               Apply now to contribute your skills and passion to meaningful projects.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 stagger-animation">
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105">
-                <Calendar className="h-5 w-5 flex-shrink-0" />
-                <span>Flexible Timeline</span>
-              </div>
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105">
-                <Award className="h-5 w-5 flex-shrink-0" />
-                <span>Leadership Opportunities</span>
-              </div>
-              <div className="flex items-center gap-3 text-blue-100 form-transition hover:text-white hover:scale-105">
-                <Users className="h-5 w-5 flex-shrink-0" />
-                <span>Collaborative Community</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -183,44 +183,45 @@ useEffect(() => {
           </div>
 
           <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              {togglesLoading ? (
-                // SKELETON while flags load
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[0, 1].map((i) => (
-                    <div key={i} className="relative p-6 rounded-xl border-2 bg-white">
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-lg bg-gray-200 animate-pulse" />
-                        <div className="flex-1 min-w-0">
-                          <div className="h-4 w-40 bg-gray-200 rounded animate-pulse mb-2" />
-                          <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
-                        </div>
+            {togglesLoading ? (
+              // SKELETON while flags load
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[0, 1].map((i) => (
+                  <div key={i} className="relative p-6 rounded-xl bg-white shadow-[0_4px_20px_rgb(0,0,0,0.08)]">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-lg bg-gray-200 animate-pulse" />
+                      <div className="flex-1 min-w-0">
+                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse mb-2" />
+                        <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
                       </div>
-                      <div className="h-3 w-full bg-gray-100 rounded animate-pulse mb-2" />
-                      <div className="h-3 w-5/6 bg-gray-100 rounded animate-pulse mb-4" />
-                      <div className="h-24 w-24 rounded-md border bg-gray-100 animate-pulse" />
-                      <div className="absolute top-3 right-3 h-6 w-20 rounded-full bg-gray-200 animate-pulse" />
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <RegisterTabs
-                  active={active}
-                  onChange={handleTabChange}
-                  availability={{
-                    energy_week_2: !!openEW2,
-                    female_energy_club: !!openFEC,
-                  }}
-                  showAdmin={isAdmin}
-                  onAdminToggle={toggleProgram}
-                />
-              )}
-            </div>
+                    <div className="h-3 w-full bg-gray-100 rounded animate-pulse mb-2" />
+                    <div className="h-3 w-5/6 bg-gray-100 rounded animate-pulse mb-4" />
+                    <div className="h-24 w-24 rounded-md bg-gray-100 animate-pulse" />
+                    <div className="absolute top-3 right-3 h-6 w-20 rounded-full bg-gray-200 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <RegisterTabs
+                active={active}
+                onChange={handleTabChange}
+                availability={{
+                  energy_week_2: !!openEW2,
+                  female_energy_club: !!openFEC,
+                  regional_team: !!openRegionalTeam,
+                }}
+                showAdmin={isAdmin}
+                onAdminToggle={toggleProgram}
+              />
+            )}
+          </div>
 
         </div>
 
         {/* Application Form */}
         <section aria-live="polite" className="relative">
-          <div className="mb-6 bg-blue-50 border backdrop-blur-md border-blue-200 rounded-lg p-4 animate-slide-in-left btn-hover-lift">
+          <div className="mb-6 bg-blue-50/50 shadow-[0_4px_20px_rgb(0,0,0,0.05)] backdrop-blur-md rounded-lg p-4 animate-slide-in-left btn-hover-lift">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium animate-pulse-custom">
@@ -230,7 +231,9 @@ useEffect(() => {
                   <h3 className="font-medium text-gray-900 form-transition">
                     {active === 'energy_week_2'
                       ? 'Energy Week 2 Application'
-                      : 'Female Energy Club Application'}
+                      : active === 'female_energy_club'
+                        ? 'Female Energy Club Application'
+                        : 'Regional Team Application'}
                   </h3>
                   <p className="text-sm text-gray-600">Estimated completion time: 5-10 minutes</p>
                 </div>
@@ -246,7 +249,7 @@ useEffect(() => {
           {togglesLoading ? (
             <p className="mt-6 text-sm text-gray-600">Checking registration status…</p>
           ) : !isOpenFor(active) ? (
-            <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="mt-6 bg-red-50 shadow-[0_4px_20px_rgb(239,68,68,0.15)] rounded-lg p-4">
               <h3 className="font-semibold text-red-700">Registration is closed</h3>
               <p className="text-sm text-red-700/90">Please check back later.</p>
             </div>
@@ -256,9 +259,13 @@ useEffect(() => {
                 <div className="animate-fade-in-up">
                   <EnergyWeekForm isOpen={!!openEW2} />
                 </div>
+              ) : active === 'female_energy_club' ? (
+                <div className="animate-fade-in-up">
+                  <FemaleEnergyClubForm isOpen={!!openFEC} />
+                </div>
               ) : (
                 <div className="animate-fade-in-up">
-                 <FemaleEnergyClubForm isOpen={!!openFEC} />
+                  <RegionalTeamForm isOpen={!!openRegionalTeam} />
                 </div>
               )}
             </div>

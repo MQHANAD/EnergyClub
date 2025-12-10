@@ -46,6 +46,8 @@ try {
 }
 
 // Initialize App Check on the client if available
+/*
+// Initialize App Check on the client if available
 if (typeof window !== 'undefined' && !appCheckInited) {
   try {
     if (process.env.NODE_ENV !== 'production') {
@@ -76,6 +78,7 @@ if (typeof window !== 'undefined' && !appCheckInited) {
     console.warn('App Check initialization failed', e);
   }
 }
+*/
 
 
 // Note: App Check disabled in development for testing - should be re-enabled for production

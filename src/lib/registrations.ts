@@ -54,10 +54,10 @@ export async function createApplication(data: CreateApplicationInput): Promise<s
     leadershipInterest: !!data.leadershipInterest,
     leadershipChoices: data.leadershipInterest
       ? (data.leadershipChoices ?? []).map((c) => ({
-          choice: c.choice,
-          team: c.team,
-          why: c.why ? c.why.trim() : null,
-        }))
+        choice: c.choice,
+        team: c.team,
+        why: c.why ? c.why.trim() : null,
+      }))
       : [],
     previous: data.previous?.toString().trim() || null,
     competitions: data.competitions?.toString().trim() || null,
@@ -274,7 +274,7 @@ function classifyError(error: any): ClassifiedError {
 
   // Network errors
   if (/network/i.test(message) || /timeout/i.test(message) || /connection/i.test(message) ||
-      code === 'unavailable' || code === 'deadline-exceeded') {
+    code === 'unavailable' || code === 'deadline-exceeded') {
     return {
       type: ErrorType.NETWORK,
       originalError: error,
@@ -286,7 +286,7 @@ function classifyError(error: any): ClassifiedError {
 
   // Authentication errors
   if (/auth/i.test(message) || /permission/i.test(message) || /unauthorized/i.test(message) ||
-      code === 'permission-denied' || code === 'unauthenticated') {
+    code === 'permission-denied' || code === 'unauthenticated') {
     return {
       type: ErrorType.AUTH,
       originalError: error,
@@ -468,7 +468,11 @@ export async function listApplications(): Promise<Application[]> {
   return snap.docs.map((d: QueryDocumentSnapshot<DocumentData>) => {
     const data = d.data() as Record<string, unknown>;
     const program = (data?.program as Application['program']) ?? 'energy_week_2';
-    const programLabel = (data?.programLabel as string) ?? (program === 'energy_week_2' ? 'Energy Week 2' : 'Female Energy Club');
+    const programLabel = (data?.programLabel as string) ?? (
+      program === 'energy_week_2' ? 'Energy Week 2' :
+        program === 'female_energy_club' ? 'Female Energy Club' :
+          program === 'regional_team' ? 'Regional Team 2026' : program
+    );
     const app: Application = {
       id: d.id,
       program,
@@ -477,7 +481,7 @@ export async function listApplications(): Promise<Application[]> {
       email: (data?.email as string) ?? '',
       kfupmId: (data?.kfupmId as string) ?? '',
       mobile: (data?.mobile as string) ?? '',
-      academicYear: (data?.academicYear as Application['academicYear']) ?? 'Freshman',
+      academicYear: (data?.academicYear as string) ?? 'Freshman',
       committees: Array.isArray(data?.committees) ? (data.committees as string[]).slice() : [],
       leadershipInterest: !!data?.leadershipInterest,
       leadershipChoices: Array.isArray(data?.leadershipChoices) ? (data.leadershipChoices as any[]) : [],
@@ -491,6 +495,23 @@ export async function listApplications(): Promise<Application[]> {
       designFileUrl: (data?.designFileUrl as string | null) ?? null,
       cvPath: (data?.cvPath as string | null) ?? null,
       designFilePath: (data?.designFilePath as string | null) ?? null,
+
+      // Regional Team specific fields
+      university: (data?.university as string) ?? undefined,
+      region: (data?.region as string) ?? undefined,
+      majorCollege: (data?.majorCollege as string) ?? undefined,
+      previousExperience: (data?.previousExperience as string) ?? undefined,
+      competitionsHackathons: (data?.competitionsHackathons as string) ?? undefined,
+      whyJoin: (data?.whyJoin as string) ?? undefined,
+      strengthsSkills: (data?.strengthsSkills as string) ?? undefined,
+      rolePreferences: Array.isArray(data?.rolePreferences) ? (data.rolePreferences as string[]).slice() : undefined,
+      leadershipPosition: (data?.leadershipPosition as string) ?? undefined,
+      whyLeadership: (data?.whyLeadership as string) ?? undefined,
+      availability: (data?.availability as string) ?? undefined,
+      portfolioLink: (data?.portfolioLink as string) ?? undefined,
+      portfolioUrl: (data?.portfolioUrl as string) ?? undefined,
+
+      // Status and metadata
       status: (data?.status as Application['status']) ?? 'pending',
       createdBy: (data?.createdBy as string) ?? '',
       createdByType: (data?.createdByType as Application['createdByType']) ?? 'anonymous',
@@ -512,9 +533,11 @@ export async function decideApplication(
   status: 'accepted' | 'rejected',
   decidedByUid: string,
   adminNotes?: string,
-  selectedCommittee?: string | number
+  selectedCommittee?: string | number,
+  createMember: boolean = false,
+  applicationData?: Application
 ): Promise<void> {
-  console.log(`decideApplication selectedCommittee: ${selectedCommittee}, type: ${typeof selectedCommittee}`);
+  console.log(`decideApplication selectedCommittee: ${selectedCommittee}, type: ${typeof selectedCommittee}, createMember: ${createMember}`);
   const payload: Record<string, any> = {
     status,
     decidedAt: serverTimestamp(),
@@ -534,6 +557,72 @@ export async function decideApplication(
 
   console.log(`decideApplication payload.selectedCommittee: ${payload.selectedCommittee}`);
   await updateDoc(doc(db, 'applications', applicationId), payload);
+
+  // Create member if requested
+  if (status === 'accepted' && createMember && applicationData) {
+    try {
+      await createMemberFromApp(applicationData, selectedCommittee);
+    } catch (error) {
+      console.error('Error creating member from application:', error);
+      // We don't throw here to avoid failing the decision if member creation fails
+      // But in a real app you might want to handle this better
+    }
+  }
+}
+
+async function createMemberFromApp(app: Application, selectedValue?: string | number) {
+  // Determine role/committee info
+  // For Energy Week/Female Club, selectedValue is likely a committee name (string)
+  // For Regional Team, selectedValue might be a role preference (string)
+
+  // Note: We don't have the Committee ID here easily if selectedValue is just a name.
+  // Ideally, we would look up the committee by name to get its ID.
+  // For now, we'll store the name in committeeId temporarily or leave it empty if we can't resolve it.
+  // In a robust system, we should resolve the ID.
+
+  // Attempt to resolve committee ID or just use the string if implementation allows looser typing
+  let committeeId = '';
+
+  // Use the selected value if it's a string, or lookup in array if number
+  // But decideApplication payload logic already handled the mapping in the UI usually?
+  // Actually, UI passes string for committee name usually.
+
+  if (typeof selectedValue === 'string') {
+    committeeId = selectedValue; // Placeholder: using name as ID or needing manual fix later
+  }
+
+  const memberPayload: any = {
+    email: app.email,
+    fullName: app.fullName,
+    role: 'member', // Default role
+    profilePicture: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png', // Default
+    linkedInUrl: app.linkedIn || app.portfolioLink || null,
+    portfolioUrl: app.portfolioUrl || app.designLink || null,
+    committeeId: committeeId, // This might need to be a real ID
+    isActive: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  // Add Regional Team specific fields
+  if (app.program === 'regional_team') {
+    if (app.region) memberPayload.region = app.region;
+    if (app.university) memberPayload.university = app.university;
+
+    // If selectedValue corresponds to a role preference, maybe we override 'role'?
+    // User requested "pick from roles like the other applications".
+    // If selectedValue is passed, maybe that IS the role?
+    // If the selected value is one of "President", "Vice President", etc.
+    if (typeof selectedValue === 'string' && selectedValue) {
+      // Ideally we might want to set memberPayload.role = selectedValue; 
+      // But 'role' usually controls permissions (admin/organizer/member).
+      // So we keep role='member' and maybe put the title in committeeId or a new field?
+      // The user example showed: role "member", committeeId "GuR1zipm9hLxjD4IsOOw".
+      // We'll stick to 'member' for the system role.
+    }
+  }
+
+  await addDoc(collection(db, 'members'), memberPayload);
 }
 
 /**

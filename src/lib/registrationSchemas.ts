@@ -2,16 +2,16 @@ import { z } from 'zod';
 
 // Registration schemas for public applications
 
-export const AcademicYearEnum = z.enum(['Oria','Freshman','Sophomore','Junior','Senior']);
+export const AcademicYearEnum = z.enum(['Oria', 'Freshman', 'Sophomore', 'Junior', 'Senior']);
 export type AcademicYear = z.infer<typeof AcademicYearEnum>;
 
-export const ProgramEnum = z.enum(['energy_week_2','female_energy_club']);
+export const ProgramEnum = z.enum(['energy_week_2', 'female_energy_club', 'regional_team']);
 export type Program = z.infer<typeof ProgramEnum>;
 
 // Committees lists
-export const EW2_COMMITTEES = ['Expo Team','Marketing Team','Public Relations Team','Event Planning Team','Project Management Team','Tech Team','Operations & Logistics Team'] as const;
-export const FEC_COMMITTEES_NO_ECE = ['Marketing','PR','Event Planning','PMO','Operations & Logistics'] as const;
-export const FEC_TEAMS_WITH_ECE = ['Marketing','PR','Event Planning','PMO','Operations & Logistics','Energy Community Engagement ECE'] as const;
+export const EW2_COMMITTEES = ['Expo Team', 'Marketing Team', 'Public Relations Team', 'Event Planning Team', 'Project Management Team', 'Tech Team', 'Operations & Logistics Team'] as const;
+export const FEC_COMMITTEES_NO_ECE = ['Marketing', 'PR', 'Event Planning', 'PMO', 'Operations & Logistics'] as const;
+export const FEC_TEAMS_WITH_ECE = ['Marketing', 'PR', 'Event Planning', 'PMO', 'Operations & Logistics', 'Energy Community Engagement ECE'] as const;
 
 const emailSchema = z.string().trim().email();
 const kfupmIdSchema = z.string().trim().regex(/^\d{9}$/, 'KFUPM ID must be 9 digits');

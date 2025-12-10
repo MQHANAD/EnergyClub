@@ -91,7 +91,7 @@ type Props = { isOpen?: boolean };
 
 export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
 
-  
+
   // Show registration closed message
   if (!isOpen) {
     return (
@@ -117,7 +117,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
                     Thank You for Your Interest!
                   </h2>
                   <p className="text-gray-700 leading-relaxed">
-                    Registration for the Female Energy Club is currently closed. 
+                    Registration for the Female Energy Club is currently closed.
                     We appreciate your interest in joining our community of women leaders in energy.
                   </p>
                 </div>
@@ -207,7 +207,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const formValues = watch();
-  
+
   // Helper function to check if personal info is completed
   const isPersonalInfoCompleted = (): boolean => {
     return Boolean(
@@ -218,16 +218,16 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
       formValues.academicYear && !errors.academicYear
     );
   };
-  
+
   const isCommitteesCompleted = (): boolean => Boolean(committees.length > 0 && !errors.committees);
-  
+
   const isFormValid = isPersonalInfoCompleted() && isCommitteesCompleted();
-  
+
   // Enforce sequential completion: a step cannot be completed unless previous steps are completed
   const completedPersonal = isPersonalInfoCompleted();
   const completedCommittees = completedPersonal && isCommitteesCompleted();
   const completedAttachments = completedCommittees && true; // optional but gated by previous step
-  
+
   const steps: Step[] = [
     {
       id: 'personal',
@@ -574,7 +574,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
       // errors are handled/logged inside onSubmit/doUploadsAndPatch
     }
   };
-  
+
   if (successId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-rose-50 flex items-center justify-center px-4 py-8">
@@ -639,7 +639,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
                         <p className="text-gray-600 text-sm">Our team will carefully review your application within 3-5 business days.</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start gap-3">
                       <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                         <span className="text-purple-600 text-sm font-bold">2</span>
@@ -649,7 +649,7 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
                         <p className="text-gray-600 text-sm">You'll receive an email with our decision and next steps.</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start gap-3">
                       <div className="w-6 h-6 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                         <span className="text-rose-600 text-sm font-bold">3</span>
@@ -724,187 +724,187 @@ export default function FemaleEnergyClubForm({ isOpen = true }: Props) {
       ) : (
         // Form Input Mode
         <form className="space-y-8" onSubmit={(e) => e.preventDefault()} noValidate>
-        {/* Step 1: Personal Information */}
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-pink-50 to-rose-100 border-b">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-pink-600 text-white rounded-full">
-                <User className="h-5 w-5" />
+          {/* Step 1: Personal Information */}
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-pink-50 to-rose-100">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-pink-600 text-white rounded-full">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-pink-900">Personal Information</CardTitle>
+                  <p className="text-sm text-pink-700 mt-1">Tell us about yourself</p>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-xl text-pink-900">Personal Information</CardTitle>
-                <p className="text-sm text-pink-700 mt-1">Tell us about yourself</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <SharedFields<FormValues>
-              register={register}
-              errors={errors}
-              academicYears={academicYears}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Committee Selection */}
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-purple-600 text-white rounded-full">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-purple-900">Committee Preferences</CardTitle>
-                <p className="text-sm text-purple-700 mt-1">Choose where you'd like to contribute</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <CommitteesMultiSelect
-              options={FEC_COMMITTEES_NO_ECE}
-              values={(committees as string[]) || []}
-              onToggle={onToggleCommittee}
-              error={errors.committees?.message as string | undefined}
-            />
-            
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                  {...register('leadershipInterest')}
-                />
-                <span className="text-sm font-medium text-gray-900">I am interested in a leadership role</span>
-              </label>
-              <p className="text-xs text-gray-600 mt-1">
-                Leadership positions offer additional responsibilities and growth opportunities
-              </p>
-            </div>
-
-            {leadershipInterest && (
-              <div className="mt-6 p-4 border border-pink-200 rounded-lg bg-pink-50">
-                <LeadershipSection<FormValues>
-                  control={control as any}
-                  register={register}
-                  errors={errors}
-                  name={'leadershipChoices'}
-                  teamOptions={teamOptions}
-                  maxChoices={3}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 3: Documents & Attachments */}
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-b">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-full">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-indigo-900">Documents & Attachments</CardTitle>
-                <p className="text-sm text-indigo-700 mt-1">Upload your CV and design portfolio (optional)</p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <FileOrLinkInput<FormValues>
-              cvFileName={'cvFile'}
-              designFileName={'designFile'}
-              designLinkName={'designLink'}
-              register={register}
-              setValue={setValue}
-              watch={watch}
-              errors={errors}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Error Display */}
-        {(submitError || uploadError) && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="flex items-start gap-3 p-6">
-              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                {submitError && (
-                  <div className="mb-3">
-                    <h4 className="text-sm font-medium text-red-800">Submission Error</h4>
-                    <p className="text-sm text-red-700 mt-1">{submitError}</p>
-                  </div>
-                )}
-                {uploadError && createdId && (
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-red-800">Upload Error</h4>
-                      <p className="text-sm text-red-700 mt-1">
-                        {uploadError} Your application has been created with ID:
-                        <code className="ml-1 px-1 py-0.5 bg-red-100 rounded text-xs">{createdId}</code>
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        if (!createdId) return;
-                        try {
-                          await doUploadsAndPatch(createdId);
-                          setUploadError(null);
-                          setSuccessId(createdId);
-                        } catch {
-                          // remain error
-                        }
-                      }}
-                      className="border-red-300 text-red-700 hover:bg-red-100"
-                    >
-                      Try upload again
-                    </Button>
-                  </div>
-                )}
-              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <SharedFields<FormValues>
+                register={register}
+                errors={errors}
+                academicYears={academicYears}
+              />
             </CardContent>
           </Card>
-        )}
 
-        {uploading && (
-          <div className="mb-3 rounded-md bg-pink-50 border border-pink-200 p-3 text-sm text-pink-800" aria-live="polite">
-            Uploading attachments ({uploadProgress}%)… Please wait and do not close this tab.
-          </div>
-        )}
-
-        {/* Enhanced Submit Bar */}
-        <div className="sticky bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-t shadow-lg">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="whitespace-nowrap">{steps.filter(s => s.completed).length} of {steps.length} steps completed</span>
+          {/* Step 2: Committee Selection */}
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-purple-600 text-white rounded-full">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-purple-900">Committee Preferences</CardTitle>
+                  <p className="text-sm text-purple-700 mt-1">Choose where you'd like to contribute</p>
                 </div>
               </div>
-              <Button
-                type="button"
-                size="lg"
-                disabled={!isFormValid || uploading}
-                onClick={() => {
-                  if (isFormValid) {
-                    setShowPreview(true);
-                  }
-                }}
-                className="w-full sm:w-auto sm:min-w-[200px] bg-pink-600 hover:bg-pink-700 text-white font-medium order-1 sm:order-2"
-              >
-                <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
-                  <span>Review Application</span>
+            </CardHeader>
+            <CardContent className="p-6">
+              <CommitteesMultiSelect
+                options={FEC_COMMITTEES_NO_ECE}
+                values={(committees as string[]) || []}
+                onToggle={onToggleCommittee}
+                error={errors.committees?.message as string | undefined}
+              />
+
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
+                    {...register('leadershipInterest')}
+                  />
+                  <span className="text-sm font-medium text-gray-900">I am interested in a leadership role</span>
+                </label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Leadership positions offer additional responsibilities and growth opportunities
+                </p>
+              </div>
+
+              {leadershipInterest && (
+                <div className="mt-6 p-4 border border-pink-200 rounded-lg bg-pink-50">
+                  <LeadershipSection<FormValues>
+                    control={control as any}
+                    register={register}
+                    errors={errors}
+                    name={'leadershipChoices'}
+                    teamOptions={teamOptions}
+                    maxChoices={3}
+                  />
                 </div>
-              </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Step 3: Documents & Attachments */}
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-indigo-100">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-full">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-indigo-900">Documents & Attachments</CardTitle>
+                  <p className="text-sm text-indigo-700 mt-1">Upload your CV and design portfolio (optional)</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <FileOrLinkInput<FormValues>
+                cvFileName={'cvFile'}
+                designFileName={'designFile'}
+                designLinkName={'designLink'}
+                register={register}
+                setValue={setValue}
+                watch={watch}
+                errors={errors}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Error Display */}
+          {(submitError || uploadError) && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="flex items-start gap-3 p-6">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  {submitError && (
+                    <div className="mb-3">
+                      <h4 className="text-sm font-medium text-red-800">Submission Error</h4>
+                      <p className="text-sm text-red-700 mt-1">{submitError}</p>
+                    </div>
+                  )}
+                  {uploadError && createdId && (
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="text-sm font-medium text-red-800">Upload Error</h4>
+                        <p className="text-sm text-red-700 mt-1">
+                          {uploadError} Your application has been created with ID:
+                          <code className="ml-1 px-1 py-0.5 bg-red-100 rounded text-xs">{createdId}</code>
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          if (!createdId) return;
+                          try {
+                            await doUploadsAndPatch(createdId);
+                            setUploadError(null);
+                            setSuccessId(createdId);
+                          } catch {
+                            // remain error
+                          }
+                        }}
+                        className="border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        Try upload again
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {uploading && (
+            <div className="mb-3 rounded-md bg-pink-50 border border-pink-200 p-3 text-sm text-pink-800" aria-live="polite">
+              Uploading attachments ({uploadProgress}%)… Please wait and do not close this tab.
+            </div>
+          )}
+
+          {/* Enhanced Submit Bar */}
+          <div className="sticky bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm shadow-[0_-4px_20px_rgb(0,0,0,0.08)]">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="whitespace-nowrap">{steps.filter(s => s.completed).length} of {steps.length} steps completed</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="lg"
+                  disabled={!isFormValid || uploading}
+                  onClick={() => {
+                    if (isFormValid) {
+                      setShowPreview(true);
+                    }
+                  }}
+                  className="w-full sm:w-auto sm:min-w-[200px] bg-pink-600 hover:bg-pink-700 text-white font-medium order-1 sm:order-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    <span>Review Application</span>
+                  </div>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </form>
-    )}
-  </div>
+        </form>
+      )}
+    </div>
   );
 }

@@ -3,9 +3,9 @@ export interface Event {
   title: string;
   description: string;
   status: "active" | "cancelled" | "completed";
-  date?: string; 
-  startDate?: string; 
-  endDate?: string; 
+  date?: string;
+  startDate?: string;
+  endDate?: string;
   location?: string;
   tags: string[];
   currentAttendees: number;
@@ -63,30 +63,47 @@ export interface RegistrationFormData {
 
 export interface Application {
   id: string;
-  program: 'energy_week_2' | 'female_energy_club';
+  program: 'energy_week_2' | 'female_energy_club' | 'regional_team';
   programLabel: string;
   fullName: string;
   email: string;
-  kfupmId: string;
+  kfupmId?: string; // Optional for Regional Team (they have university instead)
   mobile: string;
-  academicYear: 'Oria' | 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';
-  committees: string[];
+  academicYear: string;
+  committees?: string[]; // Used by Energy Week and Female Energy Club
   leadershipInterest: boolean;
   leadershipChoices?: Array<{
     choice: 1 | 2 | 3;
     team: string;
     why: string;
   }>;
-  previous: string | null;
-  competitions: string | null;
-  energy: string | null;
-  linkedIn: string | null;
-  designLink: string | null;
-  selectedCommittee: string | null;
-  cvUrl: string | null;
-  designFileUrl: string | null;
+  previous?: string | null;
+  competitions?: string | null;
+  energy?: string | null;
+  linkedIn?: string | null;
+  designLink?: string | null;
+  selectedCommittee?: string | null;
+  cvUrl?: string | null;
+  designFileUrl?: string | null;
   cvPath?: string | null;
   designFilePath?: string | null;
+
+  // Regional Team specific fields
+  university?: string;
+  region?: string;
+  majorCollege?: string;
+  previousExperience?: string;
+  competitionsHackathons?: string;
+  whyJoin?: string;
+  strengthsSkills?: string;
+  rolePreferences?: string[];
+  leadershipPosition?: string;
+  whyLeadership?: string;
+  availability?: string;
+  portfolioLink?: string;
+  portfolioUrl?: string;
+
+  // Status and metadata
   status: 'pending' | 'accepted' | 'rejected';
   createdBy: string;
   createdByType: 'anonymous' | 'authenticated';
@@ -109,6 +126,8 @@ export interface Member {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  region?: string;
+  university?: string;
 }
 
 export interface Committee {
