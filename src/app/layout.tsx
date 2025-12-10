@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   description: "Discover and register for Energy club and Energy week events",
   icons: {
     icon: [
-      "/favicon.png",
-      { url: "/favicon.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon.png", type: "image/png", sizes: "64x64" },
+      "/favicon2.png",
+      { url: "/favicon2.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon2.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon2.png", type: "image/png", sizes: "64x64" },
     ],
-    shortcut: ["/favicon.png"],
-    apple: [{ url: "/favicon.png" }],
+    shortcut: ["/favicon2.png"],
+    apple: [{ url: "/favicon2.png" }],
   },
 };
 
