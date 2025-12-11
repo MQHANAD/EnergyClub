@@ -9,6 +9,7 @@ import RegionalTeamForm from '@/components/register/RegionalTeamForm';
 import type { Program } from '@/lib/registrationSchemas';
 import { Users, Calendar, Award, ArrowRight, MapPin } from 'lucide-react';
 import Image from 'next/image';
+import { motion, scale, } from "framer-motion";
 
 import { db, auth } from '@/lib/firebase';
 import {
@@ -166,10 +167,22 @@ export default function RegisterPage() {
             </p>
           </div>
         </div>
+        <motion.div
+          className="absolute bottom-[-12px] w-[110%] h-16 bg-[url('/VisualIdentity4.svg')] bg-cover bg-top bg-no-repeat right-[-10px]"
+        />
       </div>
 
-      <main className="mx-auto max-w-6xl px-4 py-12">
-
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <div
+          className="flex flex-wrap items-center justify-center text-2xl md:text-5xl font-semibold tracking-wide mb-8 animate-fade-in-up"
+          style={{ fontFamily: '"DGSahabah", sans-serif', direction: "ltr" }}
+        >
+          <span className="text-[#989898]">#</span>
+          <span className="text-[#284f93] mr-1">Lets</span>
+          <span className="text-[#209eaa] mr-1">Energize</span>
+          <span className="text-[#f4bb12] mr-1">The</span>
+          <span className="text-[#f4bb12]">Future</span>
+        </div>
         {/* Program Selection */}
         <div className="mb-12 animate-fade-in-up">
           <div className="text-center mb-8">

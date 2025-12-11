@@ -258,7 +258,7 @@ function MemberContent() {
 
 export default function MemberPage() {
     return (
-        <AuthGuard>
+        <AuthGuard requireAuth={true}>
             <MemberContent />
         </AuthGuard>
     );
