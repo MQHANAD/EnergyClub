@@ -24,9 +24,7 @@ const CommitteesSection = React.lazy(() =>
 export default function TeamPage() {
   const { t } = useI18n();
   const [committees, setCommittees] = useState<Committee[]>([]);
-  const [leadershipPositions, setLeadershipPositions] = useState<
-    LeadershipPosition[]
-  >([]);
+  const [leadershipPositions, setLeadershipPositions] = useState<LeadershipPosition[]>([]);
   const [hybridMembers, setHybridMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,13 +36,11 @@ export default function TeamPage() {
         setError(null);
 
         // Fetch committees, leadership positions, and hybrid members in parallel
-        const [committeesData, leadershipData, membersData] = await Promise.all(
-          [
-            teamApi.getCommitteesLight(),
-            teamApi.getLeadershipPositions(),
-            getMembersUltraOptimized(),
-          ]
-        );
+        const [committeesData, leadershipData, membersData] = await Promise.all([
+          teamApi.getCommitteesLight(),
+          teamApi.getLeadershipPositions(),
+          getMembersUltraOptimized()
+        ]);
 
         setCommittees(committeesData);
         setLeadershipPositions(leadershipData);
@@ -108,15 +104,27 @@ export default function TeamPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <div className="flex items-center justify-center">
-                {/* <h1 className="text-4xl md:text-5xl font-light text-gray-900">
-                {t('team.title')}
-              </h1> */}
-                <Image src="/energyWeekLogo.png" alt="KFUPM Energy Week" width={320} height={320} className="ml-4" />
-
+                <Image
+                  src="/ksa-energy-week-logo.png"
+                  alt="KSA Energy Week"
+                  width={350}
+                  height={175}
+                  className="object-contain"
+                  priority
+                />
               </div>
             </div>
           </div>
         </section>
+
+        {/* Leadership Section */}
+        <Suspense fallback={<LoadingSpinner />}>
+          <LeadershipSection
+            leadershipPositions={leadershipPositions}
+            committees={committees}
+            hybridMembers={hybridMembers}
+          />
+        </Suspense>
 
         {/* Decorative Banner */}
         {/* Decorative Banner */}
@@ -135,44 +143,13 @@ export default function TeamPage() {
         {/* Eastern Province (Default) */}
         <Suspense fallback={<LoadingSpinner />}>
           <CommitteesSection
-            committees={[
-              {
-                id: 'leaders',
-                name: 'Leaders',
-                order: 0,
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                members: []
-              },
-              ...committees
-            ]}
-            hybridMembers={[
-              // Create dummy members for the Leaders committee to make the count work
-              ...leadershipPositions.map(p => ({
-                id: p.memberId,
-                email: p.member?.email || '',
-                fullName: p.member?.fullName || '',
-                role: p.title,
-                committeeId: 'leaders',
-                committeeName: 'Leaders',
-                status: 'active',
-                profilePicture: p.member?.profilePicture || null,
-                linkedInUrl: p.member?.linkedInUrl || null
-              } as HybridMember)),
-              ...hybridMembers.filter(m => {
-                const role = m.role?.trim().toLowerCase();
-                return role === "leader" || role === "team leader" || role === "committee leader";
-              }).map(m => ({
-                ...m,
-                committeeName: 'Leaders'
-              })),
-              ...hybridMembers
-            ]}
+            committees={committees}
+            hybridMembers={hybridMembers}
             title="Eastern Province"
             sectionLogo="/eastern-logo.png"
           />
         </Suspense>
+
 
         {/* Decorative Banner */}
         <div
