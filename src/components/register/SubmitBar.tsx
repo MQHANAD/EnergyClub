@@ -15,7 +15,7 @@ export default function SubmitBar({ disabled, loading, onClick, label = 'Submit 
   const isDisabled = !!loading || !!disabled;
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 z-10 mt-6 border-t bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <div className="sticky bottom-0 left-0 right-0 z-10 mt-6 bg-white/90 backdrop-blur shadow-[0_-4px_20px_rgb(0,0,0,0.08)] supports-[backdrop-filter]:bg-white/60">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-end">
         <Button
           type="button"

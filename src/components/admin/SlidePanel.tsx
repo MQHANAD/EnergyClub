@@ -24,7 +24,7 @@ export interface SlidePanelProps {
   isOpen: boolean;
   onClose: () => void;
   application: Application;
-  onAccept?: (application: Application, selectedCommittee?: number) => void;
+  onAccept?: (application: Application, selectedCommittee?: number, createMember?: boolean) => void;
   onReject?: (application: Application) => void;
   onUndo?: (application: Application) => void;
   className?: string;
@@ -44,6 +44,7 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [createMember, setCreateMember] = useState<boolean>(false);
 
 
 
@@ -181,10 +182,12 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
                   <label className="text-sm font-medium text-gray-700">Phone</label>
                   <div className="text-sm text-gray-900">{application.mobile}</div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">KFUPM ID</label>
-                  <div className="text-sm text-gray-900">{application.kfupmId}</div>
-                </div>
+                {application.program !== 'regional_team' && application.kfupmId && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">KFUPM ID</label>
+                    <div className="text-sm text-gray-900">{application.kfupmId}</div>
+                  </div>
+                )}
                 <div>
                   <label className="text-sm font-medium text-gray-700">Academic Year</label>
                   <div className="text-sm text-gray-900">{application.academicYear}</div>
@@ -198,62 +201,62 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
               </div>
             </section>
 
-            {/* Committees */}
-            <section>
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <Users className="h-5 w-5 mr-2 text-gray-400" />
-                Committee Preferences
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                {application.committees?.length ? (
-                  <div className="space-y-3">
-                    {application.committees.map((committee, idx) => (
-                      <label 
-                        key={idx} 
-                        className="group flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 cursor-pointer"
-                      >
-                        <div className="relative flex items-center">
-                          <input
-                            type="radio"
-                            name="committee-selection"
-                            value={idx}
-                            checked={selectedIndex === idx}
-                            onChange={() => setSelectedIndex(idx)}
-                            className="sr-only"
-                          />
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                            selectedIndex === idx 
-                              ? 'border-blue-600 bg-blue-600' 
+            {/* Committees - Only for Energy Week and Female Energy Club */}
+            {application.program !== 'regional_team' && (
+              <section>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-gray-400" />
+                  Committee Preferences
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  {application.committees?.length ? (
+                    <div className="space-y-3">
+                      {application.committees.map((committee, idx) => (
+                        <label
+                          key={idx}
+                          className="group flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 cursor-pointer"
+                        >
+                          <div className="relative flex items-center">
+                            <input
+                              type="radio"
+                              name="committee-selection"
+                              value={idx}
+                              checked={selectedIndex === idx}
+                              onChange={() => setSelectedIndex(idx)}
+                              className="sr-only"
+                            />
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${selectedIndex === idx
+                              ? 'border-blue-600 bg-blue-600'
                               : 'border-gray-300 bg-white group-hover:border-blue-400'
-                          }`}>
-                            {selectedIndex === idx && (
-                              <div className="w-2 h-2 rounded-full bg-white"></div>
-                            )}
+                              }`}>
+                              {selectedIndex === idx && (
+                                <div className="w-2 h-2 rounded-full bg-white"></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <span className={`text-sm font-medium transition-colors duration-200 ${
-                          selectedIndex === idx 
-                            ? 'text-blue-900' 
+                          <span className={`text-sm font-medium transition-colors duration-200 ${selectedIndex === idx
+                            ? 'text-blue-900'
                             : 'text-gray-700 group-hover:text-blue-800'
-                        }`}>
-                          {committee}
-                        </span>
-                        {selectedIndex === idx && (
-                          <div className="ml-auto">
-                            <Check className="h-4 w-4 text-blue-600" />
-                          </div>
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500 italic">No committees specified</div>
-                )}
-              </div>
-            </section>
+                            }`}>
+                            {committee}
+                          </span>
+                          {selectedIndex === idx && (
+                            <div className="ml-auto">
+                              <Check className="h-4 w-4 text-blue-600" />
+                            </div>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 italic">No committees specified</div>
+                  )}
+                </div>
+              </section>
+            )}
 
-            {/* Leadership */}
-            {application.leadershipInterest && (
+            {/* Leadership - Only for Energy Week and Female Energy Club */}
+            {application.leadershipInterest && application.program !== 'regional_team' && (
               <section>
                 <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                   <Award className="h-5 w-5 mr-2 text-gray-400" />
@@ -282,35 +285,173 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
               </section>
             )}
 
-            {/* Application Answers */}
-            <section>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Application Responses</h3>
-              <div className="space-y-4">
-                {application.previous && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">Previous Experience</h4>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.previous}</p>
-                  </div>
-                )}
+            {/* Application Answers - Only for Energy Week and Female Energy Club */}
+            {application.program !== 'regional_team' && (application.previous || application.competitions || application.energy) && (
+              <section>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Application Responses</h3>
+                <div className="space-y-4">
+                  {application.previous && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Previous Experience</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.previous}</p>
+                    </div>
+                  )}
 
-                {application.competitions && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">Competitions</h4>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.competitions}</p>
-                  </div>
-                )}
+                  {application.competitions && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Competitions</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.competitions}</p>
+                    </div>
+                  )}
 
-                {application.energy && (
+                  {application.energy && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Energy Interest</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.energy}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Regional Team Specific Fields */}
+            {application.program === 'regional_team' && (
+              <section>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-gray-400" />
+                  Regional Team Details
+                </h3>
+                <div className="space-y-4">
+                  {/* University & Region */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">Energy Interest</h4>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.energy}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {application.university && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">University</label>
+                          <div className="text-sm text-gray-900">{application.university}</div>
+                        </div>
+                      )}
+                      {application.region && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Region</label>
+                          <div className="text-sm text-gray-900">{application.region}</div>
+                        </div>
+                      )}
+                      {application.majorCollege && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Major / College</label>
+                          <div className="text-sm text-gray-900">{application.majorCollege}</div>
+                        </div>
+                      )}
+                      {application.availability && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Availability</label>
+                          <div className="text-sm text-gray-900">{application.availability}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </section>
+
+                  {/* Role Preferences - Selectable like committees */}
+                  {application.rolePreferences && application.rolePreferences.length > 0 && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-3">Role Preferences (Select One)</h4>
+                      <div className="space-y-3">
+                        {application.rolePreferences.map((role, idx) => (
+                          <label
+                            key={idx}
+                            className="group flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 cursor-pointer"
+                          >
+                            <div className="relative flex items-center">
+                              <input
+                                type="radio"
+                                name="role-selection"
+                                value={idx}
+                                checked={selectedIndex === idx}
+                                onChange={() => setSelectedIndex(idx)}
+                                className="sr-only"
+                              />
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${selectedIndex === idx
+                                ? 'border-blue-600 bg-blue-600'
+                                : 'border-gray-300 bg-white group-hover:border-blue-400'
+                                }`}>
+                                {selectedIndex === idx && (
+                                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                                )}
+                              </div>
+                            </div>
+                            <span className={`text-sm font-medium transition-colors duration-200 ${selectedIndex === idx
+                              ? 'text-blue-900'
+                              : 'text-gray-700 group-hover:text-blue-800'
+                              }`}>
+                              {role}
+                            </span>
+                            {selectedIndex === idx && (
+                              <div className="ml-auto">
+                                <Check className="h-4 w-4 text-blue-600" />
+                              </div>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Why Join */}
+                  {application.whyJoin && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Why Join Regional Team?</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.whyJoin}</p>
+                    </div>
+                  )}
+
+                  {/* Strengths & Skills */}
+                  {application.strengthsSkills && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Strengths & Skills</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.strengthsSkills}</p>
+                    </div>
+                  )}
+
+                  {/* Previous Experience */}
+                  {application.previousExperience && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Previous Experience</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.previousExperience}</p>
+                    </div>
+                  )}
+
+                  {/* Competitions & Hackathons */}
+                  {application.competitionsHackathons && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Competitions & Hackathons</h4>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{application.competitionsHackathons}</p>
+                    </div>
+                  )}
+
+                  {/* Leadership Position (for Regional Team) */}
+                  {application.leadershipInterest && application.leadershipPosition && (
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-medium text-yellow-900 mb-2 flex items-center">
+                        <Award className="h-4 w-4 mr-2" />
+                        Leadership Interest
+                      </h4>
+                      <div className="text-sm text-yellow-800 font-medium mb-2">
+                        Position: {application.leadershipPosition}
+                      </div>
+                      {application.whyLeadership && (
+                        <blockquote className="text-sm text-yellow-700 italic border-l-4 border-yellow-400 pl-3">
+                          "{application.whyLeadership}"
+                        </blockquote>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Links & Files */}
-            {(application.linkedIn || application.designLink || application.cvUrl || application.designFileUrl) && (
+            {(application.linkedIn || application.designLink || application.cvUrl || application.designFileUrl || application.portfolioLink || application.portfolioUrl) && (
               <section>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Links & Files</h3>
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -323,6 +464,17 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
                         className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         <span>LinkedIn Profile</span>
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
+                    {application.portfolioLink && (
+                      <a
+                        href={application.portfolioLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        <span>Portfolio/LinkedIn</span>
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
@@ -356,6 +508,17 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
                         className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         <span>Design File</span>
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    )}
+                    {application.portfolioUrl && (
+                      <a
+                        href={application.portfolioUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        <span>Portfolio File</span>
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
@@ -404,8 +567,20 @@ export const SlidePanel: React.FC<SlidePanelProps> = ({
             <div className="flex space-x-3">
               {application.status === 'pending' ? (
                 <>
+                  <div className="flex items-center space-x-2 mr-4">
+                    <input
+                      type="checkbox"
+                      id="create-member"
+                      checked={createMember}
+                      onChange={(e) => setCreateMember(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="create-member" className="text-sm text-gray-700 select-none">
+                      Create Member
+                    </label>
+                  </div>
                   <Button
-                    onClick={() => onAccept?.(application, selectedIndex >= 0 ? selectedIndex : undefined)}
+                    onClick={() => onAccept?.(application, selectedIndex >= 0 ? selectedIndex : undefined, createMember)}
                     disabled={isProcessing}
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >

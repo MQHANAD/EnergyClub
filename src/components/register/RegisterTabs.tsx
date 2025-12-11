@@ -3,7 +3,7 @@
 import React from "react";
 import type { Program } from "@/lib/registrationSchemas";
 import { cn } from "@/lib/utils";
-import { Calendar, Users, Zap, Star, Clock, CheckCircle } from "lucide-react";
+import { Calendar, Users, Zap, Star, Clock, CheckCircle, MapPin } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
@@ -25,27 +25,37 @@ const tabs: {
   disabled?: boolean;
   disabledMessage?: string;
 }[] = [
-  {
-    key: "energy_week_2",
-    label: "Energy Week 2",
-    title: "Energy Week 2 Program",
-    description:
-      "Join our flagship energy event with hands-on workshops, competitions, and networking opportunities.",
-    icon: Zap,
-    features: ["Industry Networking", "Leadership Roles"],
-    duration: "1 Week",
-  },
-  {
-    key: "female_energy_club",
-    label: "Female Energy Club",
-    title: "Female Energy Club Program",
-    description:
-      "Empowering students in energy through mentorship, skill development, and community building initiatives.",
-    icon: Star,
-    features: ["Skill Development", "Community Building", "Career Guidance"],
-    duration: "Ongoing",
-  },
-];
+    {
+      key: "energy_week_2",
+      label: "Energy Week 2",
+      title: "Energy Week 2 Program",
+      description:
+        "Join our flagship energy event with hands-on workshops, competitions, and networking opportunities.",
+      icon: Zap,
+      features: ["Industry Networking", "Leadership Roles"],
+      duration: "1 Week",
+    },
+    {
+      key: "female_energy_club",
+      label: "Female Energy Club",
+      title: "Female Energy Club Program",
+      description:
+        "Empowering students in energy through mentorship, skill development, and community building initiatives.",
+      icon: Star,
+      features: ["Skill Development", "Community Building", "Career Guidance"],
+      duration: "Ongoing",
+    },
+    {
+      key: "regional_team",
+      label: "Regional Team",
+      title: "Energy Week Regional Team",
+      description:
+        "Join the regional organizing team for Riyadh, Western, or Eastern regions. Support hackathons and debates.",
+      icon: MapPin,
+      features: ["Event Coordination", "Regional Leadership"],
+      duration: "Jan 2026",
+    },
+  ];
 
 const tabImages: Record<Program, { src: string; alt: string }> = {
   energy_week_2: { src: "/EW.svg", alt: "Energy Week preview" },
@@ -53,17 +63,29 @@ const tabImages: Record<Program, { src: string; alt: string }> = {
     src: "/energyClubLogo.png",
     alt: "Female Energy Club preview",
   },
+  regional_team: {
+    src: "/EW.svg",
+    alt: "Regional Team preview",
+  },
 };
 
 export default function RegisterTabs({
   active,
   onChange,
-  availability = { energy_week_2: true, female_energy_club: true },
+  availability = { energy_week_2: true, female_energy_club: true, regional_team: true },
   showAdmin = false,
   onAdminToggle,
 }: Props) {
   const ew2Open = availability.energy_week_2 !== false;
   const fecOpen = availability.female_energy_club !== false;
+  const rtOpen = availability.regional_team !== false;
+
+  const getIsDisabled = (key: Program) => {
+    if (key === 'energy_week_2') return !ew2Open;
+    if (key === 'female_energy_club') return !fecOpen;
+    if (key === 'regional_team') return !rtOpen;
+    return false;
+  };
 
   const handleKey = (
     e: React.KeyboardEvent,
@@ -85,8 +107,7 @@ export default function RegisterTabs({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {tabs.map((tab) => {
             const isActive = active === tab.key;
-            const isDisabled =
-              tab.key === "energy_week_2" ? !ew2Open : !fecOpen;
+            const isDisabled = getIsDisabled(tab.key);
             const cardDisabled = isDisabled && !showAdmin;
 
             return (
@@ -99,17 +120,16 @@ export default function RegisterTabs({
                 onClick={() => !cardDisabled && onChange(tab.key)}
                 onKeyDown={(e) => handleKey(e, cardDisabled, tab.key)}
                 className={cn(
-                  "relative flex items-center gap-3 p-4 rounded-lg border transition-all text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20",
+                  "relative flex items-center gap-3 p-4 rounded-lg transition-all text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20",
                   isDisabled
-                    ? `border-gray-200 bg-gray-50 ${
-                        showAdmin ? "cursor-default" : "cursor-not-allowed"
-                      } opacity-60`
+                    ? `bg-gray-50 ${showAdmin ? "cursor-default" : "cursor-not-allowed"
+                    } opacity-60 grayscale`
                     : isActive
-                    ? "border-blue-500 bg-blue-50 hover:shadow-md"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
+                      ? "bg-white shadow-[0_4px_20px_rgb(0,0,0,0.08)] ring-1 ring-black/5"
+                      : "bg-white hover:bg-gray-50/50 hover:shadow-md"
                 )}
               >
-                <div className="flex-shrink-0 rounded-md overflow-hidden border bg-white">
+                <div className="flex-shrink-0 rounded-md overflow-hidden bg-white">
                   <Image
                     src={tabImages[tab.key].src}
                     alt={tabImages[tab.key].alt}
@@ -118,6 +138,7 @@ export default function RegisterTabs({
                     className="object-contain p-2"
                   />
                 </div>
+
                 <div className="min-w-0 flex-1">
                   {/* 2x2 grid: 
                     col1 = text, col2 = badge/dropdown
@@ -131,8 +152,8 @@ export default function RegisterTabs({
                         isActive
                           ? "text-blue-900"
                           : isDisabled
-                          ? "text-gray-500"
-                          : "text-gray-900"
+                            ? "text-gray-500"
+                            : "text-gray-900"
                       )}
                       title={tab.label}
                     >
@@ -208,10 +229,10 @@ export default function RegisterTabs({
       </div>
 
       {/* Desktop Card View */}
-      <div className="hidden lg:grid lg:grid-cols-2 gap-6">
+      <div className="hidden lg:grid lg:grid-cols-3 gap-6">
         {tabs.map((tab) => {
           const isActive = active === tab.key;
-          const isDisabled = tab.key === "energy_week_2" ? !ew2Open : !fecOpen;
+          const isDisabled = getIsDisabled(tab.key);
           const cardDisabled = isDisabled && !showAdmin;
 
           const Icon = tab.icon;
@@ -226,30 +247,18 @@ export default function RegisterTabs({
               onClick={() => !cardDisabled && onChange(tab.key)}
               onKeyDown={(e) => handleKey(e, cardDisabled, tab.key)}
               className={cn(
-                "group relative p-6 rounded-xl border-2 transition-all duration-200 text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20",
+                "group relative p-6 rounded-xl transition-all duration-300 text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20",
                 isDisabled
-                  ? `border-gray-200 bg-gray-50 ${
-                      showAdmin ? "cursor-default" : "cursor-not-allowed"
-                    } opacity-60`
+                  ? `bg-gray-50 ${showAdmin ? "cursor-default" : "cursor-not-allowed"
+                  } opacity-60 grayscale`
                   : isActive
-                  ? "border-blue-500 bg-blue-50 shadow-lg scale-[1.02]"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:scale-[1.02]"
+                    ? "bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] scale-[1.02] ring-1 ring-black/5"
+                    : "bg-white hover:bg-gray-50/50 hover:shadow-lg hover:scale-[1.02]"
               )}
             >
               {/* Header */}
               <div className="flex items-start gap-4 mb-4">
-                <div
-                  className={cn(
-                    "flex items-center justify-center w-12 h-12 rounded-lg transition-colors",
-                    isDisabled
-                      ? "bg-gray-200 text-gray-400"
-                      : isActive
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
-                  )}
-                >
-                  <Icon className="h-6 w-6" />
-                </div>
+
                 <div className="flex-1 min-w-0">
                   <h3
                     className={cn(
@@ -257,8 +266,8 @@ export default function RegisterTabs({
                       isDisabled
                         ? "text-gray-500"
                         : isActive
-                        ? "text-blue-900"
-                        : "text-gray-900"
+                          ? "text-blue-900"
+                          : "text-gray-900"
                     )}
                   >
                     {tab.label}
@@ -283,7 +292,7 @@ export default function RegisterTabs({
               </p>
 
               {/* Features */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <h4
                   className={cn(
                     "text-xs font-semibold uppercase tracking-wide transition-colors",
@@ -312,20 +321,12 @@ export default function RegisterTabs({
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Small Photo Section (dummy image) */}
               <div className="mt-4">
-                <h4
-                  className={cn(
-                    "text-xs font-semibold uppercase tracking-wide transition-colors",
-                    isActive ? "text-blue-600" : "text-gray-500"
-                  )}
-                >
-                  Program Snapshot
-                </h4>
                 <div className="mt-2 inline-flex items-center gap-2">
-                  <div className="rounded-md overflow-hidden border bg-white">
+                  <div className="rounded-md overflow-hidden bg-white">
                     <Image
                       src={tabImages[tab.key].src}
                       alt={tabImages[tab.key].alt}

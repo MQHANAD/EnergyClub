@@ -219,10 +219,12 @@ export default function ApplicationsAdminPage() {
   );
 
   // Application decision handlers
+  // Application decision handlers
   const onDecide = async (
     application: Application,
     status: "accepted" | "rejected",
-    selectedCommittee?: number
+    selectedCommittee?: number,
+    createMember?: boolean
   ) => {
     if (!user) return;
     if (status === "rejected" && !confirm("Reject this application?")) return;
@@ -231,18 +233,25 @@ export default function ApplicationsAdminPage() {
     setProcessingId(application.id);
     try {
       // Map selected committee index to the actual committee name (string)
-      const selectedCommitteeValue =
-        typeof selectedCommittee === "number" &&
-        Array.isArray(application.committees)
-          ? application.committees[selectedCommittee]
-          : undefined;
+      // For Regional Team, mapped from rolePreferences
+      let selectedCommitteeValue: string | undefined;
+
+      if (typeof selectedCommittee === "number") {
+        if (Array.isArray(application.committees) && application.committees.length > 0) {
+          selectedCommitteeValue = application.committees[selectedCommittee];
+        } else if (Array.isArray(application.rolePreferences) && application.rolePreferences.length > 0) {
+          selectedCommitteeValue = application.rolePreferences[selectedCommittee];
+        }
+      }
 
       await decideApplication(
         application.id,
         status,
         user.uid,
         undefined,
-        selectedCommitteeValue
+        selectedCommitteeValue,
+        createMember,
+        application
       );
       // Optimistic update
       const updatedApp = { ...application, status } as Application;
@@ -477,9 +486,8 @@ export default function ApplicationsAdminPage() {
                     disabled={loadingApps}
                   >
                     <RefreshCw
-                      className={`h-4 w-4 mr-2 ${
-                        loadingApps ? "animate-spin" : ""
-                      }`}
+                      className={`h-4 w-4 mr-2 ${loadingApps ? "animate-spin" : ""
+                        }`}
                     />
                     Refresh
                   </Button>
@@ -495,18 +503,33 @@ export default function ApplicationsAdminPage() {
                         };
                         return statusOrder[a.status] - statusOrder[b.status];
                       });
-                      // Prepare data for Excel
+                      // Prepare data for Excel - include all possible fields
                       const data = sortedApps.map((app) => ({
                         Name: app.fullName,
                         Email: app.email,
-                        KFUPM_ID: app.kfupmId,
+                        Mobile: app.mobile,
+                        KFUPM_ID: app.kfupmId || "",
                         Status: app.status,
                         Program: app.programLabel || app.program,
                         AcademicYear: app.academicYear,
+                        // Energy Week / Female Club fields
                         Committees: Array.isArray(app.committees)
                           ? app.committees.join(", ")
                           : "",
                         SelectedCommittee: app.selectedCommittee || "",
+                        // Regional Team fields
+                        University: app.university || "",
+                        Region: app.region || "",
+                        MajorCollege: app.majorCollege || "",
+                        RolePreferences: Array.isArray(app.rolePreferences)
+                          ? app.rolePreferences.join(", ")
+                          : "",
+                        LeadershipPosition: app.leadershipPosition || "",
+                        Availability: app.availability || "",
+                        WhyJoin: app.whyJoin || "",
+                        StrengthsSkills: app.strengthsSkills || "",
+                        // Common
+                        LinkedIn: app.linkedIn || app.portfolioLink || "",
                         SubmittedAt: app.submittedAt,
                       }));
                       const worksheet = XLSX.utils.json_to_sheet(data);
@@ -696,8 +719,8 @@ export default function ApplicationsAdminPage() {
           isOpen={showSlidePanel}
           onClose={handleClosePanel}
           application={selectedApplication}
-          onAccept={(app, selectedIdx) =>
-            onDecide(app, "accepted", selectedIdx)
+          onAccept={(app, selectedIdx, createMember) =>
+            onDecide(app, "accepted", selectedIdx, createMember)
           }
           onReject={(app) => onDecide(app, "rejected")}
           onUndo={onUndo}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { useI18n } from '@/i18n/index';
 export default function LoginPage() {
   const { signInWithEmail, signUpWithEmail, resetPassword, loading, user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -25,13 +26,16 @@ export default function LoginPage() {
   const [resetMessage, setResetMessage] = useState('');
 
   // Redirect if already authenticated
+  // Redirect if already authenticated
   React.useEffect(() => {
     console.log('Login page: user =', user, 'loading =', loading);
     if (user && !loading) {
-      console.log('Login page: Redirecting to /events');
-      router.push('/events');
+      const from = searchParams.get('from');
+      const redirectPath = from ? decodeURIComponent(from) : '/events';
+      console.log(`Login page: Redirecting to ${redirectPath}`);
+      router.push(redirectPath);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, searchParams]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +113,7 @@ export default function LoginPage() {
 
   return (
     //login page UI
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 bg-white bg-cover bg-center bg-fixed">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -133,7 +137,7 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             {resetMessage && (
               <Alert>
                 <AlertDescription>{resetMessage}</AlertDescription>
@@ -153,14 +157,14 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                
-                <Button type="submit" className="w-full" disabled={isSigningIn}>
+
+                <Button type="submit" className="w-full bg-[#209EAA] hover:bg-[#209EAA]" disabled={isSigningIn}>
                   Send Reset Email
                 </Button>
-                
-                <Button 
-                  type="button" 
-                  variant="ghost" 
+
+                <Button
+                  type="button"
+                  variant="ghost"
                   className="w-full"
                   onClick={() => {
                     setShowResetPassword(false);
@@ -186,7 +190,7 @@ export default function LoginPage() {
                     />
                   </div>
                 )}
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -198,7 +202,7 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
@@ -213,19 +217,19 @@ export default function LoginPage() {
                     <p className="text-sm text-gray-500">Password must be at least 6 characters long</p>
                   )}
                 </div>
-                
-                <Button type="submit" className="w-full" disabled={isSigningIn}>
+
+                <Button type="submit" className="w-full bg-[#209EAA] hover:bg-[#209EAA] text-white" disabled={isSigningIn}>
                   {isSigningIn ? (
                     <span className="loading loading-infinity loading-xl"></span>
                   ) : (
                     isSignUp ? 'Create Account' : 'Sign In'
                   )}
                 </Button>
-                
+
                 <div className="text-center space-y-2">
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
+                  <Button
+                    type="button"
+                    variant="ghost"
                     className="text-sm"
                     onClick={() => {
                       setIsSignUp(!isSignUp);
@@ -237,11 +241,11 @@ export default function LoginPage() {
                   >
                     {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                   </Button>
-                  
+
                   {!isSignUp && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
+                    <Button
+                      type="button"
+                      variant="ghost"
                       className="text-sm"
                       onClick={() => {
                         setShowResetPassword(true);

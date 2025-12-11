@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Menu, X, LayoutDashboard } from "lucide-react";
@@ -22,6 +22,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
     useAuth();
   const canSeeAdmin = Boolean(isOrganizer || isAdmin);
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useI18n();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -229,7 +230,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
             </div>
           ) : (
             <Link
-              href="/login"
+              href={`/login?from=${encodeURIComponent(pathname)}`}
               className={`relative px-4 py-2 text-sm font-medium transition-colors ${textColorClass}`}
             >
               {t("nav.signIn")}
@@ -337,7 +338,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
                 <>
                   <div className="h-px bg-gray-200 my-2"></div>
                   <Link
-                    href="/login"
+                    href={`/login?from=${encodeURIComponent(pathname)}`}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="px-4 py-3 text-center text-slate-800 font-medium rounded-lg hover:bg-white/30"
                   >
