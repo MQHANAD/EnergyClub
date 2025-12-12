@@ -74,7 +74,7 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   ];
 
   // Filter to show only specific leaders in exact order
-  const allowedNames = ['Layan Iseafan', 'Omar Alsaigh', 'Musa Ibn Rashid', 'Muhannad Alduraywish'];
+  const allowedNames = ['Layan Iseafan', 'Omar Alsaigh'];
 
   const filteredLeadership = allLeadership.filter(pos =>
     pos.member && allowedNames.some(name =>
@@ -114,7 +114,7 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
         </div>
 
         {/* Leadership Cards - Only filtered 4 members */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {sortedLeadership.map((position, index) => (
             <MemberCard
               key={position.id}
