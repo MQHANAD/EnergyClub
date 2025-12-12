@@ -64,8 +64,8 @@ export const messages = {
           title: "Engineering Shark Tank – 1st Edition",
           short:
             "The Engineers’ Shark Tank let students pitch innovative energy ideas to experts.",
-          content:"The Engineers’ Shark Tank launched as a bold platform for students to pitch their groundbreaking ideas directly to experts and industry leaders. In its first edition, participants showcased innovative energy solutions, spanning renewable technologies, efficiency strategies, and entrepreneurial projects.\n\nThe event provided:\n-A real-world pitching experience before a panel of judges\n-Opportunities for mentorship and funding\n-Recognition for the most impactful ideas\n\nThe Shark Tank was more than a competition—it was a launchpad for student entrepreneurs to transform their concepts into tangible innovations, shaping the energy future.",
-          
+          content: "The Engineers’ Shark Tank launched as a bold platform for students to pitch their groundbreaking ideas directly to experts and industry leaders. In its first edition, participants showcased innovative energy solutions, spanning renewable technologies, efficiency strategies, and entrepreneurial projects.\n\nThe event provided:\n-A real-world pitching experience before a panel of judges\n-Opportunities for mentorship and funding\n-Recognition for the most impactful ideas\n\nThe Shark Tank was more than a competition—it was a launchpad for student entrepreneurs to transform their concepts into tangible innovations, shaping the energy future.",
+
         },
         greenH2: {
           title: "Strategy& ME Hydrogen Workshop",
@@ -110,7 +110,7 @@ export const messages = {
       titlePrefix: "جامعة الملك فهد",
       titleEnergyHub: "مركز الطاقة",
       tagline:
-        "منصة تجمع أندية الطاقة وأسبوع الطاقة. نُعزز الابتكار والتعاون والقيادة في مجالات الطاقة والاستدامة، ونربط بين الطلاب والأكاديميا والصناعة.",
+        "منصة تجمع أندية الطاقة وأسبوع الطاقة. نُعزز الابتكار والتعاون والقيادة في مجالات الطاقة والاستدامة، ونربط بين الطلاب والأكاديميين وخبراء الصناعة.",
       ctaExplore: "استكشف الفعاليات",
       ctaLearn: "اعرف المزيد",
       bgAlt: "توربينات رياح وألواح شمسية",
