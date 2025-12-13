@@ -30,13 +30,6 @@ export const MemberCard: React.FC<MemberCardProps> = ({
   return (
     <Card className={`group overflow-visible transition-all duration-500 ease-out hover:shadow-xl hover:scale-[1.03] bg-white border border-gray-200 ${className}`}>
       <div className="relative">
-        {/* Leadership Badge */}
-        {isLeadership && (
-          <div className="absolute -top-3 -left-3 w-10 h-10 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg z-10">
-            <Crown className="w-5 h-5 text-white" />
-          </div>
-        )}
-        
         {/* Full-size Image */}
         <div className="relative h-96 w-full overflow-hidden md:filter md:grayscale md:saturate-0 transition-all duration-1000 ease-in-out md:group-hover:grayscale-0 md:group-hover:saturate-100">
           <OptimizedImage
