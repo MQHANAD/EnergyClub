@@ -191,7 +191,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
                           className="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                         >
                           <LayoutDashboard className="h-4 w-4 mr-2" />
-                          Member Dashboard
+                          Member Card
                         </Link>
                       )}
 
@@ -300,7 +300,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
                       className="flex items-center justify-center px-4 py-3 text-slate-800 font-medium rounded-lg hover:bg-white/30"
                     >
                       <LayoutDashboard className="h-4 w-4 mr-2" />
-                      Member Dashboard
+                      Member Card
                     </Link>
                   )}
 
