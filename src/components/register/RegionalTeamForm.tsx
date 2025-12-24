@@ -1,5 +1,5 @@
 'use client';
-
+import Select from 'react-select';
 import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,8 +35,8 @@ type Props = { isOpen?: boolean };
 const STEP_TITLES = [
     { title: 'Personal Info', icon: User, color: 'blue' },
     { title: 'Experience', icon: Briefcase, color: 'purple' },
-    { title: 'Role Preferences', icon: Users, color: 'green' },
-    { title: 'Leadership', icon: Star, color: 'yellow' },
+    { title: 'Leadership', icon: Users, color: 'green' },
+    { title: 'Role Preferences', icon: Star, color: 'yellow' },
     { title: 'Availability', icon: Calendar, color: 'cyan' },
     { title: 'Documents', icon: FileText, color: 'pink' },
     { title: 'Account', icon: CheckCircle2, color: 'orange' },
@@ -55,6 +55,7 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
         setValue,
         trigger,
         reset,
+        setError,
         formState: { errors },
     } = useForm<RegionalTeamFormValues>({
         resolver: zodResolver(RegionalTeamSchema) as any,
@@ -63,11 +64,13 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
             program: 'regional_team',
             fullName: '',
             university: undefined,
+            otherUniversity: '', // Add default for new field
             region: undefined,
             email: '',
             mobile: '',
             majorCollege: '',
             academicYear: undefined,
+            otherAcademicYear: '', // Add default for new field
             previousExperience: '',
             competitionsHackathons: '',
             whyJoin: '',
@@ -87,6 +90,8 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
     const leadershipInterest = watch('leadershipInterest');
     const selectedRegion = watch('region');
     const rolePreferences = watch('rolePreferences') || [];
+    const selectedUniversity = watch('university'); 
+    const selectedAcademicYear = watch('academicYear');
 
     if (!isOpen) return null;
 
@@ -98,17 +103,23 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
         switch (step) {
             case 1:
                 fieldsToValidate.push('fullName', 'university', 'region', 'email', 'mobile', 'majorCollege', 'academicYear');
+                if (selectedUniversity === 'Other') {
+                    fieldsToValidate.push('otherUniversity');
+                }
+                if (selectedAcademicYear === 'Other') {
+                    fieldsToValidate.push('otherAcademicYear');
+                }
                 break;
             case 2:
                 fieldsToValidate.push('whyJoin', 'strengthsSkills');
                 break;
             case 3:
-                fieldsToValidate.push('rolePreferences');
-                break;
-            case 4:
                 if (leadershipInterest) {
                     fieldsToValidate.push('leadershipPosition');
                 }
+                break;
+            case 4:
+                fieldsToValidate.push('rolePreferences');
                 break;
             case 5:
                 fieldsToValidate.push('availability');
@@ -123,7 +134,21 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
         }
 
         if (fieldsToValidate.length === 0) return true;
-        return await trigger(fieldsToValidate);
+        isValid = await trigger(fieldsToValidate);
+
+        // Additional validation for conditional fields
+        if (step === 1) {
+            if (selectedUniversity === 'Other' && (!formValues.otherUniversity || formValues.otherUniversity.trim() === '')) {
+                setError('otherUniversity', { message: 'Please specify your university' });
+                isValid = false;
+            }
+            if (selectedAcademicYear === 'Other' && (!formValues.otherAcademicYear || formValues.otherAcademicYear.trim() === '')) {
+                setError('otherAcademicYear', { message: 'Please specify your academic year' });
+                isValid = false;
+            }
+        }
+
+        return isValid;
     };
 
     const handleNext = async () => {
@@ -167,11 +192,18 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
             // Prepare data without files and passwords
             const { cvFile, portfolioFile, password, confirmPassword, ...rest } = values as any;
 
-            // Sanitize payload: convert undefined to null
-            const sanitizedRest = Object.entries(rest).reduce((acc, [key, value]) => {
+            // Handle university: Use otherUniversity if 'Other' is selected
+            const finalUniversity = rest.university === 'Other' ? rest.otherUniversity : rest.university;
+            // Handle academicYear: Use otherAcademicYear if 'Other' is selected
+            const finalAcademicYear = rest.academicYear === 'Other' ? rest.otherAcademicYear : rest.academicYear;
+            const sanitizedRest = Object.entries({ ...rest, university: finalUniversity, academicYear: finalAcademicYear }).reduce((acc, [key, value]) => {
                 acc[key] = value === undefined ? null : value;
                 return acc;
             }, {} as Record<string, any>);
+
+            // Remove otherUniversity and otherAcademicYear from payload if not needed
+            delete sanitizedRest.otherUniversity;
+            delete sanitizedRest.otherAcademicYear;
 
             // Generate ID first
             const docRef = doc(collection(db, 'applications'));
@@ -401,6 +433,20 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
                                     {errors.university && <p className="text-sm text-red-600 mt-1">{errors.university.message}</p>}
                                 </div>
 
+                                {/* Conditional input for "Other" */}
+                                {selectedUniversity === 'Other' && (
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Specify Your University *</label>
+                                        <input
+                                            type="text"
+                                            {...register('otherUniversity')}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter your university name"
+                                        />
+                                        {errors.otherUniversity && <p className="text-sm text-red-600 mt-1">{errors.otherUniversity.message}</p>}
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Region You're Applying For *</label>
                                     <select
@@ -461,6 +507,20 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
                                     </select>
                                     {errors.academicYear && <p className="text-sm text-red-600 mt-1">{errors.academicYear.message}</p>}
                                 </div>
+
+                                {/* Conditional input for "Other" academic year */}
+                                {selectedAcademicYear === 'Other' && (
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Specify Your Academic Year *</label>
+                                        <input
+                                            type="text"
+                                            {...register('otherAcademicYear')}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter your academic year"
+                                        />
+                                        {errors.otherAcademicYear && <p className="text-sm text-red-600 mt-1">{errors.otherAcademicYear.message}</p>}
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -527,7 +587,7 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
                 )}
 
                 {/* Step 3: Role Preferences */}
-                {currentStep === 3 && (
+                {currentStep === 4 && (
                     <Card className="overflow-hidden animate-fade-in-up">
                         <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
                             <div className="flex items-center gap-3">
@@ -575,7 +635,7 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
                 )}
 
                 {/* Step 4: Leadership Interest */}
-                {currentStep === 4 && (
+                {currentStep === 3 && (
                     <Card className="overflow-hidden animate-fade-in-up">
                         <CardHeader className="bg-gradient-to-r from-yellow-50 to-yellow-100">
                             <div className="flex items-center gap-3">

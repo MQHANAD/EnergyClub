@@ -5,32 +5,26 @@ import { z } from 'zod';
 // ===== Enums =====
 
 export const RegionalTeamUniversities = [
-    'KSU', 'PSU', 'Alfaisal', 'IAU', 'PMU', 'UJ', 'KAU', 'KAUST', 'Other'
+    'KSU', 'PSU', 'Alfaisal', 'UJ', 'KAU', 'KAUST', 'Other'
 ] as const;
 
 export const RegionalTeamRegions = [
     'Riyadh Regional Team',
     'Western Regional Team',
-    'Eastern Regional Team'
 ] as const;
 
 export const RegionalTeamAcademicYears = [
-    'Freshman', 'Sophomore', 'Junior', 'Senior', 'Master\'s', 'Other'
+    'Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'Other'
 ] as const;
 
 export const RegionalTeamRoles = [
-    'University Outreach Team',
+    'Public Relations Team',
     'Logistics & Operations Team',
-    'Competitions Support Team',
-    'Hospitality & Guest Support',
-    'Media & Coverage Team'
+    'Marketing & Media Team'
 ] as const;
 
 export const RegionalTeamLeadershipPositions = [
-    'Regional Coordinator',
-    'University Outreach Lead',
-    'Logistics Lead',
-    'Competition-Day Lead'
+    'Regional Manager',
 ] as const;
 
 export const AvailabilityOptions = [
@@ -52,11 +46,6 @@ export const REGION_DATES: Record<typeof RegionalTeamRegions[number], { dates: s
         hackathon: '20–21 Jan: Hackathon',
         debate: '22 Jan: Debate'
     },
-    'Eastern Regional Team': {
-        dates: 'Jan 17–19, 2026',
-        hackathon: '17–18 Jan: Hackathon',
-        debate: '19 Jan: Debate'
-    }
 };
 
 // ===== Schema Helpers =====
@@ -72,11 +61,28 @@ const mobileSchema = z.string().trim().regex(
 export const Step1Schema = z.object({
     fullName: z.string().trim().min(1, 'Full name is required').max(100),
     university: z.enum(RegionalTeamUniversities, { message: 'Please select a university' }),
+    otherUniversity: z.string().trim().optional(),
     region: z.enum(RegionalTeamRegions, { message: 'Please select a region' }),
     email: emailSchema,
     mobile: mobileSchema,
     majorCollege: z.string().trim().min(1, 'Major/College is required').max(200),
     academicYear: z.enum(RegionalTeamAcademicYears, { message: 'Please select academic year' }),
+    otherAcademicYear: z.string().trim().optional(),
+}).superRefine((val, ctx) => {
+    if (val.university === 'Other' && (!val.otherUniversity || val.otherUniversity.trim() === '')) {
+        ctx.addIssue({
+            code: 'custom',
+            path: ['otherUniversity'],
+            message: 'Please specify your university'
+        });
+    }
+    if (val.academicYear === 'Other' && (!val.otherAcademicYear || val.otherAcademicYear.trim() === '')) {
+        ctx.addIssue({
+            code: 'custom',
+            path: ['otherAcademicYear'],
+            message: 'Please specify your academic year'
+        });
+    }
 });
 
 export const Step2Schema = z.object({
