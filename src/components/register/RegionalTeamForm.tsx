@@ -42,6 +42,11 @@ const STEP_TITLES = [
     { title: 'Account', icon: CheckCircle2, color: 'orange' },
 ];
 
+const regionOptions = [
+    { value: 'Riyadh Regional Team', label: 'Riyadh Regional Team', image: '/riyadh.svg' },
+    { value: 'Western Regional Team', label: 'Western Regional Team', image: '/west.svg' },
+];
+
 export default function RegionalTeamForm({ isOpen = true }: Props) {
     const [currentStep, setCurrentStep] = useState(1);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -449,15 +454,25 @@ export default function RegionalTeamForm({ isOpen = true }: Props) {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Region You're Applying For *</label>
-                                    <select
-                                        {...register('region')}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="">Select region</option>
-                                        {RegionalTeamRegions.map((r) => (
-                                            <option key={r} value={r}>{r}</option>
-                                        ))}
-                                    </select>
+                                    <Select
+                                        options={regionOptions}
+                                        value={regionOptions.find((opt) => opt.value === formValues.region)}
+                                        onChange={(selected) => setValue('region', selected?.value as any)}
+                                        formatOptionLabel={(option, { context }) => (
+                                            <div className="flex items-center gap-2">
+                                                <img src={option.image} alt={option.label} className="w-10 h-10" />
+                                                <span>{option.label}</span>
+                                            </div>
+                                        )}
+                                        className="w-full"
+                                        styles={{
+                                            control: (base) => ({ ...base, borderColor: '#d1d5db', borderRadius: '0.375rem' }),
+                                            option: (base, state) => ({
+                                                ...base,
+                                                backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f3f4f6' : 'white',
+                                            }),
+                                        }}
+                                    />
                                     {errors.region && <p className="text-sm text-red-600 mt-1">{errors.region.message}</p>}
                                 </div>
 
