@@ -50,7 +50,7 @@ const tabs: {
       label: "Regional Team",
       title: "Energy Week Regional Team",
       description:
-        "Join the regional organizing team for Riyadh, Western, or Eastern regions. Support hackathons and debates.",
+        "Join the regional organizing team for Riyadh or Western Energy Week. Support hackathons and debates in your region!",
       icon: MapPin,
       features: ["Event Coordination", "Regional Leadership"],
       duration: "Jan 2026",
