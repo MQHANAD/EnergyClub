@@ -64,7 +64,7 @@ service cloud.firestore {
     }
 
     function isValidRegistrationStatus(status) {
-      return status in ['confirmed', 'waitlist', 'cancelled'];
+      return status in ['confirmed', 'waitlist', 'cancelled', 'checked_in'];
     }
 
     function isValidEventStatus(status) {

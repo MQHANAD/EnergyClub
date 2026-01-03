@@ -6,8 +6,8 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  setDoc,          
-  onSnapshot,     
+  setDoc,
+  onSnapshot,
   query,
   where,
   orderBy,
@@ -73,6 +73,7 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
     userEmail: data.userEmail,
     registrationTime: timestampToDate(data.registrationTime),
     status: data.status,
+    checkInTime: data.checkInTime ? timestampToDate(data.checkInTime) : undefined,
     reason: data.reason,
     notes: data.notes,
     attendance: data.attendance,
@@ -165,7 +166,7 @@ export const eventsApi = {
         }
       }
 
-          let eventsQuery = query(
+      let eventsQuery = query(
         collection(db, 'events'),
         where('status', 'in', ['active', 'completed']),
         orderBy('createdAt', 'desc'),
@@ -214,51 +215,51 @@ export const eventsApi = {
 
   // Create new event
   async createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'currentAttendees'>): Promise<string> {
-  try {
-    const now = Timestamp.now();
-    const docRef = await addDoc(collection(db, 'events'), {
-  ...eventData,
-  startDate: eventData.startDate
-    ? Timestamp.fromDate(new Date(eventData.startDate))
-    : Timestamp.now(),
-  endDate: eventData.endDate
-    ? Timestamp.fromDate(new Date(eventData.endDate))
-    : null,
-  currentAttendees: 0,
-  createdAt: now,
-  updatedAt: now,
-});
+    try {
+      const now = Timestamp.now();
+      const docRef = await addDoc(collection(db, 'events'), {
+        ...eventData,
+        startDate: eventData.startDate
+          ? Timestamp.fromDate(new Date(eventData.startDate))
+          : Timestamp.now(),
+        endDate: eventData.endDate
+          ? Timestamp.fromDate(new Date(eventData.endDate))
+          : null,
+        currentAttendees: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
 
 
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating event:', error);
-    throw error;
-  }
-},
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating event:', error);
+      throw error;
+    }
+  },
 
   // Update event
   async updateEvent(eventId: string, updates: Partial<Event>): Promise<void> {
-  try {
-    const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
+    try {
+      const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
 
-    if (updates.startDate) {
-      updateData.startDate = Timestamp.fromDate(new Date(updates.startDate));
+      if (updates.startDate) {
+        updateData.startDate = Timestamp.fromDate(new Date(updates.startDate));
+      }
+
+      if (updates.endDate) {
+        updateData.endDate = Timestamp.fromDate(new Date(updates.endDate));
+      } else if (updates.endDate === null) {
+        updateData.endDate = null;
+      }
+
+      await updateDoc(doc(db, "events", eventId), updateData);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      throw error;
     }
-
-    if (updates.endDate) {
-      updateData.endDate = Timestamp.fromDate(new Date(updates.endDate));
-    } else if (updates.endDate === null) {
-      updateData.endDate = null;
-    }
-
-    await updateDoc(doc(db, "events", eventId), updateData);
-  } catch (error) {
-    console.error("Error updating event:", error);
-    throw error;
   }
-}
-,
+  ,
 
   // Delete event
   async deleteEvent(eventId: string): Promise<void> {
@@ -402,7 +403,7 @@ export const registrationsApi = {
       throw error;
     }
   }
-,
+  ,
 
   // Approve a registration (set to confirmed) and increment attendee count
   async approveRegistration(registrationId: string, eventId: string): Promise<void> {
@@ -493,15 +494,15 @@ export const teamApi = {
         where('isActive', '==', true),
         orderBy('order', 'asc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const committees = querySnapshot.docs.map(docToCommittee);
-      
+
       // Fetch members for each committee
       for (const committee of committees) {
         committee.members = await this.getCommitteeMembers(committee.id);
       }
-      
+
       return committees;
     } catch (error) {
       console.error('Error fetching committees:', error);
@@ -577,10 +578,10 @@ export const teamApi = {
         where('committeeId', '==', committeeId)
       );
       const membersSnapshot = await getDocs(membersQuery);
-      
+
       const deletePromises = membersSnapshot.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
-      
+
       // Then delete the committee
       await deleteDoc(doc(db, 'committees', committeeId));
     } catch (error) {
@@ -598,7 +599,7 @@ export const teamApi = {
         where('isActive', '==', true),
         orderBy('fullName', 'asc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(docToMember);
     } catch (error) {
@@ -695,10 +696,10 @@ export const teamApi = {
         where('isActive', '==', true),
         orderBy('title', 'asc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const positions = querySnapshot.docs.map(docToLeadershipPosition);
-      
+
       // Fetch member details for each position
       for (const position of positions) {
         try {
@@ -724,7 +725,7 @@ export const teamApi = {
           console.error(`Error fetching member for leadership position ${position.title}:`, error);
         }
       }
-      
+
       // Filter out positions without valid members
       const data = positions.filter(position => position.member);
       this._leadershipCache = { data, ts: Date.now() };

@@ -3,9 +3,9 @@ export interface Event {
   title: string;
   description: string;
   status: "active" | "cancelled" | "completed";
-  date?: string; 
-  startDate?: string; 
-  endDate?: string; 
+  date?: string;
+  startDate?: string;
+  endDate?: string;
   location?: string;
   tags: string[];
   currentAttendees: number;
@@ -22,7 +22,8 @@ export interface Registration {
   userName: string;
   userEmail: string;
   registrationTime: Date;
-  status: 'confirmed' | 'waitlist' | 'cancelled';
+  status: 'confirmed' | 'waitlist' | 'cancelled' | 'checked_in';
+  checkInTime?: Date;
   reason?: string;
   notes?: string;
   attendance?: boolean;
