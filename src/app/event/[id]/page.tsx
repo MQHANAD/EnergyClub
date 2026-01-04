@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
-import { Event, Registration } from "@/types";
+import { Event, Registration, RegistrationResponse } from "@/types";
 import Navigation from "@/components/Navigation";
+import DynamicRegistrationForm, { useValidateResponses } from "@/components/registration/DynamicRegistrationForm";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { logEventView, logEventRegistration } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,8 @@ export default function EventDetailsPage() {
   >(null);
   const [studentId, setStudentId] = useState("");
   const [studentIdError, setStudentIdError] = useState<string | null>(null);
+  const [dynamicResponses, setDynamicResponses] = useState<RegistrationResponse[]>([]);
+  const [dynamicFormValid, setDynamicFormValid] = useState(true);
 
   const loadEvent = async () => {
     if (!id || typeof id !== "string") return;
@@ -67,7 +70,7 @@ export default function EventDetailsPage() {
       }
 
       setEvent(eventData);
-      
+
       // Log event view for analytics
       logEventView(id, eventData.title);
     } catch (error) {
@@ -184,7 +187,8 @@ export default function EventDetailsPage() {
         registrationReason.trim() || undefined,
         isFromUniversity || event.requireStudentId,
         universityEmail || undefined,
-        event.requireStudentId ? studentId.trim() : undefined
+        event.requireStudentId ? studentId.trim() : undefined,
+        dynamicResponses.length > 0 ? dynamicResponses : undefined
       );
 
       // Log registration for analytics
@@ -208,19 +212,19 @@ export default function EventDetailsPage() {
   };
 
   const formatDate = (date: Date) => {
-  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
+    const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
 
-  // Add "at" between date and time (for English locales)
-  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
-  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
-};
+    // Add "at" between date and time (for English locales)
+    const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+    return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+  };
 
 
 
@@ -242,7 +246,7 @@ export default function EventDetailsPage() {
     <div className="animate-pulse space-y-8">
       {/* Image Skeleton */}
       <div className="w-full h-64 md:h-96 bg-gray-300 rounded-xl"></div>
-      
+
       {/* Content Skeleton */}
       <div className="space-y-6">
         <Card className="border-0 shadow-lg">
@@ -256,7 +260,7 @@ export default function EventDetailsPage() {
             <div className="h-4 bg-gray-200 rounded w-4/6"></div>
           </CardContent>
         </Card>
-        
+
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -268,7 +272,7 @@ export default function EventDetailsPage() {
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <div className="h-6 bg-gray-300 rounded w-1/2"></div>
@@ -307,8 +311,8 @@ export default function EventDetailsPage() {
             <Alert variant="destructive" className="border-l-4 shadow-lg">
               <AlertDescription className="text-base">{error}</AlertDescription>
             </Alert>
-            <Button 
-              onClick={() => router.back()} 
+            <Button
+              onClick={() => router.back()}
               variant="outline"
               className="group hover:bg-gray-100 transition-all duration-200 hover:shadow-md"
             >
@@ -331,21 +335,21 @@ export default function EventDetailsPage() {
     <div className="min-h-screen bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed">
       <div className="min-h-screen bg-gradient-to-br from-gray-50/95 to-gray-100/95 backdrop-blur-sm">
         <Navigation />
-         {/* Back Button */}
-          <div className=" pt-20 pl-5">
-            <Button
-              onClick={() => router.back()}
-              variant="ghost"
-              size="sm"
-              className="group hover:bg-gray-100 transition-colors duration-200"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1 duration-200" />
-              <span className="text-sm">{t("eventDetails.backToEvents")}</span>
-            </Button>
-          </div>
+        {/* Back Button */}
+        <div className=" pt-20 pl-5">
+          <Button
+            onClick={() => router.back()}
+            variant="ghost"
+            size="sm"
+            className="group hover:bg-gray-100 transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1 duration-200" />
+            <span className="text-sm">{t("eventDetails.backToEvents")}</span>
+          </Button>
+        </div>
 
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-         
+
 
           <div className="space-y-6 md:space-y-8">
             {/* Event Image */}
@@ -397,7 +401,7 @@ export default function EventDetailsPage() {
                       </span>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-8">
                     {/* Description */}
                     <div className="space-y-3">
@@ -442,46 +446,46 @@ export default function EventDetailsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                  {/* Date */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                    <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-sm md:text-base text-gray-700">
-                      {formatDate(new Date(event.startDate || event.date))}
-                    </span>
-                  </div>
-
-                  {/* Duration (only show if endDate exists) */}
-                  {event.endDate && (
+                    {/* Date */}
                     <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                      <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
                       <span className="text-sm md:text-base text-gray-700">
-                        Duration: {(() => {
-                          const start = new Date(event.startDate || event.date);
-                          const end = new Date(event.endDate);
-                          const diffMs = (end.getTime() - start.getTime())+1;
-                          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                          return diffDays === 1 ? "1 day" : `${diffDays} days`;
-                        })()}
+                        {formatDate(new Date(event.startDate || event.date))}
                       </span>
                     </div>
-                  )}
 
-                  {/* Location */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                    <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-sm md:text-base text-gray-700 break-words">
-                      {event.location}
-                    </span>
-                  </div>
+                    {/* Duration (only show if endDate exists) */}
+                    {event.endDate && (
+                      <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                        <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-sm md:text-base text-gray-700">
+                          Duration: {(() => {
+                            const start = new Date(event.startDate || event.date);
+                            const end = new Date(event.endDate);
+                            const diffMs = (end.getTime() - start.getTime()) + 1;
+                            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                            return diffDays === 1 ? "1 day" : `${diffDays} days`;
+                          })()}
+                        </span>
+                      </div>
+                    )}
 
-                  {/* Created Date */}
-                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
-                    <User className="h-5 w-5 text-gray-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-sm md:text-base text-gray-700 break-words">
-                      {t("eventDetails.created", { date: formatDate(event.createdAt) })}
-                    </span>
-                  </div>
-                </CardContent>
+                    {/* Location */}
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                      <MapPin className="h-5 w-5 text-red-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-sm md:text-base text-gray-700 break-words">
+                        {event.location}
+                      </span>
+                    </div>
+
+                    {/* Created Date */}
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
+                      <User className="h-5 w-5 text-gray-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-sm md:text-base text-gray-700 break-words">
+                        {t("eventDetails.created", { date: formatDate(event.createdAt) })}
+                      </span>
+                    </div>
+                  </CardContent>
 
                 </Card>
 
@@ -504,7 +508,7 @@ export default function EventDetailsPage() {
                         <p className="text-gray-600 text-base">
                           {t("eventDetails.pleaseSignIn")}
                         </p>
-                        <Button 
+                        <Button
                           onClick={() => router.push("/login")}
                           className="w-full min-h-[44px] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                         >
@@ -603,11 +607,10 @@ export default function EventDetailsPage() {
                                   validateUniversityEmail(v)
                                 );
                               }}
-                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
-                                universityEmailError
-                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
-                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
-                              }`}
+                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${universityEmailError
+                                ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                                }`}
                               required
                               aria-invalid={!!universityEmailError}
                               aria-describedby={universityEmailError ? "email-error" : undefined}
@@ -642,11 +645,10 @@ export default function EventDetailsPage() {
                                 setStudentId(e.target.value);
                                 setStudentIdError(null);
                               }}
-                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
-                                studentIdError
-                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
-                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
-                              }`}
+                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${studentIdError
+                                ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                                }`}
                               required
                               aria-invalid={!!studentIdError}
                               aria-describedby={studentIdError ? "student-id-error" : undefined}
@@ -683,11 +685,21 @@ export default function EventDetailsPage() {
                           />
                         </div>
 
+                        {/* Dynamic Registration Questions */}
+                        {event.questions && event.questions.length > 0 && (
+                          <DynamicRegistrationForm
+                            questions={event.questions}
+                            onResponsesChange={setDynamicResponses}
+                            onValidationChange={setDynamicFormValid}
+                          />
+                        )}
+
                         {/* Register Button */}
                         <Button
                           onClick={handleRegister}
                           disabled={
                             registering ||
+                            !dynamicFormValid ||
                             ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
                           }
                           className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"

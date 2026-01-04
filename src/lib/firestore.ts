@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from './firebase';
-import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition } from '@/types';
+import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse } from '@/types';
 
 // Convert Firestore timestamp-like value to Date
 function hasToDate(v: unknown): v is { toDate: () => Date } {
@@ -57,6 +57,7 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     tags: data.tags || [],
     imageUrls: data.imageUrls || [],
     requireStudentId: data.requireStudentId || false,
+    questions: data.questions || [],  // Dynamic registration questions
   };
 };
 
@@ -79,7 +80,8 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
     attendance: data.attendance,
     isFromUniversity: data.isFromUniversity,
     universityEmail: data.universityEmail,
-    studentId: data.studentId
+    studentId: data.studentId,
+    responses: data.responses || [],  // Dynamic form responses
   };
 };
 
@@ -339,7 +341,7 @@ export const registrationsApi = {
   },
 
   // Register for an event
-  async registerForEvent(eventId: string, userId: string, userName: string, userEmail: string, reason?: string, isFromUniversity?: boolean, universityEmail?: string, studentId?: string): Promise<string> {
+  async registerForEvent(eventId: string, userId: string, userName: string, userEmail: string, reason?: string, isFromUniversity?: boolean, universityEmail?: string, studentId?: string, responses?: RegistrationResponse[]): Promise<string> {
     try {
       // Check if user is already registered
       const existingQuery = query(
@@ -363,7 +365,8 @@ export const registrationsApi = {
         reason: reason || null,
         isFromUniversity: isFromUniversity || false,
         universityEmail: universityEmail || null,
-        studentId: studentId || null
+        studentId: studentId || null,
+        responses: responses || [],  // Dynamic form responses
       });
 
       // Do not update event attendee count here; it will be incremented upon approval
