@@ -1,20 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { I18nProvider } from "@/i18n/index";
 import { getDirFromLang, type Lang } from "@/i18n/messages";
 import { cookies } from "next/headers";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Energy Hub",
@@ -43,9 +32,7 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} dir={dir}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased font-sans">
         <AuthProvider>
           <I18nProvider lang={lang}>
             {children}
