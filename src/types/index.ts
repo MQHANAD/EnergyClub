@@ -12,7 +12,12 @@ export interface Event {
   maxAttendees: number;
   imageUrls: string[];
   requireStudentId?: boolean;
-  questions?: EventQuestion[];  // Dynamic registration questions
+  questions?: EventQuestion[];  // Dynamic registration questions (team-level)
+  // Team registration settings
+  isTeamEvent?: boolean;        // Enable team registration mode
+  minTeamSize?: number;         // Minimum team members (default: 2)
+  maxTeamSize?: number;         // Maximum team members (default: 10)
+  memberQuestions?: EventQuestion[];  // Questions asked per team member
 }
 
 // ============================================
@@ -51,6 +56,17 @@ export interface RegistrationResponse {
   value: string | string[];     // string for single answers, string[] for checkbox
 }
 
+/**
+ * Responses for a single team member (used in team registrations)
+ */
+export interface TeamMemberResponse {
+  memberIndex: number;          // 0-based index of the member
+  memberName: string;           // Name of the team member
+  kfupmId?: string;             // KFUPM ID if required
+  kfupmEmail?: string;          // KFUPM Email if required
+  responses: RegistrationResponse[];  // Member's answers to memberQuestions
+}
+
 export interface Registration {
   id: string;
   eventId: string;
@@ -66,7 +82,11 @@ export interface Registration {
   isFromUniversity?: boolean;
   universityEmail?: string;
   studentId?: string;
-  responses?: RegistrationResponse[];  // Dynamic form responses
+  responses?: RegistrationResponse[];  // Dynamic form responses (team-level)
+  // Team registration fields
+  teamSize?: number;                    // Number of team members
+  teamResponses?: RegistrationResponse[];  // Team-level question answers
+  memberResponses?: TeamMemberResponse[];  // Per-member answers
 }
 
 export interface UserProfile {

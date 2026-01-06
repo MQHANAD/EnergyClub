@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
-import { Event, Registration } from "@/types";
+import { Event, Registration, EventQuestion } from "@/types";
 import Navigation from "@/components/Navigation";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,7 @@ import {
 } from "firebase/storage";
 import { exportResponsesToExcel } from "@/lib/exportResponses";
 import ResponsesTable from "@/components/admin/ResponsesTable";
+import QuestionBuilder from "@/components/admin/QuestionBuilder";
 
 export default function AdminDashboard() {
   const {
@@ -97,6 +98,9 @@ export default function AdminDashboard() {
     status: "active" as Event["status"],
     imageUrls: [] as string[],
     requireStudentId: false,
+    questions: [] as EventQuestion[],
+    memberQuestions: [] as EventQuestion[],
+    isTeamEvent: false,
   });
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -214,6 +218,9 @@ export default function AdminDashboard() {
       status: event.status,
       imageUrls: event.imageUrls || [],
       requireStudentId: event.requireStudentId || false,
+      questions: event.questions || [],
+      memberQuestions: event.memberQuestions || [],
+      isTeamEvent: event.isTeamEvent || false,
     });
     setEditModalOpen(true);
   };
@@ -289,6 +296,9 @@ export default function AdminDashboard() {
         status: editForm.status,
         imageUrls: editForm.imageUrls,
         requireStudentId: editForm.requireStudentId,
+        questions: editForm.questions,
+        memberQuestions: editForm.memberQuestions,
+        isTeamEvent: editForm.isTeamEvent,
       });
 
       // Refresh events
@@ -641,6 +651,7 @@ export default function AdminDashboard() {
                   <ResponsesTable
                     registrations={filteredRegistrations}
                     questions={selectedEvent?.questions || []}
+                    memberQuestions={selectedEvent?.memberQuestions || []}
                     onApprove={(id) => {
                       const reg = registrations.find(r => r.id === id);
                       if (reg) handleApproveRegistration(reg);
@@ -802,6 +813,49 @@ export default function AdminDashboard() {
                 Require Student ID for registration
               </Label>
             </div>
+
+            {/* Team Event Toggle */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isTeamEvent"
+                checked={editForm.isTeamEvent}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    isTeamEvent: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <Label htmlFor="isTeamEvent" className="text-sm font-medium text-gray-700">
+                Team Registration Event
+              </Label>
+            </div>
+
+            {/* Questions */}
+            <div className="border-t pt-4 mt-4">
+              <QuestionBuilder
+                title={editForm.isTeamEvent ? "Team Questions" : "Registration Questions"}
+                questions={editForm.questions}
+                onChange={(questions) =>
+                  setEditForm((prev) => ({ ...prev, questions }))
+                }
+              />
+            </div>
+
+            {/* Member Questions (only for team events) */}
+            {editForm.isTeamEvent && (
+              <div className="border-t pt-4 mt-4">
+                <QuestionBuilder
+                  title="Member Questions (asked per team member)"
+                  questions={editForm.memberQuestions}
+                  onChange={(memberQuestions) =>
+                    setEditForm((prev) => ({ ...prev, memberQuestions }))
+                  }
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>

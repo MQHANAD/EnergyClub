@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
-import { Event, Registration, RegistrationResponse } from "@/types";
+import { Event, Registration, RegistrationResponse, TeamMemberResponse } from "@/types";
 import Navigation from "@/components/Navigation";
 import DynamicRegistrationForm, { useValidateResponses } from "@/components/registration/DynamicRegistrationForm";
+import TeamRegistrationWizard from "@/components/registration/TeamRegistrationWizard";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { logEventView, logEventRegistration } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -383,14 +384,7 @@ export default function EventDetailsPage() {
                         <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-gray-900">
                           {event.title}
                         </CardTitle>
-                        <CardDescription className="text-base md:text-lg flex items-center gap-2">
-                          <User className="h-4 w-4 flex-shrink-0" />
-                          <span>
-                            {t("eventDetails.organizedBy", {
-                              name: event.organizerName,
-                            })}
-                          </span>
-                        </CardDescription>
+
                       </div>
                       <span
                         className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border-2 shadow-sm transition-all duration-200 hover:shadow-md ${getStatusColor(
@@ -560,37 +554,60 @@ export default function EventDetailsPage() {
                       </p>
                     </div>
                   </div>
+                ) : event.isTeamEvent ? (
+                  // Team Registration Wizard
+                  <TeamRegistrationWizard
+                    event={event}
+                    isSubmitting={registering}
+                    onSubmit={async (teamData) => {
+                      if (!user || !userProfile) return;
+                      try {
+                        setRegistering(true);
+                        setError(null);
+
+                        await registrationsApi.registerForEvent(
+                          event.id,
+                          user.uid,
+                          userProfile.displayName,
+                          userProfile.email,
+                          undefined, // reason
+                          false, // isFromUniversity
+                          undefined, // universityEmail
+                          undefined, // studentId
+                          undefined, // responses (use teamResponses instead)
+                          teamData.teamSize,
+                          teamData.teamResponses,
+                          teamData.memberResponses
+                        );
+
+                        logEventRegistration(event.id, event.title);
+
+                        // Refresh registration status to show "Already Registered"
+                        const registration = await registrationsApi.getUserEventRegistration(
+                          user.uid,
+                          event.id
+                        );
+                        setUserRegistration(registration);
+
+                        await loadEvent();
+                      } catch (err: any) {
+                        console.error("Registration error:", err);
+                        setError(err.message || "Failed to register. Please try again.");
+                      } finally {
+                        setRegistering(false);
+                      }
+                    }}
+                  />
                 ) : (
                   <div className="space-y-5">
-                    {/* University Checkbox - Only show if student ID is not required */}
-                    {!event.requireStudentId && (
-                      <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          id="university"
-                          checked={isFromUniversity}
-                          onChange={(e) =>
-                            setIsFromUniversity(e.target.checked)
-                          }
-                          className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
-                        />
-                        <Label
-                          htmlFor="university"
-                          className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
-                        >
-                          {t("eventDetails.universityToggle")}
-                        </Label>
-                      </div>
-                    )}
-
-                    {/* University Email Field */}
-                    {(isFromUniversity || event.requireStudentId) && (
+                    {/* KFUPM Email Field - Only show if requireStudentId is enabled */}
+                    {event.requireStudentId && (
                       <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                         <Label
                           htmlFor="universityEmail"
                           className="text-sm font-semibold text-gray-700"
                         >
-                          {t("eventDetails.universityEmail")}
+                          KFUPM Email
                           <span className="text-red-500 ml-1">*</span>
                         </Label>
                         <input
@@ -633,13 +650,13 @@ export default function EventDetailsPage() {
                           htmlFor="studentId"
                           className="text-sm font-semibold text-gray-700"
                         >
-                          {t("Student ID")}
+                          KFUPM ID
                           <span className="text-red-500 ml-1">*</span>
                         </Label>
                         <input
                           type="text"
                           id="studentId"
-                          placeholder={t("Enter you student ID")}
+                          placeholder="Enter your KFUPM ID"
                           value={studentId}
                           onChange={(e) => {
                             setStudentId(e.target.value);

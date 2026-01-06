@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Registration, EventQuestion, RegistrationResponse } from '@/types';
+import { Registration, EventQuestion, RegistrationResponse, TeamMemberResponse } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Download, Check, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, Check, X, Loader2, ChevronDown, ChevronUp, Users, User } from 'lucide-react';
 
 interface ResponsesTableProps {
     registrations: Registration[];
-    questions: EventQuestion[];
+    questions: EventQuestion[];  // Team-level questions
+    memberQuestions?: EventQuestion[];  // Per-member questions
     onExport?: () => void;
     onApprove?: (id: string) => void;
     onReject?: (id: string) => void;
@@ -16,11 +17,12 @@ interface ResponsesTableProps {
 
 /**
  * Displays all registrations with expandable rows to view dynamic form responses
- * Optimized for events with many questions (10+)
+ * Supports both individual and team registrations with member details
  */
 export default function ResponsesTable({
     registrations,
     questions,
+    memberQuestions = [],
     onExport,
     onApprove,
     onReject,
@@ -30,6 +32,7 @@ export default function ResponsesTable({
 
     // Sort questions by order
     const sortedQuestions = [...questions].sort((a, b) => a.order - b.order);
+    const sortedMemberQuestions = [...memberQuestions].sort((a, b) => a.order - b.order);
 
     // Toggle row expansion
     const toggleExpand = (id: string) => {
@@ -96,6 +99,7 @@ export default function ResponsesTable({
     }
 
     const hasQuestions = sortedQuestions.length > 0;
+    const hasMemberQuestions = sortedMemberQuestions.length > 0;
 
     return (
         <div className="space-y-4">
@@ -105,7 +109,7 @@ export default function ResponsesTable({
                     <p className="text-sm text-gray-600 font-medium">
                         {registrations.length} registration{registrations.length !== 1 ? 's' : ''}
                     </p>
-                    {hasQuestions && (
+                    {(hasQuestions || hasMemberQuestions) && (
                         <div className="flex items-center gap-1">
                             <Button
                                 variant="ghost"
@@ -140,6 +144,8 @@ export default function ResponsesTable({
                 {registrations.map((registration) => {
                     const isExpanded = expandedIds.has(registration.id);
                     const isProcessing = processingId === registration.id;
+                    const isTeamRegistration = (registration.teamSize ?? 0) > 0;
+                    const hasContent = hasQuestions || (isTeamRegistration && hasMemberQuestions);
 
                     return (
                         <div
@@ -148,12 +154,12 @@ export default function ResponsesTable({
                         >
                             {/* Main Row - Always Visible */}
                             <div
-                                className={`p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50/50 transition-colors ${hasQuestions ? '' : 'cursor-default'
+                                className={`p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50/50 transition-colors ${hasContent ? '' : 'cursor-default'
                                     }`}
-                                onClick={() => hasQuestions && toggleExpand(registration.id)}
+                                onClick={() => hasContent && toggleExpand(registration.id)}
                             >
                                 {/* Expand Toggle */}
-                                {hasQuestions && (
+                                {hasContent && (
                                     <button
                                         className="flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors"
                                         onClick={(e) => {
@@ -176,6 +182,12 @@ export default function ResponsesTable({
                                             {registration.userName}
                                         </h3>
                                         {getStatusBadge(registration.status)}
+                                        {isTeamRegistration && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                                                <Users className="h-3 w-3" />
+                                                Team of {registration.teamSize}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-sm text-gray-500 truncate mt-0.5">
                                         {registration.userEmail}
@@ -186,7 +198,7 @@ export default function ResponsesTable({
                                 <div className="hidden sm:flex items-center gap-4 text-sm text-gray-500">
                                     {registration.studentId && (
                                         <div className="flex flex-col items-end">
-                                            <span className="text-xs text-gray-400">Student ID</span>
+                                            <span className="text-xs text-gray-400">KFUPM ID</span>
                                             <span className="font-medium text-gray-700">{registration.studentId}</span>
                                         </div>
                                     )}
@@ -244,13 +256,13 @@ export default function ResponsesTable({
                             </div>
 
                             {/* Expanded Details */}
-                            {isExpanded && hasQuestions && (
+                            {isExpanded && hasContent && (
                                 <div className="border-t border-gray-100 bg-gradient-to-b from-gray-50/80 to-white">
                                     {/* Mobile Quick Info */}
                                     <div className="sm:hidden px-4 py-3 border-b border-gray-100 flex gap-4 text-sm">
                                         {registration.studentId && (
                                             <div>
-                                                <span className="text-gray-400">Student ID: </span>
+                                                <span className="text-gray-400">KFUPM ID: </span>
                                                 <span className="font-medium text-gray-700">{registration.studentId}</span>
                                             </div>
                                         )}
@@ -262,43 +274,103 @@ export default function ResponsesTable({
                                         </div>
                                     </div>
 
-                                    {/* Questions & Answers Grid */}
-                                    <div className="p-4">
-                                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                                            Form Responses ({sortedQuestions.length})
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {sortedQuestions.map((question, index) => {
-                                                const answer = getResponseValue(registration.responses, question.id);
-                                                return (
-                                                    <div
-                                                        key={question.id}
-                                                        className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm"
-                                                    >
-                                                        <div className="flex items-start gap-2">
-                                                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center">
-                                                                {index + 1}
-                                                            </span>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-medium text-gray-700 leading-snug">
-                                                                    {question.label}
-                                                                    {question.required && (
-                                                                        <span className="text-red-500 ml-0.5">*</span>
-                                                                    )}
-                                                                </p>
-                                                                <p className={`mt-1.5 text-sm ${answer === '-'
+                                    {/* Team/Individual Questions */}
+                                    {hasQuestions && (
+                                        <div className="p-4">
+                                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                                                {isTeamRegistration ? 'Team Responses' : 'Form Responses'} ({sortedQuestions.length})
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {sortedQuestions.map((question, index) => {
+                                                    const answer = getResponseValue(registration.responses || registration.teamResponses, question.id);
+                                                    return (
+                                                        <div
+                                                            key={question.id}
+                                                            className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm"
+                                                        >
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold flex items-center justify-center">
+                                                                    {index + 1}
+                                                                </span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium text-gray-700 leading-snug">
+                                                                        {question.label}
+                                                                        {question.required && (
+                                                                            <span className="text-red-500 ml-0.5">*</span>
+                                                                        )}
+                                                                    </p>
+                                                                    <p className={`mt-1.5 text-sm ${answer === '-'
                                                                         ? 'text-gray-400 italic'
                                                                         : 'text-gray-900'
-                                                                    }`}>
-                                                                    {answer}
-                                                                </p>
+                                                                        }`}>
+                                                                        {answer}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {/* Team Members Section */}
+                                    {isTeamRegistration && registration.memberResponses && registration.memberResponses.length > 0 && (
+                                        <div className="p-4 border-t border-gray-100">
+                                            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                                <Users className="h-4 w-4" />
+                                                Team Members ({registration.memberResponses.length})
+                                            </h4>
+                                            <div className="space-y-4">
+                                                {registration.memberResponses.map((member: TeamMemberResponse, memberIdx: number) => (
+                                                    <div
+                                                        key={memberIdx}
+                                                        className="bg-gradient-to-r from-purple-50 to-white border border-purple-100 rounded-xl p-4"
+                                                    >
+                                                        {/* Member Header */}
+                                                        <div className="flex items-center gap-3 mb-3 pb-3 border-b border-purple-100">
+                                                            <div className="w-8 h-8 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center font-bold text-sm">
+                                                                {memberIdx + 1}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-semibold text-gray-900">{member.memberName}</p>
+                                                                <div className="flex gap-3 text-xs text-gray-500">
+                                                                    {member.kfupmEmail && (
+                                                                        <span>{member.kfupmEmail}</span>
+                                                                    )}
+                                                                    {member.kfupmId && (
+                                                                        <span>ID: {member.kfupmId}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Member Responses */}
+                                                        {hasMemberQuestions && member.responses && member.responses.length > 0 && (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                {sortedMemberQuestions.map((question, qIdx) => {
+                                                                    const answer = getResponseValue(member.responses, question.id);
+                                                                    return (
+                                                                        <div
+                                                                            key={question.id}
+                                                                            className="bg-white/70 rounded-lg p-2.5 border border-purple-50"
+                                                                        >
+                                                                            <p className="text-xs font-medium text-gray-600 mb-1">
+                                                                                {question.label}
+                                                                            </p>
+                                                                            <p className={`text-sm ${answer === '-' ? 'text-gray-400 italic' : 'text-gray-900'}`}>
+                                                                                {answer}
+                                                                            </p>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

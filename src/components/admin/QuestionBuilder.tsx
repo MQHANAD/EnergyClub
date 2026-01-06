@@ -15,6 +15,7 @@ import {
 interface QuestionBuilderProps {
     questions: EventQuestion[];
     onChange: (questions: EventQuestion[]) => void;
+    title?: string;  // Optional custom title for the section
 }
 
 const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
@@ -32,7 +33,7 @@ function generateId(): string {
     return `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export default function QuestionBuilder({ questions, onChange }: QuestionBuilderProps) {
+export default function QuestionBuilder({ questions, onChange, title }: QuestionBuilderProps) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const addQuestion = () => {
@@ -107,7 +108,7 @@ export default function QuestionBuilder({ questions, onChange }: QuestionBuilder
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Registration Questions</Label>
+                <Label className="text-base font-semibold">{title || 'Registration Questions'}</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addQuestion}>
                     <Plus className="h-4 w-4 mr-1" />
                     Add Question
