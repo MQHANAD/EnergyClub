@@ -18,6 +18,7 @@ export const messages = {
     hero: {
       titlePrefix: "KFUPM",
       titleEnergyHub: "Energy Hub",
+      aboutSectionTitle: "About Energy Hub",
       tagline:
         "The platform uniting the Energy Clubs and Energy Week. We champion innovation, collaboration, and leadership in energy and sustainability, connecting students, academia, and industry.",
       ctaExplore: "Explore Events",
@@ -109,6 +110,7 @@ export const messages = {
     hero: {
       titlePrefix: "جامعة الملك فهد",
       titleEnergyHub: "مركز الطاقة",
+      aboutSectionTitle: "عن مركز الطاقة",
       tagline:
         "منصة تجمع أندية الطاقة وأسبوع الطاقة. نُعزز الابتكار والتعاون والقيادة في مجالات الطاقة والاستدامة، ونربط بين الطلاب والأكاديميين وخبراء الصناعة.",
       ctaExplore: "استكشف الفعاليات",

@@ -135,7 +135,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
         <div className="flex md:hidden items-center ml-auto">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`p-2.5 rounded-full hover:bg-black/5 active:scale-95 transition-all ${isScrolled || isMobileMenuOpen ? 'text-slate-800' : iconColorClass}`}
+            className={`p-2.5 rounded-full hover:bg-black/5 active:scale-95 transition-all cursor-pointer ${isScrolled || isMobileMenuOpen ? 'text-slate-800' : iconColorClass}`}
             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -198,7 +198,7 @@ function UserDropdown({ user, userProfile, isMember, adminLinks, onLogout }: any
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 focus:outline-none transition-transform active:scale-95"
+        className="flex items-center gap-2 focus:outline-none transition-transform active:scale-95 cursor-pointer"
       >
         <OptimizedImage
           src={userProfile?.photoURL}
@@ -241,7 +241,7 @@ function UserDropdown({ user, userProfile, isMember, adminLinks, onLogout }: any
               <div className="h-px bg-gray-100 my-1" />
               <button
                 onClick={onLogout}
-                className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
               >
                 <LogOut className="h-4 w-4 mr-2.5" />
                 Logout
