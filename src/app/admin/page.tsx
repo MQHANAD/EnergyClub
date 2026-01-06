@@ -29,6 +29,7 @@ import {
   Upload,
   Clock,
   MapPin,
+  Download,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 import Input from "@/components/ui/input";
@@ -55,6 +56,8 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
+import { exportResponsesToExcel } from "@/lib/exportResponses";
+import ResponsesTable from "@/components/admin/ResponsesTable";
 
 export default function AdminDashboard() {
   const {
@@ -340,29 +343,29 @@ export default function AdminDashboard() {
     }
   };
 
- const formatDate = (date: Date) => {
-  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
-
- 
+  const formatDate = (date: Date) => {
+    const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
 
 
-  // Add "at" between date and time (for English locales)
-  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
-  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
-};
 
- const getDuration = (start: Date, end: Date) => {
-  const diffMs = (end.getTime() - start.getTime())+1;
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  return diffDays === 1 ? "1 day" : `${diffDays} days`;
-};
+
+    // Add "at" between date and time (for English locales)
+    const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+    return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+  };
+
+  const getDuration = (start: Date, end: Date) => {
+    const diffMs = (end.getTime() - start.getTime()) + 1;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays === 1 ? "1 day" : `${diffDays} days`;
+  };
 
 
 
@@ -424,22 +427,20 @@ export default function AdminDashboard() {
             <nav className="flex space-x-4">
               <button
                 onClick={() => setView("events")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  view === "events"
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${view === "events"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {t("admin.eventsTab", { count: events.length })}
               </button>
               {selectedEvent && (
                 <button
                   onClick={() => setView("registrations")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    view === "registrations"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${view === "registrations"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   {t("admin.registrationsTab", {
                     title: selectedEvent.title,
@@ -594,6 +595,26 @@ export default function AdminDashboard() {
                       plural: filteredRegistrations.length !== 1 ? "s" : "",
                     })}
                   </p>
+                  {/* Export Button */}
+                  {filteredRegistrations.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => {
+                        if (selectedEvent) {
+                          exportResponsesToExcel({
+                            registrations: filteredRegistrations,
+                            questions: selectedEvent.questions || [],
+                            eventTitle: selectedEvent.title,
+                          });
+                        }
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to Excel
+                    </Button>
+                  )}
                   <div className="mt-4 max-w-md">
                     <Input
                       placeholder={t("admin.registrations.searchPlaceholder")}
@@ -616,142 +637,20 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {statusOrder.map((status) => {
-                    const group = groupedRegistrations[status];
-                    if (group.length === 0) return null;
-                    const isExpanded = !!showMore[status];
-                    const visible = isExpanded
-                      ? group
-                      : group.slice(0, DEFAULT_GROUP_LIMIT);
-                    return (
-                      <Card key={status} className="shadow overflow-hidden">
-                        <CardHeader className="bg-gray-50 border-b">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                  status
-                                )}`}
-                              >
-                                {status.charAt(0).toUpperCase() +
-                                  status.slice(1)}
-                              </span>
-                              <span className="text-sm text-gray-600">
-                                ({group.length})
-                              </span>
-                            </div>
-                            {group.length > DEFAULT_GROUP_LIMIT && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  setShowMore((prev) => ({
-                                    ...prev,
-                                    [status]: !isExpanded,
-                                  }))
-                                }
-                              >
-                                {isExpanded ? "Show Less" : "Show More"}
-                              </Button>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                          <ul className="divide-y divide-gray-200">
-                            {visible.map((registration) => (
-                              <li key={registration.id} className="px-6 py-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <h3 className="text-lg font-medium text-gray-900">
-                                          {registration.userName}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                          {registration.userEmail}
-                                        </p>
-                                        {registration.isFromUniversity &&
-                                          registration.universityEmail && (
-                                            <p className="text-sm text-blue-700 mt-1">
-                                              {t(
-                                                "eventDetails.universityEmail"
-                                              )}
-                                              : {registration.universityEmail}
-                                            </p>
-                                          )}
-                                        {registration.reason && (
-                                          <p className="text-sm text-gray-500 mt-1">
-                                            {t("eventDetails.reasonLabel", {
-                                              reason: registration.reason,
-                                            })}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="text-right">
-                                        <p className="text-sm text-gray-600">
-                                          {t("eventDetails.youRegisteredOn", {
-                                            date: formatDate(
-                                              registration.registrationTime
-                                            ),
-                                          })}
-                                        </p>
-                                        <span
-                                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                            registration.status
-                                          )}`}
-                                        >
-                                          {registration.status}
-                                        </span>
-                                        <div className="mt-2 flex justify-end space-x-2">
-                                          <Button
-                                            onClick={() =>
-                                              handleApproveRegistration(
-                                                registration
-                                              )
-                                            }
-                                            variant="outline2"
-                                            size="sm"
-                                            disabled={
-                                              processingId ===
-                                                registration.id ||
-                                              registration.status ===
-                                                "confirmed"
-                                            }
-                                            title="Approve"
-                                          >
-                                            <Check className="h-4 w-4 text-green-600" />
-                                          </Button>
-                                          <Button
-                                            onClick={() =>
-                                              handleRejectRegistration(
-                                                registration
-                                              )
-                                            }
-                                            variant="outline2"
-                                            size="sm"
-                                            disabled={
-                                              processingId ===
-                                                registration.id ||
-                                              registration.status ===
-                                                "cancelled"
-                                            }
-                                            title="Reject"
-                                          >
-                                            <X className="h-4 w-4 text-red-600" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <div className="bg-white rounded-lg shadow p-4">
+                  <ResponsesTable
+                    registrations={filteredRegistrations}
+                    questions={selectedEvent?.questions || []}
+                    onApprove={(id) => {
+                      const reg = registrations.find(r => r.id === id);
+                      if (reg) handleApproveRegistration(reg);
+                    }}
+                    onReject={(id) => {
+                      const reg = registrations.find(r => r.id === id);
+                      if (reg) handleRejectRegistration(reg);
+                    }}
+                    processingId={processingId}
+                  />
                 </div>
               )}
             </>

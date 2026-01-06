@@ -16,8 +16,9 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import { EventFormData } from "@/types";
+import { EventFormData, EventQuestion } from "@/types";
 import Navigation from "@/components/Navigation";
+import QuestionBuilder from "@/components/admin/QuestionBuilder";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,17 +38,18 @@ export default function CreateEventPage() {
   const { t } = useI18n();
 
   const [formData, setFormData] = useState<EventFormData>({
-  title: "",
-  description: "",
-  startDate: "",
-  endDate: "",
-  location: "",
-  maxAttendees: 50,
-  tags: [],
-  imageUrls: [],
-});
+    title: "",
+    description: "",
+    startDate: "",
+    endDate: "",
+    location: "",
+    maxAttendees: 50,
+    tags: [],
+    imageUrls: [],
+  });
 
   const [requireStudentId, setRequireStudentId] = useState(false);
+  const [questions, setQuestions] = useState<EventQuestion[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export default function CreateEventPage() {
           if (onTimeout) {
             onTimeout();
           }
-        } catch {}
+        } catch { }
         reject(new Error(`Operation timed out after ${ms}ms`));
       }, ms);
       promise.then(
@@ -100,7 +102,7 @@ export default function CreateEventPage() {
         timer = setTimeout(() => {
           try {
             uploadTask.cancel();
-          } catch {}
+          } catch { }
           reject(new Error(`Upload timed out after ${ms}ms`));
         }, ms);
       };
@@ -118,7 +120,7 @@ export default function CreateEventPage() {
             if (onProgress) {
               onProgress(pct);
             }
-          } catch {}
+          } catch { }
           resetTimer();
         },
         (err: any) => {
@@ -286,9 +288,9 @@ export default function CreateEventPage() {
       }
 
       if (formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-  setError("End date cannot be before start date.");
-  return;
-}
+        setError("End date cannot be before start date.");
+        return;
+      }
 
 
 
@@ -307,6 +309,7 @@ export default function CreateEventPage() {
         tags: formData.tags,
         imageUrls: formData.imageUrls,
         requireStudentId,
+        questions,  // Dynamic registration questions
       };
 
 
@@ -397,7 +400,7 @@ export default function CreateEventPage() {
                     />
                   </div>
 
-          
+
 
                   <div>
                     <Label htmlFor="startDate" className="block mb-1">
@@ -535,6 +538,14 @@ export default function CreateEventPage() {
                   <Label htmlFor="requireStudentId" className="text-sm font-medium text-gray-700">
                     Require Student ID for registration
                   </Label>
+                </div>
+
+                {/* Dynamic Registration Questions */}
+                <div className="border-t border-gray-200 pt-6">
+                  <QuestionBuilder
+                    questions={questions}
+                    onChange={setQuestions}
+                  />
                 </div>
 
                 <div>
