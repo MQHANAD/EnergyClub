@@ -35,7 +35,7 @@ export default function ProgressIndicator({ steps, className }: ProgressIndicato
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
+          <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
@@ -54,7 +54,7 @@ export default function ProgressIndicator({ steps, className }: ProgressIndicato
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>{completedSteps} of {steps.length} completed</span>
             <div className="w-16 bg-gray-200 rounded-full h-1">
-              <div 
+              <div
                 className="bg-blue-600 h-1 rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${progress}%` }}
               />
@@ -65,7 +65,7 @@ export default function ProgressIndicator({ steps, className }: ProgressIndicato
         <div className="relative">
           {/* Progress Line */}
           <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200" />
-          <div 
+          <div
             className="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all duration-500 ease-out"
             style={{ width: `${(completedSteps / Math.max(steps.length - 1, 1)) * 100}%` }}
           />
@@ -84,14 +84,14 @@ export default function ProgressIndicator({ steps, className }: ProgressIndicato
                 >
                   {/* Step Circle */}
                   <div className={cn(
-                    'w-10 h-10 rounded-full border-2 flex items-center justify-center mb-2 transition-all duration-300',
-                    isCompleted 
-                      ? 'bg-blue-600 border-blue-600 text-white' 
+                    'w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300',
+                    isCompleted
+                      ? 'bg-blue-600 text-white shadow-[0_4px_12px_rgb(37,99,235,0.4)]'
                       : isCurrent
-                      ? 'bg-blue-50 border-blue-600 text-blue-600'
-                      : isPast
-                      ? 'bg-gray-100 border-gray-300 text-gray-400'
-                      : 'bg-white border-gray-300 text-gray-400'
+                        ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-600 ring-offset-2'
+                        : isPast
+                          ? 'bg-gray-100 text-gray-400'
+                          : 'bg-white text-gray-400 shadow-[0_2px_8px_rgb(0,0,0,0.08)]'
                   )}>
                     {isCompleted ? (
                       <Check className="h-5 w-5" />
@@ -107,16 +107,16 @@ export default function ProgressIndicator({ steps, className }: ProgressIndicato
                   <div className="space-y-1">
                     <h4 className={cn(
                       'text-xs font-medium transition-colors',
-                      isCompleted || isCurrent 
-                        ? 'text-gray-900' 
+                      isCompleted || isCurrent
+                        ? 'text-gray-900'
                         : 'text-gray-500'
                     )}>
                       {step.title}
                     </h4>
                     <p className={cn(
                       'text-xs leading-tight transition-colors',
-                      isCompleted || isCurrent 
-                        ? 'text-gray-600' 
+                      isCompleted || isCurrent
+                        ? 'text-gray-600'
                         : 'text-gray-400'
                     )}>
                       {step.description}
@@ -141,20 +141,20 @@ export function calculateFormProgress(
   const completedFields = requiredFields.filter(field => {
     const value = values[field];
     const hasError = errors[field];
-    
+
     // Field is completed if it has a value and no errors
     if (hasError) return false;
-    
+
     if (Array.isArray(value)) return value.length > 0;
     if (typeof value === 'boolean') return true; // Checkboxes are always considered completed
     if (typeof value === 'string') return value.trim().length > 0;
     if (typeof value === 'number') return !isNaN(value);
-    
+
     return false;
   }).length;
-  
+
   const totalFields = requiredFields.length;
   const progress = totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
-  
+
   return { completedFields, totalFields, progress };
 }

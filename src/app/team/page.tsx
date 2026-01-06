@@ -15,22 +15,16 @@ import { logTeamView } from "@/lib/analytics";
 
 // Lazy load heavy components for better performance
 const LeadershipSection = React.lazy(() =>
-  import("@/components/team/LeadershipSection").then((module) => ({
-    default: module.LeadershipSection,
-  }))
+  import('@/components/team/LeadershipSection').then(module => ({ default: module.LeadershipSection }))
 );
 const CommitteesSection = React.lazy(() =>
-  import("@/components/team/CommitteesSection").then((module) => ({
-    default: module.CommitteesSection,
-  }))
+  import('@/components/team/CommitteesSection').then(module => ({ default: module.CommitteesSection }))
 );
 
 export default function TeamPage() {
   const { t } = useI18n();
   const [committees, setCommittees] = useState<Committee[]>([]);
-  const [leadershipPositions, setLeadershipPositions] = useState<
-    LeadershipPosition[]
-  >([]);
+  const [leadershipPositions, setLeadershipPositions] = useState<LeadershipPosition[]>([]);
   const [hybridMembers, setHybridMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,13 +36,11 @@ export default function TeamPage() {
         setError(null);
 
         // Fetch committees, leadership positions, and hybrid members in parallel
-        const [committeesData, leadershipData, membersData] = await Promise.all(
-          [
-            teamApi.getCommitteesLight(),
-            teamApi.getLeadershipPositions(),
-            getMembersUltraOptimized(),
-          ]
-        );
+        const [committeesData, leadershipData, membersData] = await Promise.all([
+          teamApi.getCommitteesLight(),
+          teamApi.getLeadershipPositions(),
+          getMembersUltraOptimized()
+        ]);
 
         setCommittees(committeesData);
         setLeadershipPositions(leadershipData);
@@ -73,6 +65,7 @@ export default function TeamPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <LoadingSpinner />
+
           </div>
         </div>
       </div>
@@ -103,6 +96,7 @@ export default function TeamPage() {
 
   return (
     <div className="min-h-screen bg-white">
+
       <Navigation />
       <ScrollRevealWrapper>
         {/* Hero Section */}
@@ -110,15 +104,13 @@ export default function TeamPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <div className="flex items-center justify-center">
-                {/* <h1 className="text-4xl md:text-5xl font-light text-gray-900">
-                {t('team.title')}
-              </h1> */}
                 <Image
-                  src="/EW.svg"
-                  alt="KFUPM Energy Week"
-                  width={320}
-                  height={320}
-                  className="ml-4"
+                  src="/ksa-energy-week-logo.png"
+                  alt="KSA Energy Week"
+                  width={350}
+                  height={175}
+                  className="object-contain"
+                  priority
                 />
               </div>
             </div>
@@ -134,11 +126,70 @@ export default function TeamPage() {
           />
         </Suspense>
 
-        {/* Committees Section */}
+        {/* Decorative Banner */}
+        {/* Decorative Banner */}
+        <div
+          className="w-full h-12 md:h-16 relative my-8"
+          style={{
+            backgroundImage: 'url(/energy-week-banner.png?v=2)',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center'
+          }}
+        />
+
+
+        {/* Regional Sections */}
+        {/* Eastern Province (Default) */}
         <Suspense fallback={<LoadingSpinner />}>
           <CommitteesSection
             committees={committees}
             hybridMembers={hybridMembers}
+            title="Eastern Province"
+            sectionLogo="/eastern-logo.png"
+          />
+        </Suspense>
+
+
+        {/* Decorative Banner */}
+        <div
+          className="w-full h-12 md:h-16 relative my-8"
+          style={{
+            backgroundImage: 'url(/energy-week-banner.png?v=3)',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center'
+          }}
+        />
+
+        {/* Riyadh Region */}
+        <Suspense fallback={<LoadingSpinner />}>
+          <CommitteesSection
+            committees={[]}
+            hybridMembers={hybridMembers}
+            title="Riyadh Region"
+            sectionLogo="/riyadh-logo.png"
+          />
+        </Suspense>
+
+        {/* Decorative Banner */}
+        <div
+          className="w-full h-12 md:h-16 relative my-8"
+          style={{
+            backgroundImage: 'url(/energy-week-banner.png?v=3)',
+            backgroundRepeat: 'repeat-x',
+            backgroundSize: 'auto 100%',
+            backgroundPosition: 'center'
+          }}
+        />
+
+        {/* Western Region */}
+        <Suspense fallback={<LoadingSpinner />}>
+          <CommitteesSection
+            committees={[]}
+            hybridMembers={hybridMembers}
+            title="Western Region"
+            sectionLogo="/western-logo.png"
           />
         </Suspense>
 

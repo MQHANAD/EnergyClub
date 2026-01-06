@@ -4,15 +4,15 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  GraduationCap, 
-  LinkedinIcon, 
-  Users, 
-  Crown, 
-  FileText, 
+import {
+  User,
+  Mail,
+  Phone,
+  GraduationCap,
+  LinkedinIcon,
+  Users,
+  Crown,
+  FileText,
   Link,
   Edit,
   CheckCircle,
@@ -27,7 +27,7 @@ export interface FormSummaryData {
   mobile: string;
   academicYear: string;
   linkedIn?: string;
-  
+
   // Committees & Leadership
   committees: string[];
   leadershipInterest: boolean;
@@ -36,17 +36,17 @@ export interface FormSummaryData {
     team: string;
     why?: string;
   }>;
-  
+
   // Experience (optional)
   previous?: string;
   competitions?: string;
   energy?: string;
-  
+
   // Files
   cvFile?: File;
   designFile?: File;
   designLink?: string;
-  
+
   // Program info
   program: 'energy_week_2' | 'female_energy_club';
 }
@@ -59,12 +59,12 @@ interface FormSummaryProps {
   programTitle: string;
 }
 
-export default function FormSummary({ 
-  data, 
-  onEdit, 
-  onSubmit, 
+export default function FormSummary({
+  data,
+  onEdit,
+  onSubmit,
   isSubmitting = false,
-  programTitle 
+  programTitle
 }: FormSummaryProps) {
   const hasOptionalInfo = data.previous || data.competitions || data.energy;
   const hasFiles = data.cvFile || data.designFile || data.designLink;
@@ -85,7 +85,7 @@ export default function FormSummary({
 
       {/* Personal Information */}
       <Card className="overflow-hidden">
-        <CardHeader className="bg-blue-50 border-b">
+        <CardHeader className="bg-blue-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-blue-600" />
@@ -106,7 +106,7 @@ export default function FormSummary({
                 <p className="text-gray-900">{data.fullName}</p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3">
               <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
@@ -114,7 +114,7 @@ export default function FormSummary({
                 <p className="text-gray-900">{data.email}</p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3">
               <GraduationCap className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
@@ -122,7 +122,7 @@ export default function FormSummary({
                 <p className="text-gray-900">{data.kfupmId}</p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3">
               <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
@@ -130,7 +130,7 @@ export default function FormSummary({
                 <p className="text-gray-900">{data.mobile}</p>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-3">
               <GraduationCap className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
@@ -138,15 +138,15 @@ export default function FormSummary({
                 <p className="text-gray-900">{data.academicYear}</p>
               </div>
             </div>
-            
+
             {data.linkedIn && (
               <div className="flex items-start gap-3">
                 <LinkedinIcon className="h-5 w-5 text-gray-400 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-gray-500">LinkedIn</p>
-                  <a 
-                    href={data.linkedIn} 
-                    target="_blank" 
+                  <a
+                    href={data.linkedIn}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-700 text-sm underline break-all"
                   >
@@ -161,7 +161,7 @@ export default function FormSummary({
 
       {/* Committees & Leadership */}
       <Card className="overflow-hidden">
-        <CardHeader className="bg-green-50 border-b">
+        <CardHeader className="bg-green-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-green-600" />
@@ -236,7 +236,7 @@ export default function FormSummary({
       {/* Experience (if provided) */}
       {hasOptionalInfo && (
         <Card className="overflow-hidden">
-          <CardHeader className="bg-purple-50 border-b">
+          <CardHeader className="bg-purple-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-purple-600" />
@@ -256,14 +256,14 @@ export default function FormSummary({
                   <p className="text-sm text-gray-600 leading-relaxed">{data.previous}</p>
                 </div>
               )}
-              
+
               {data.competitions && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-2">Competitions & Hackathons</h4>
                   <p className="text-sm text-gray-600 leading-relaxed">{data.competitions}</p>
                 </div>
               )}
-              
+
               {data.energy && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-2">Why Energy?</h4>
@@ -278,7 +278,7 @@ export default function FormSummary({
       {/* Files & Documents */}
       {hasFiles && (
         <Card className="overflow-hidden">
-          <CardHeader className="bg-orange-50 border-b">
+          <CardHeader className="bg-orange-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-orange-600" />
@@ -301,7 +301,7 @@ export default function FormSummary({
                   </div>
                 </div>
               )}
-              
+
               {data.designFile && (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <FileText className="h-5 w-5 text-gray-500" />
@@ -311,15 +311,15 @@ export default function FormSummary({
                   </div>
                 </div>
               )}
-              
+
               {data.designLink && (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Link className="h-5 w-5 text-gray-500" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Design Portfolio Link</p>
-                    <a 
-                      href={data.designLink} 
-                      target="_blank" 
+                    <a
+                      href={data.designLink}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-blue-600 hover:text-blue-700 underline break-all"
                     >
@@ -335,24 +335,24 @@ export default function FormSummary({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-        <Button 
-          variant="outline" 
-          size="lg" 
+        <Button
+          variant="outline"
+          size="lg"
           onClick={onEdit}
           className="min-w-[160px]"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Edit
         </Button>
-        
-        <Button 
-          size="lg" 
+
+        <Button
+          size="lg"
           onClick={onSubmit}
           disabled={isSubmitting}
           className={cn(
             "min-w-[160px] text-white font-medium",
-            data.program === 'energy_week_2' 
-              ? "bg-blue-600 hover:bg-blue-700" 
+            data.program === 'energy_week_2'
+              ? "bg-blue-600 hover:bg-blue-700"
               : "bg-pink-600 hover:bg-pink-700"
           )}
         >

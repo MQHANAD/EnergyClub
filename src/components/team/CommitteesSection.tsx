@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Committee } from '@/types';
 import { HybridMember } from '@/lib/hybridMembers';
@@ -10,9 +11,21 @@ import { Button } from '@/components/ui/button';
 import { MemberCard } from './MemberCard';
 import { Users, Building2, ArrowRight } from 'lucide-react';
 
-// Function to get unique colors and styles for each committee
+// Function to get unique colors and styles for each committee 
 const getCommitteeStyle = (committeeName: string) => {
   const styles = {
+    'Leaders': {
+      gradient: 'from-blue-500 to-blue-600',
+      bgGradient: 'from-blue-50 to-blue-100',
+      border: 'border-blue-200',
+      textColor: 'text-blue-900',
+      hoverTextColor: 'group-hover:text-blue-700',
+      iconColor: 'text-blue-600',
+      hoverIconColor: 'group-hover:text-blue-800',
+      buttonBg: 'bg-blue-100',
+      buttonHover: 'hover:bg-blue-200',
+      buttonText: 'text-blue-700'
+    },
     'Tech Team': {
       gradient: 'from-purple-500 to-purple-600',
       bgGradient: 'from-purple-50 to-purple-100',
@@ -110,17 +123,17 @@ interface CommitteeCardProps {
   className?: string;
 }
 
-export const CommitteeCard: React.FC<CommitteeCardProps> = ({ 
+export const CommitteeCard: React.FC<CommitteeCardProps> = ({
   committee,
   hybridMembers,
-  className = '' 
+  className = ''
 }) => {
   const { t, lang } = useI18n();
   const router = useRouter();
   const style = getCommitteeStyle(committee.name);
 
   // Count hybrid members for this committee
-  const memberCount = hybridMembers.filter(member => 
+  const memberCount = hybridMembers.filter(member =>
     member.committeeName === committee.name
   ).length;
 
@@ -137,12 +150,72 @@ export const CommitteeCard: React.FC<CommitteeCardProps> = ({
     <Card className={`group overflow-hidden transition-all duration-500 ease-out hover:shadow-xl hover:scale-[1.03] cursor-pointer bg-gradient-to-br ${style.bgGradient} border ${style.border} md:filter md:grayscale transition-[filter] duration-700 ease-in-out md:hover:grayscale-0 ${className}`} onClick={handleViewCommittee}>
       <div className="p-12 h-80 flex flex-col justify-center items-center text-center">
         {/* Centered Committee Name */}
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col items-center justify-center">
+          {committee.name === 'Project Management Team' && (
+            <div className="relative w-24 h-16 mb-4">
+              <Image
+                src="/pmo-logo.png"
+                alt="PMO Logo"
+                fill
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+          )}
+          {committee.name === 'Public Relations Team' && (
+            <div className="relative w-24 h-16 mb-4">
+              <Image
+                src="/pr-logo.png"
+                alt="PR Logo"
+                fill
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+          )}
+          {committee.name === 'Operations & Logistics Team' && (
+            <div className="relative w-24 h-16 mb-4">
+              <Image
+                src="/op-logo.png"
+                alt="OP Logo"
+                fill
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+          )}
+          {committee.name === 'Tech Team' && (
+            <div className="relative w-24 h-16 mb-4">
+              <Image
+                src="/tech-logo.png"
+                alt="Tech Logo"
+                fill
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+          )}
+          {committee.name === 'Marketing Team' && (
+            <div className="relative w-24 h-16 mb-4">
+              <Image
+                src="/marketing-logo.png"
+                alt="Marketing Logo"
+                fill
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+          )}
+          {committee.name === 'Event Planning Team' && (
+            <div className="relative w-24 h-16 mb-4">
+              <Image
+                src="/ep-logo.png"
+                alt="Event Planning Logo"
+                fill
+                className="object-contain mix-blend-multiply"
+              />
+            </div>
+          )}
           <h3 className={`text-4xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out`}>
             {committee.name}
           </h3>
         </div>
-        
+
         {/* Footer Section */}
         <div className="flex items-center justify-between w-full">
           <div className={`flex items-center space-x-2 ${style.iconColor} ${style.hoverIconColor} transition-colors duration-700 ease-in-out`}>
@@ -164,28 +237,36 @@ interface CommitteesSectionProps {
   committees: Committee[];
   hybridMembers: HybridMember[];
   className?: string;
+  title?: string;
+  sectionLogo?: string;
 }
 
-export const CommitteesSection: React.FC<CommitteesSectionProps> = ({ 
+export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
   committees,
   hybridMembers,
-  className = '' 
+  className = '',
+  title,
+  sectionLogo
 }) => {
   const { t } = useI18n();
 
-  // Sort committees to put Tech Team first
+  // Sort committees to put Leaders first, then Tech Team
   const sortedCommittees = [...committees].sort((a, b) => {
-    // Put Tech Team first
+    // Put Leaders first
+    if (a.name === 'Leaders') return -1;
+    if (b.name === 'Leaders') return 1;
+
+    // Put Tech Team second
     if (a.name.toLowerCase().includes('tech')) return -1;
     if (b.name.toLowerCase().includes('tech')) return 1;
-    
+
     // For other committees, maintain original order
     return 0;
   });
 
   // Filter out committees with no members
   const committeesWithMembers = sortedCommittees.filter(committee => {
-    const memberCount = hybridMembers.filter(member => 
+    const memberCount = hybridMembers.filter(member =>
       member.committeeName === committee.name
     ).length;
     return memberCount > 0;
@@ -196,9 +277,20 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
       <section className={`py-16 ${className}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            {sectionLogo ? (
+              <div className="relative w-48 h-24 mx-auto mb-4">
+                <Image
+                  src={sectionLogo}
+                  alt={title || "Section Logo"}
+                  fill
+                  className="object-contain mix-blend-multiply"
+                />
+              </div>
+            ) : (
+              <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            )}
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {t('team.committees.title')}
+              {title || t('team.committees.title')}
             </h2>
             <p className="text-gray-500 dark:text-gray-400">
               {t('team.committees.noMembers')}
@@ -214,22 +306,37 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-4">
-            <Building2 className="w-8 h-8 text-gray-600 mr-3" />
+          <div className="flex flex-col items-center justify-center mb-4">
+            {sectionLogo ? (
+              <div className="relative w-48 h-24 mb-4">
+                <Image
+                  src={sectionLogo}
+                  alt={title || "Section Logo"}
+                  fill
+                  className="object-contain mix-blend-multiply"
+                />
+              </div>
+            ) : (
+              <Building2 className="w-8 h-8 text-gray-600 mb-3" />
+            )}
             <h2 className="text-4xl font-light text-gray-900">
-              {t('team.committees.title')}
+              {title || t('team.committees.title')}
             </h2>
           </div>
 
         </div>
 
         {/* Committees Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className={`gap-8 ${committeesWithMembers.length === 1
+          ? 'flex justify-center'
+          : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}>
           {committeesWithMembers.map((committee) => (
             <CommitteeCard
               key={committee.id}
               committee={committee}
               hybridMembers={hybridMembers}
+              className={committeesWithMembers.length === 1 ? 'w-full max-w-md' : ''}
             />
           ))}
         </div>

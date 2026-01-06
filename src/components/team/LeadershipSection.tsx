@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { LeadershipPosition, Committee } from '@/types';
@@ -14,11 +14,11 @@ interface LeadershipSectionProps {
   className?: string;
 }
 
-export const LeadershipSection: React.FC<LeadershipSectionProps> = ({ 
+export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   leadershipPositions,
   committees,
   hybridMembers,
-  className = '' 
+  className = ''
 }) => {
   const { t } = useI18n();
 
@@ -60,30 +60,43 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   // Combine leadership positions and unique leaders
   const allLeadership = [
     ...leadershipPositions.map(pos => ({ ...pos, isFormalLeadership: true, committeeName: undefined })),
-    ...uniqueLeaders.map(leader => ({ 
-      id: `leader-${leader.id}`, 
-      title: 'leader' as any, 
-      memberId: leader.id, 
-      member: convertHybridToMember(leader), 
-      isActive: true, 
-      createdAt: new Date(), 
+    ...uniqueLeaders.map(leader => ({
+      id: `leader-${leader.id}`,
+      title: 'leader' as any,
+      memberId: leader.id,
+      member: convertHybridToMember(leader),
+      isActive: true,
+      createdAt: new Date(),
       updatedAt: new Date(),
       isFormalLeadership: false,
       committeeName: leader.committeeName
     }))
   ];
 
-  // Prioritize specific leadership id to appear first among non-president/vice
-  const PRIORITY_LEADERSHIP_ID = 'Z6XUlCj1HMEP41dtUEA7';
-  const sortedOtherLeadership = allLeadership
-    .filter(pos => pos.title !== 'president' && pos.title !== 'vice_president' && pos.member)
-    .sort((a, b) => {
-      const aPri = a.id === PRIORITY_LEADERSHIP_ID ? -1 : 0;
-      const bPri = b.id === PRIORITY_LEADERSHIP_ID ? -1 : 0;
-      return aPri - bPri;
-    });
+  // Filter to show only specific leaders in exact order
+  const allowedNames = ['Layan Iseafan', 'Omar Alsaigh'];
 
-  if (allLeadership.length === 0) {
+  const filteredLeadership = allLeadership.filter(pos =>
+    pos.member && allowedNames.some(name =>
+      pos.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
+      name.toLowerCase().includes(pos.member.fullName.toLowerCase())
+    )
+  );
+
+  // Sort in the exact order specified
+  const sortedLeadership = filteredLeadership.sort((a, b) => {
+    const aIndex = allowedNames.findIndex(name =>
+      a.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
+      name.toLowerCase().includes(a.member.fullName.toLowerCase())
+    );
+    const bIndex = allowedNames.findIndex(name =>
+      b.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
+      name.toLowerCase().includes(b.member.fullName.toLowerCase())
+    );
+    return aIndex - bIndex;
+  });
+
+  if (sortedLeadership.length === 0) {
     return null;
   }
 
@@ -100,33 +113,15 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
           </div>
         </div>
 
-        {/* Leadership Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* President */}
-          {president && president.member && (
-            <MemberCard 
-              member={president.member} 
-              isLeadership={true}
+        {/* Leadership Cards - Only filtered 4 members */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {sortedLeadership.map((position, index) => (
+            <MemberCard
+              key={position.id}
+              member={position.member}
+              isLeadership={false}
             />
-          )}
-
-          {/* Vice President */}
-          {vicePresident && vicePresident.member && (
-            <MemberCard 
-              member={vicePresident.member} 
-              isLeadership={true}
-            />
-          )}
-
-          {/* Other Leadership Positions */}
-          {sortedOtherLeadership
-            .map((position) => (
-              <MemberCard 
-                key={position.id}
-                member={position.member} 
-                isLeadership={true}
-              />
-            ))}
+          ))}
         </div>
       </div>
     </section>

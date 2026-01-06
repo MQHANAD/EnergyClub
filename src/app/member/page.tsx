@@ -121,6 +121,7 @@ function MemberContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+
     useEffect(() => {
         const fetchMemberData = async () => {
             if (!user?.email) return;
@@ -258,7 +259,7 @@ function MemberContent() {
 
 export default function MemberPage() {
     return (
-        <AuthGuard>
+        <AuthGuard requireAuth={true}>
             <MemberContent />
         </AuthGuard>
     );
