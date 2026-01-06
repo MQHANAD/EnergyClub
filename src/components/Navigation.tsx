@@ -273,11 +273,7 @@ function LoginButton({ isScrolled, t, pathname }: any) {
   return (
     <Link
       href={`/login?from=${encodeURIComponent(pathname)}`}
-      className={`px-5 py-2.5 text-sm font-medium rounded-full transition-all 
-        ${isScrolled
-          ? 'bg-slate-900 text-white hover:bg-slate-800'
-          : 'bg-white text-slate-900 hover:bg-white/90'
-        }`}
+      className="px-5 py-2.5 text-sm font-medium rounded-full transition-all border border-gray-200 bg-white text-slate-900 hover:bg-gray-100"
     >
       {t("nav.signIn")}
     </Link>
