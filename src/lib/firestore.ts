@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from './firebase';
-import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse } from '@/types';
+import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse, TeamMemberResponse } from '@/types';
 
 // Convert Firestore timestamp-like value to Date
 function hasToDate(v: unknown): v is { toDate: () => Date } {
@@ -57,7 +57,12 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     tags: data.tags || [],
     imageUrls: data.imageUrls || [],
     requireStudentId: data.requireStudentId || false,
-    questions: data.questions || [],  // Dynamic registration questions
+    questions: data.questions || [],  // Team-level or general registration questions
+    // Team registration fields
+    isTeamEvent: data.isTeamEvent || false,
+    minTeamSize: data.minTeamSize || 2,
+    maxTeamSize: data.maxTeamSize || 10,
+    memberQuestions: data.memberQuestions || [],  // Questions per team member
   };
 };
 
@@ -82,6 +87,10 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
     universityEmail: data.universityEmail,
     studentId: data.studentId,
     responses: data.responses || [],  // Dynamic form responses
+    // Team registration fields
+    teamSize: data.teamSize,
+    teamResponses: data.teamResponses || [],
+    memberResponses: data.memberResponses || [],
   };
 };
 
@@ -341,7 +350,20 @@ export const registrationsApi = {
   },
 
   // Register for an event
-  async registerForEvent(eventId: string, userId: string, userName: string, userEmail: string, reason?: string, isFromUniversity?: boolean, universityEmail?: string, studentId?: string, responses?: RegistrationResponse[]): Promise<string> {
+  async registerForEvent(
+    eventId: string,
+    userId: string,
+    userName: string,
+    userEmail: string,
+    reason?: string,
+    isFromUniversity?: boolean,
+    universityEmail?: string,
+    studentId?: string,
+    responses?: RegistrationResponse[],
+    teamSize?: number,
+    teamResponses?: RegistrationResponse[],
+    memberResponses?: TeamMemberResponse[]
+  ): Promise<string> {
     try {
       // Check if user is already registered
       const existingQuery = query(
@@ -355,7 +377,7 @@ export const registrationsApi = {
         throw new Error('Already registered for this event');
       }
 
-      const docRef = await addDoc(collection(db, 'registrations'), {
+      const registrationData: Record<string, any> = {
         eventId,
         userId,
         userName,
@@ -367,7 +389,23 @@ export const registrationsApi = {
         universityEmail: universityEmail || null,
         studentId: studentId || null,
         responses: responses || [],  // Dynamic form responses
-      });
+      };
+
+      // Add team fields if this is a team registration
+      if (teamSize !== undefined) {
+        registrationData.teamSize = teamSize;
+        registrationData.teamResponses = teamResponses || [];
+        // Sanitize memberResponses to remove undefined values (Firestore doesn't accept undefined)
+        registrationData.memberResponses = (memberResponses || []).map((member) => ({
+          memberIndex: member.memberIndex,
+          memberName: member.memberName,
+          kfupmId: member.kfupmId || null,
+          kfupmEmail: member.kfupmEmail || null,
+          responses: member.responses || [],
+        }));
+      }
+
+      const docRef = await addDoc(collection(db, 'registrations'), registrationData);
 
       // Do not update event attendee count here; it will be incremented upon approval
 
