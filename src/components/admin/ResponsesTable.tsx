@@ -282,7 +282,9 @@ export default function ResponsesTable({
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {sortedQuestions.map((question, index) => {
-                                                    const answer = getResponseValue(registration.responses || registration.teamResponses, question.id);
+                                                    // For team registrations, use teamResponses; otherwise use responses
+                                                    const responsesSource = isTeamRegistration ? registration.teamResponses : registration.responses;
+                                                    const answer = getResponseValue(responsesSource, question.id);
                                                     return (
                                                         <div
                                                             key={question.id}
