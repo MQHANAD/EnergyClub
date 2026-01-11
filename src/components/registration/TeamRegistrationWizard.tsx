@@ -92,9 +92,23 @@ export default function TeamRegistrationWizard({
         );
     };
 
+    // Step Logic:
+    // Step 0: Team Size Selection
+    // Step 1 to teamSize: Member Forms (index = step - 1)
+    // Step teamSize + 1: Team Questions (Last Step)
+    const teamQuestionsStep = teamSize + 1;
+    const totalSteps = teamSize + 2;
+    const isLastStep = currentStep === totalSteps - 1;
+
     const validateStep = (step: number): string[] => {
         const validationErrors: string[] = [];
+
         if (step === 0) {
+            // Step 0 is always valid as it's just selection with a default
+            return [];
+        }
+
+        if (step === teamQuestionsStep) {
             teamQuestions.forEach((q) => {
                 if (q.required) {
                     const response = teamResponses.find((r) => r.questionId === q.id);
@@ -104,27 +118,29 @@ export default function TeamRegistrationWizard({
                 }
             });
         } else {
+            // Member Steps: 1 to teamSize
             const memberIndex = step - 1;
             const member = members[memberIndex];
-            if (!member?.name?.trim()) validationErrors.push('Member name is required');
-            if (event.requireStudentId) {
-                if (!member?.kfupmEmail?.trim()) validationErrors.push('KFUPM Email is required');
-                if (!member?.kfupmId?.trim()) validationErrors.push('KFUPM ID is required');
-            }
-            memberQuestions.forEach((q) => {
-                if (q.required) {
-                    const response = member?.responses?.find((r) => r.questionId === q.id);
-                    if (!response || !response.value || (Array.isArray(response.value) && response.value.length === 0)) {
-                        validationErrors.push(`"${q.label}" is required`);
-                    }
+
+            if (member) {
+                if (!member.name?.trim()) validationErrors.push('Member name is required');
+                if (event.requireStudentId) {
+                    if (!member.kfupmEmail?.trim()) validationErrors.push('KFUPM Email is required');
+                    if (!member.kfupmId?.trim()) validationErrors.push('KFUPM ID is required');
                 }
-            });
+                memberQuestions.forEach((q) => {
+                    if (q.required) {
+                        const response = member.responses?.find((r) => r.questionId === q.id);
+                        if (!response || !response.value || (Array.isArray(response.value) && response.value.length === 0)) {
+                            validationErrors.push(`"${q.label}" is required`);
+                        }
+                    }
+                });
+            }
         }
         return validationErrors;
     };
 
-    const totalSteps = 1 + teamSize;
-    const isLastStep = currentStep === totalSteps - 1;
 
     const handleNext = () => {
         const validationErrors = validateStep(currentStep);
@@ -153,6 +169,15 @@ export default function TeamRegistrationWizard({
     const progressPercent = ((currentStep + 1) / totalSteps) * 100;
     const goToStep = (step: number) => { if (step < currentStep) { setErrors([]); setCurrentStep(step); } };
 
+    // Helper to get step title and description
+    const getStepInfo = (step: number) => {
+        if (step === 0) return { title: 'Select Team Size', desc: 'How many members are in your team?' };
+        if (step === teamQuestionsStep) return { title: 'Team Setup', desc: 'Answer team questions' };
+        return { title: `Team Member ${step}`, desc: `Fill in details for member ${step} of ${teamSize}` };
+    };
+
+    const { title: stepTitle, desc: stepDesc } = getStepInfo(currentStep);
+
     return (
         <div className="space-y-6">
             {/* Step Indicators */}
@@ -166,7 +191,8 @@ export default function TeamRegistrationWizard({
                     {Array.from({ length: totalSteps }).map((_, idx) => {
                         const isCompleted = idx < currentStep;
                         const isCurrent = idx === currentStep;
-                        const isTeamStep = idx === 0;
+                        const isTeamStep = idx === teamQuestionsStep;
+                        const isMixStep = idx === 0; // First step
                         return (
                             <button key={idx} onClick={() => goToStep(idx)} disabled={idx > currentStep}
                                 className={`relative flex flex-col items-center ${idx <= currentStep ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
@@ -178,12 +204,12 @@ export default function TeamRegistrationWizard({
                                         color: isCompleted ? 'white' : isCurrent ? BRAND_GREEN : '#9ca3af',
                                         boxShadow: isCurrent ? `0 0 0 4px ${BRAND_GREEN_RING}` : 'none',
                                     }}>
-                                    {isCompleted ? <Check className="h-5 w-5" /> : isTeamStep ? <Users className="h-4 w-4" /> : <span className="text-sm font-semibold">{idx}</span>}
+                                    {isCompleted ? <Check className="h-5 w-5" /> : isTeamStep ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
                                 </div>
                                 <span
                                     className={`mt-2 text-xs font-medium ${isCompleted ? 'text-gray-700' : 'text-gray-400'}`}
                                     style={{ color: isCurrent ? BRAND_GREEN : undefined }}>
-                                    {isTeamStep ? 'Team' : `Member ${idx}`}
+                                    {isMixStep ? 'Size' : isTeamStep ? 'Team' : `Mem ${idx}`}
                                 </span>
                             </button>
                         );
@@ -196,17 +222,17 @@ export default function TeamRegistrationWizard({
                 {/* Card Header */}
                 <div className="px-6 py-4 border-b" style={{ backgroundColor: BRAND_GREEN_LIGHT, borderColor: `${BRAND_GREEN}30` }}>
                     <div className="flex items-center gap-3">
-
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">{currentStep === 0 ? 'Team Setup' : `Team Member ${currentStep}`}</h3>
-                            <p className="text-gray-500 text-sm">{currentStep === 0 ? 'Choose team size and answer team questions' : `Fill in details for member ${currentStep} of ${teamSize}`}</p>
+                            <h3 className="text-lg font-bold text-gray-900">{stepTitle}</h3>
+                            <p className="text-gray-500 text-sm">{stepDesc}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Card Content */}
-                <div className="p-6 min-h-[320px]">
+                <div className="p-6">
                     {currentStep === 0 ? (
+                        /* Step 0: Team Size Only */
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="space-y-4">
                                 <Label className="text-sm font-semibold text-gray-700">How many members in your team?</Label>
@@ -225,14 +251,19 @@ export default function TeamRegistrationWizard({
                                 </div>
                                 <p className="text-sm text-gray-500">Selected: <span className="font-semibold" style={{ color: BRAND_GREEN }}>{teamSize} members</span></p>
                             </div>
-                            {teamQuestions.length > 0 && (
-                                <div className="border-t border-gray-200 pt-6">
-                                    <DynamicRegistrationForm questions={teamQuestions} onResponsesChange={setTeamResponses} />
-                                </div>
+                        </div>
+                    ) : currentStep === teamQuestionsStep ? (
+                        /* Last Step: Team Questions */
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            {teamQuestions.length > 0 ? (
+                                <DynamicRegistrationForm questions={teamQuestions} onResponsesChange={setTeamResponses} />
+                            ) : (
+                                <p className="text-gray-500 text-center py-8">No additional team questions. You are ready to submit.</p>
                             )}
                         </div>
                     ) : (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        /* Member Steps (1 to teamSize) */
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <TeamMemberForm
                                 memberIndex={currentStep - 1}
                                 memberName={members[currentStep - 1]?.name || ''}
@@ -284,8 +315,6 @@ export default function TeamRegistrationWizard({
                     </div>
                 </div>
             </div>
-
-
         </div>
     );
 }

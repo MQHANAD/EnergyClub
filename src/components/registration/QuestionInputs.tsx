@@ -18,7 +18,7 @@ interface QuestionInputProps {
 export function ShortTextInput({ question, value, onChange, error }: QuestionInputProps) {
     return (
         <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 whitespace-pre-wrap">
                 {question.label}
                 {question.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
@@ -28,8 +28,8 @@ export function ShortTextInput({ question, value, onChange, error }: QuestionInp
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={question.placeholder || ''}
                 className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${error
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400'
                     }`}
             />
             {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
@@ -43,7 +43,7 @@ export function ShortTextInput({ question, value, onChange, error }: QuestionInp
 export function LongTextInput({ question, value, onChange, error }: QuestionInputProps) {
     return (
         <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label className="text-sm font-medium text-gray-700 whitespace-pre-wrap">
                 {question.label}
                 {question.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
@@ -153,8 +153,8 @@ export function DropdownInput({ question, value, onChange, error }: QuestionInpu
                 value={selectedValue}
                 onChange={(e) => onChange(e.target.value)}
                 className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${error
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400'
                     }`}
             >
                 <option value="">Select an option...</option>
@@ -186,8 +186,8 @@ export function YesNoInput({ question, value, onChange, error }: QuestionInputPr
                     <label
                         key={option}
                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer ${selectedValue === option
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
                             }`}
                     >
                         <input
