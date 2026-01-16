@@ -56,7 +56,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { exportResponsesToExcel } from "@/lib/exportResponses";
+import { exportResponsesToExcel, exportMultiAreaToExcel } from "@/lib/exportResponses";
 import ResponsesTable from "@/components/admin/ResponsesTable";
 import QuestionBuilder from "@/components/admin/QuestionBuilder";
 
@@ -611,11 +611,56 @@ export default function AdminDashboard() {
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => {
-                        if (selectedEvent) {
+                      onClick={async () => {
+                        if (!selectedEvent) return;
+
+                        const eventTitle = selectedEvent.title.toLowerCase();
+                        const isHackathon = eventTitle.includes('hackathon');
+                        const isDebate = eventTitle.includes('debate');
+
+                        // For Hackathons and Debates, export all areas
+                        if (isHackathon || isDebate) {
+                          const baseEventName = isHackathon ? 'Hackathon' : 'Debate';
+
+                          // Find all related events (all hackathons or all debates)
+                          const relatedEvents = events.filter(event =>
+                            event.title.toLowerCase().includes(baseEventName.toLowerCase())
+                          );
+
+                          // Fetch registrations for each area
+                          const areaDataPromises = relatedEvents.map(async (event) => {
+                            const regs = await registrationsApi.getEventRegistrations(event.id);
+
+                            // Extract area name from event title
+                            let areaName = 'Unknown';
+                            if (event.title.toLowerCase().includes('eastern')) {
+                              areaName = 'Eastern Region';
+                            } else if (event.title.toLowerCase().includes('western')) {
+                              areaName = 'Western Region';
+                            } else if (event.title.toLowerCase().includes('central') || event.title.toLowerCase().includes('riyadh')) {
+                              areaName = 'Riyadh Region';
+                            }
+
+                            return {
+                              areaName,
+                              registrations: regs,
+                              questions: event.questions || [],
+                              memberQuestions: event.memberQuestions || [],
+                            };
+                          });
+
+                          const areaData = await Promise.all(areaDataPromises);
+
+                          exportMultiAreaToExcel({
+                            areaData,
+                            baseEventName,
+                          });
+                        } else {
+                          // Regular single-event export
                           exportResponsesToExcel({
                             registrations: filteredRegistrations,
                             questions: selectedEvent.questions || [],
+                            memberQuestions: selectedEvent.memberQuestions || [],
                             eventTitle: selectedEvent.title,
                           });
                         }
