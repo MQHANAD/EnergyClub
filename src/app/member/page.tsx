@@ -55,10 +55,10 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
     if (memberData.committeeName && isLeader && !isPresident && !isVicePresident) {
         // Handle "Vice Leader" exception
         if (roleLower.includes('vice leader')) {
-            displayText = `Vice Leader of ${displayText}`;
+            displayText = `Vice Leader ${displayText}`;
         } else {
             // Only add "Leader of" if it's a committee leader
-            displayText = `Leader of ${displayText}`;
+            displayText = `Leader ${displayText}`;
         }
     }
 
@@ -69,7 +69,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
             return {
                 color,
                 textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-                fontSize: variant === 'export' ? '24px' : '5cqw', // Slightly bigger for single roles
+                fontSize: variant === 'export' ? '24px' : 'min(4.5vw, 1.5rem)', // Slightly bigger for single roles
                 fontFamily: 'DGSahabah, sans-serif'
             };
         }
@@ -80,7 +80,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
             return {
                 color,
                 textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-                fontSize: variant === 'export' ? '20px' : '5cqw',
+                fontSize: variant === 'export' ? '20px' : 'min(3.5vw, 1.2rem)',
                 fontFamily: 'DGSahabah, sans-serif'
             };
         }
@@ -106,7 +106,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
         return {
             color,
             textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-            fontSize: variant === 'export' ? '20px' : '5cqw',
+            fontSize: variant === 'export' ? '20px' : 'min(3.5vw, 1.2rem)',
             fontFamily: 'DGSahabah, sans-serif'
         };
     };
@@ -144,7 +144,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
                 <div className="absolute top-[33%] inset-x-0 flex justify-center items-center px-[8%]">
                     <h1 className="text-white font-bold drop-shadow-md text-center"
                         style={{
-                            fontSize: variant === 'export' ? '32px' : '6cqw',
+                            fontSize: variant === 'export' ? '28px' : 'min(4vw, 1.4rem)',
                             fontFamily: 'DGSahabah, sans-serif'
                         }}>
                         {memberData.fullName}
