@@ -114,7 +114,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
     const style = getStyle();
 
     const containerClasses = variant === 'view'
-        ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-20 mt-8"
+        ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto overflow-hidden md:mt-20 mt-8"
         : "relative w-[595px] h-[842px] overflow-hidden bg-[#181818]"; // Fixed size for export
 
     // Text Positioning Validation
@@ -135,8 +135,9 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
                 <Image
                     src={bgImage}
                     alt="Membership Card"
-                    fill
-                    className="object-cover"
+                    width={595}
+                    height={842}
+                    className="w-full h-auto object-cover"
                     priority
                 />
             )}
