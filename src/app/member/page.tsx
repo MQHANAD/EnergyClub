@@ -8,9 +8,8 @@ import Navigation from '@/components/Navigation';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
-import { AlertCircle, Download } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import html2canvas from 'html2canvas';
 
 interface MemberData {
     fullName: string;
@@ -226,31 +225,6 @@ function MemberContent() {
         }
     }, [user, authLoading]);
 
-    // Ref for the export version of the card
-    const exportCardRef = useRef<HTMLDivElement>(null);
-
-    const handleDownload = async () => {
-        if (!exportCardRef.current) return;
-        try {
-            const canvas = await html2canvas(exportCardRef.current, {
-                scale: 2, // Check scale for better quality
-                backgroundColor: null,
-                useCORS: true,
-                x: 0,
-                y: 0,
-                scrollX: 0,
-                scrollY: 0,
-                windowWidth: 1080
-            });
-            const image = canvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.href = image;
-            link.download = `energy-club-card-${memberData?.fullName || 'member'}.png`;
-            link.click();
-        } catch (err) {
-            console.error("Download failed", err);
-        }
-    };
 
     if (authLoading || isLoading) {
         return (
@@ -294,20 +268,7 @@ function MemberContent() {
                 >
                     {/* View Version (Responsive) */}
                     <MemberCard memberData={memberData} variant="view" />
-
-                    <button
-                        onClick={handleDownload}
-                        className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group mb-16 cursor-pointer"
-                    >
-                        <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span>Download Card</span>
-                    </button>
                 </motion.div>
-
-                {/* Export Version (Hidden, Fixed Size, Outside Flow) */}
-                <div className="fixed top-0 left-0 w-[595px] h-[842px] z-[-50] opacity-0 pointer-events-none">
-                    <MemberCard memberData={memberData} variant="export" ref={exportCardRef} />
-                </div>
 
             </div>
         </div>
