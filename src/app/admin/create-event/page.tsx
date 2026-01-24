@@ -16,8 +16,9 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import { EventFormData } from "@/types";
+import { EventFormData, EventQuestion } from "@/types";
 import Navigation from "@/components/Navigation";
+import QuestionBuilder from "@/components/admin/QuestionBuilder";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,17 +38,24 @@ export default function CreateEventPage() {
   const { t } = useI18n();
 
   const [formData, setFormData] = useState<EventFormData>({
-  title: "",
-  description: "",
-  startDate: "",
-  endDate: "",
-  location: "",
-  maxAttendees: 50,
-  tags: [],
-  imageUrls: [],
-});
+    title: "",
+    description: "",
+    startDate: "",
+    endDate: "",
+    location: "",
+    maxAttendees: 50,
+    tags: [],
+    imageUrls: [],
+  });
 
   const [requireStudentId, setRequireStudentId] = useState(false);
+  const [questions, setQuestions] = useState<EventQuestion[]>([]);
+
+  // Team registration state
+  const [isTeamEvent, setIsTeamEvent] = useState(false);
+  const [minTeamSize, setMinTeamSize] = useState(2);
+  const [maxTeamSize, setMaxTeamSize] = useState(10);
+  const [memberQuestions, setMemberQuestions] = useState<EventQuestion[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +78,7 @@ export default function CreateEventPage() {
           if (onTimeout) {
             onTimeout();
           }
-        } catch {}
+        } catch { }
         reject(new Error(`Operation timed out after ${ms}ms`));
       }, ms);
       promise.then(
@@ -100,7 +108,7 @@ export default function CreateEventPage() {
         timer = setTimeout(() => {
           try {
             uploadTask.cancel();
-          } catch {}
+          } catch { }
           reject(new Error(`Upload timed out after ${ms}ms`));
         }, ms);
       };
@@ -118,7 +126,7 @@ export default function CreateEventPage() {
             if (onProgress) {
               onProgress(pct);
             }
-          } catch {}
+          } catch { }
           resetTimer();
         },
         (err: any) => {
@@ -286,9 +294,9 @@ export default function CreateEventPage() {
       }
 
       if (formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-  setError("End date cannot be before start date.");
-  return;
-}
+        setError("End date cannot be before start date.");
+        return;
+      }
 
 
 
@@ -307,6 +315,14 @@ export default function CreateEventPage() {
         tags: formData.tags,
         imageUrls: formData.imageUrls,
         requireStudentId,
+        questions,  // Team-level or general registration questions
+        // Team registration fields
+        isTeamEvent,
+        ...(isTeamEvent && {
+          minTeamSize,
+          maxTeamSize,
+          memberQuestions,  // Questions per team member
+        }),
       };
 
 
@@ -397,7 +413,7 @@ export default function CreateEventPage() {
                     />
                   </div>
 
-          
+
 
                   <div>
                     <Label htmlFor="startDate" className="block mb-1">
@@ -533,9 +549,81 @@ export default function CreateEventPage() {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <Label htmlFor="requireStudentId" className="text-sm font-medium text-gray-700">
-                    Require Student ID for registration
+                    Require KFUPM ID for registration
                   </Label>
                 </div>
+
+                {/* Team Event Toggle */}
+                <div className="border-t border-gray-200 pt-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <input
+                      type="checkbox"
+                      id="isTeamEvent"
+                      checked={isTeamEvent}
+                      onChange={(e) => setIsTeamEvent(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <Label htmlFor="isTeamEvent" className="text-sm font-medium text-gray-700">
+                      Team Registration (register as a team instead of individual)
+                    </Label>
+                  </div>
+
+                  {/* Team Size Configuration */}
+                  {isTeamEvent && (
+                    <div className="ml-6 space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="minTeamSize" className="text-sm font-medium text-gray-700">
+                            Minimum Team Size
+                          </Label>
+                          <input
+                            type="number"
+                            id="minTeamSize"
+                            min={1}
+                            max={maxTeamSize}
+                            value={minTeamSize}
+                            onChange={(e) => setMinTeamSize(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="maxTeamSize" className="text-sm font-medium text-gray-700">
+                            Maximum Team Size
+                          </Label>
+                          <input
+                            type="number"
+                            id="maxTeamSize"
+                            min={minTeamSize}
+                            max={20}
+                            value={maxTeamSize}
+                            onChange={(e) => setMaxTeamSize(Math.max(minTeamSize, parseInt(e.target.value) || minTeamSize))}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dynamic Registration Questions */}
+                <div className="border-t border-gray-200 pt-6">
+                  <QuestionBuilder
+                    questions={questions}
+                    onChange={setQuestions}
+                    title={isTeamEvent ? "Team Questions (asked once per team)" : undefined}
+                  />
+                </div>
+
+                {/* Member Questions (only for team events) */}
+                {isTeamEvent && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <QuestionBuilder
+                      questions={memberQuestions}
+                      onChange={setMemberQuestions}
+                      title="Member Questions (asked for each team member)"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="tags">

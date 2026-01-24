@@ -21,8 +21,60 @@ export interface Event {
   maxAttendees: number;
   imageUrls: string[];
   requireStudentId?: boolean;
+  questions?: EventQuestion[];  // Dynamic registration questions (team-level)
+  // Team registration settings
+  isTeamEvent?: boolean;        // Enable team registration mode
+  minTeamSize?: number;         // Minimum team members (default: 2)
+  maxTeamSize?: number;         // Maximum team members (default: 10)
+  memberQuestions?: EventQuestion[];  // Questions asked per team member
 }
 
+// ============================================
+// Dynamic Registration Form Types
+// ============================================
+
+/**
+ * Supported question types for dynamic registration forms
+ */
+export type QuestionType =
+  | 'short_text'   // Single-line text input
+  | 'long_text'    // Multi-line textarea
+  | 'radio'        // Single choice (radio buttons)
+  | 'checkbox'     // Multiple choice (checkboxes)
+  | 'dropdown'     // Single choice (dropdown select)
+  | 'yes_no';      // Boolean (Yes/No radio)
+
+/**
+ * A single question in an event's registration form
+ */
+export interface EventQuestion {
+  id: string;              // UUID for the question
+  type: QuestionType;      // Input type to render
+  label: string;           // The question text shown to users
+  required: boolean;       // Whether answer is mandatory
+  order: number;           // For sorting/reordering questions
+  options?: string[];      // For radio, checkbox, dropdown types
+  placeholder?: string;    // Placeholder text for text inputs
+}
+
+/**
+ * A user's response to a single question
+ */
+export interface RegistrationResponse {
+  questionId: string;           // References EventQuestion.id
+  value: string | string[];     // string for single answers, string[] for checkbox
+}
+
+/**
+ * Responses for a single team member (used in team registrations)
+ */
+export interface TeamMemberResponse {
+  memberIndex: number;          // 0-based index of the member
+  memberName: string;           // Name of the team member
+  kfupmId?: string;             // KFUPM ID if required
+  kfupmEmail?: string;          // KFUPM Email if required
+  responses: RegistrationResponse[];  // Member's answers to memberQuestions
+}
 
 export interface Registration {
   id: string;
@@ -31,13 +83,19 @@ export interface Registration {
   userName: string;
   userEmail: string;
   registrationTime: Date;
-  status: 'confirmed' | 'waitlist' | 'cancelled';
+  status: 'confirmed' | 'waitlist' | 'cancelled' | 'checked_in';
+  checkInTime?: Date;
   reason?: string;
   notes?: string;
   attendance?: boolean;
   isFromUniversity?: boolean;
   universityEmail?: string;
   studentId?: string;
+  responses?: RegistrationResponse[];  // Dynamic form responses (team-level)
+  // Team registration fields
+  teamSize?: number;                    // Number of team members
+  teamResponses?: RegistrationResponse[];  // Team-level question answers
+  memberResponses?: TeamMemberResponse[];  // Per-member answers
 }
 
 export interface UserProfile {

@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
-import { Event, Registration } from "@/types";
+import { Event, Registration, RegistrationResponse, TeamMemberResponse } from "@/types";
 import Navigation from "@/components/Navigation";
+import DynamicRegistrationForm, { useValidateResponses } from "@/components/registration/DynamicRegistrationForm";
+import TeamRegistrationWizard from "@/components/registration/TeamRegistrationWizard";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { logEventView, logEventRegistration } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -52,6 +54,8 @@ export default function EventDetailsPage() {
   >(null);
   const [studentId, setStudentId] = useState("");
   const [studentIdError, setStudentIdError] = useState<string | null>(null);
+  const [dynamicResponses, setDynamicResponses] = useState<RegistrationResponse[]>([]);
+  const [dynamicFormValid, setDynamicFormValid] = useState(true);
 
   const loadEvent = async () => {
     if (!id || typeof id !== "string") return;
@@ -67,7 +71,7 @@ export default function EventDetailsPage() {
       }
 
       setEvent(eventData);
-      
+
       // Log event view for analytics
       logEventView(id, eventData.title);
     } catch (error) {
@@ -184,7 +188,8 @@ export default function EventDetailsPage() {
         registrationReason.trim() || undefined,
         isFromUniversity || event.requireStudentId,
         universityEmail || undefined,
-        event.requireStudentId ? studentId.trim() : undefined
+        event.requireStudentId ? studentId.trim() : undefined,
+        dynamicResponses.length > 0 ? dynamicResponses : undefined
       );
 
       // Log registration for analytics
@@ -208,19 +213,19 @@ export default function EventDetailsPage() {
   };
 
   const formatDate = (date: Date) => {
-  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
+    const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
 
-  // Add "at" between date and time (for English locales)
-  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
-  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
-};
+    // Add "at" between date and time (for English locales)
+    const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+    return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+  };
 
 
 
@@ -242,7 +247,7 @@ export default function EventDetailsPage() {
     <div className="animate-pulse space-y-8">
       {/* Image Skeleton */}
       <div className="w-full h-64 md:h-96 bg-gray-300 rounded-xl"></div>
-      
+
       {/* Content Skeleton */}
       <div className="space-y-6">
         <Card className="border-0 shadow-lg">
@@ -256,7 +261,7 @@ export default function EventDetailsPage() {
             <div className="h-4 bg-gray-200 rounded w-4/6"></div>
           </CardContent>
         </Card>
-        
+
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -268,7 +273,7 @@ export default function EventDetailsPage() {
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <div className="h-6 bg-gray-300 rounded w-1/2"></div>
@@ -307,8 +312,8 @@ export default function EventDetailsPage() {
             <Alert variant="destructive" className="border-l-4 shadow-lg">
               <AlertDescription className="text-base">{error}</AlertDescription>
             </Alert>
-            <Button 
-              onClick={() => router.back()} 
+            <Button
+              onClick={() => router.back()}
               variant="outline"
               className="group hover:bg-gray-100 transition-all duration-200 hover:shadow-md"
             >
@@ -328,26 +333,26 @@ export default function EventDetailsPage() {
     user && !userRegistration && event.status === "active" && !isEventFull;
 
   return (
-    <div className="min-h-screen bg-[url('/BG.PNG')] bg-cover bg-center bg-fixed">
-      <div className="min-h-screen bg-gradient-to-br from-gray-50/95 to-gray-100/95 backdrop-blur-sm">
+    <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50/95 to-gray-100/95 backdrop-blur-sm ">
         <Navigation />
-         {/* Back Button */}
-          <div className=" pt-20 pl-5">
-            <Button
-              onClick={() => router.back()}
-              variant="ghost"
-              size="sm"
-              className="group hover:bg-gray-100 transition-colors duration-200"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1 duration-200" />
-              <span className="text-sm">{t("eventDetails.backToEvents")}</span>
-            </Button>
-          </div>
+        {/* Back Button */}
+        <div className=" pt-20 pl-5">
+          <Button
+            onClick={() => router.back()}
+            variant="ghost"
+            size="sm"
+            className="group hover:bg-gray-100 transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1 transition-transform group-hover:-translate-x-1 duration-200" />
+            <span className="text-sm">{t("eventDetails.backToEvents")}</span>
+          </Button>
+        </div>
 
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-         
 
-          <div className="space-y-6 md:space-y-8">
+
+          <div className="space-y-6 md:space-y-8 pb-8">
             {/* Event Image */}
             <div className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white transition-transform duration-300 hover:shadow-3xl">
               {event.imageUrls && event.imageUrls.length > 0 ? (
@@ -368,25 +373,18 @@ export default function EventDetailsPage() {
               )}
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid gap-6 md:gap-8 lg:grid-cols-3 items-start">
-              {/* Main Event Info - Takes 2 columns on large screens */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden self-start mb-[12px]">
+            {/* Main Content Grid - Two cards side by side */}
+            <div className="grid gap-6 md:gap-8 lg:grid-cols-[2fr_1fr] items-stretch">
+              {/* Main Event Info */}
+              <div className="space-y-6">
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden h-full">
                   <CardHeader className="space-y-4 pb-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="space-y-3 flex-1">
                         <CardTitle className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-gray-900">
                           {event.title}
                         </CardTitle>
-                        <CardDescription className="text-base md:text-lg flex items-center gap-2">
-                          <User className="h-4 w-4 flex-shrink-0" />
-                          <span>
-                            {t("eventDetails.organizedBy", {
-                              name: event.organizerName,
-                            })}
-                          </span>
-                        </CardDescription>
+
                       </div>
                       <span
                         className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border-2 shadow-sm transition-all duration-200 hover:shadow-md ${getStatusColor(
@@ -397,7 +395,7 @@ export default function EventDetailsPage() {
                       </span>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-8">
                     {/* Description */}
                     <div className="space-y-3">
@@ -433,15 +431,14 @@ export default function EventDetailsPage() {
               </div>
 
               {/* Sidebar - Takes 1 column on large screens */}
-              <div className="space-y-6 lg:col-span-1">
-                {/* Event Details Card */}
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 self-start mb-[12px]">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-xl font-semibold">
-                      {t("eventDetails.detailsTitle")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+              {/* Event Details Card */}
+              <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 h-full">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-semibold">
+                    {t("eventDetails.detailsTitle")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   {/* Date */}
                   <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
                     <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
@@ -458,7 +455,7 @@ export default function EventDetailsPage() {
                         Duration: {(() => {
                           const start = new Date(event.startDate || event.date);
                           const end = new Date(event.endDate);
-                          const diffMs = (end.getTime() - start.getTime())+1;
+                          const diffMs = (end.getTime() - start.getTime()) + 1;
                           const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
                           return diffDays === 1 ? "1 day" : `${diffDays} days`;
                         })()}
@@ -483,230 +480,260 @@ export default function EventDetailsPage() {
                   </div>
                 </CardContent>
 
-                </Card>
-
-                {/* Registration Card */}
-                <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 self-start mb-[12px]">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-xl font-semibold">
-                      {t("eventDetails.registrationTitle")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {error && (
-                      <Alert variant="destructive" className="mb-4 border-l-4 animate-in slide-in-from-top-2 duration-300">
-                        <AlertDescription className="text-sm">{error}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    {!user ? (
-                      <div className="text-center space-y-4 py-4">
-                        <p className="text-gray-600 text-base">
-                          {t("eventDetails.pleaseSignIn")}
-                        </p>
-                        <Button 
-                          onClick={() => router.push("/login")}
-                          className="w-full min-h-[44px] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
-                        >
-                          {t("eventDetails.signIn")}
-                        </Button>
-                      </div>
-                    ) : userRegistration ? (
-                      <div className="text-center space-y-4 py-4 animate-in fade-in zoom-in duration-500">
-                        <div className="flex items-center justify-center gap-2 p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                          <CheckCircle className="h-6 w-6 text-green-600 animate-in zoom-in duration-300" />
-                          <span className="text-green-700 font-semibold text-lg">
-                            {t("eventDetails.alreadyRegistered")}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          {t("eventDetails.youRegisteredOn", {
-                            date: formatDate(userRegistration.registrationTime),
-                          })}
-                        </p>
-                        {userRegistration.reason && (
-                          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <p className="text-sm text-gray-700 leading-relaxed">
-                              <span className="font-medium">
-                                {t("eventDetails.reasonLabel", { reason: "" }).split(":")[0]}:
-                              </span>{" "}
-                              {userRegistration.reason}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : event.status !== "active" ? (
-                      <div className="text-center py-4">
-                        <div className="p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
-                          <p className="text-gray-700 font-medium">
-                            {t("eventDetails.eventStatusNotAccepting", {
-                              status: event.status,
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ) : isEventFull ? (
-                      <div className="text-center space-y-3 py-4">
-                        <div className="p-4 bg-red-50 rounded-xl border-2 border-red-200">
-                          <p className="text-red-700 font-semibold text-lg mb-2">
-                            {t("eventDetails.eventFull")}
-                          </p>
-                          <p className="text-sm text-red-600">
-                            {t("eventDetails.eventFullSubtitle")}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-5">
-                        {/* University Checkbox - Only show if student ID is not required */}
-                        {!event.requireStudentId && (
-                          <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 cursor-pointer group">
-                            <input
-                              type="checkbox"
-                              id="university"
-                              checked={isFromUniversity}
-                              onChange={(e) =>
-                                setIsFromUniversity(e.target.checked)
-                              }
-                              className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-gray-300 rounded cursor-pointer transition-all duration-200"
-                            />
-                            <Label
-                              htmlFor="university"
-                              className="text-sm md:text-base font-medium text-gray-700 cursor-pointer group-hover:text-blue-700 transition-colors duration-200"
-                            >
-                              {t("eventDetails.universityToggle")}
-                            </Label>
-                          </div>
-                        )}
-
-                        {/* University Email Field */}
-                        {(isFromUniversity || event.requireStudentId) && (
-                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label
-                              htmlFor="universityEmail"
-                              className="text-sm font-semibold text-gray-700"
-                            >
-                              {t("eventDetails.universityEmail")}
-                              <span className="text-red-500 ml-1">*</span>
-                            </Label>
-                            <input
-                              type="email"
-                              id="universityEmail"
-                              placeholder={t(
-                                "eventDetails.universityEmailPlaceholder"
-                              )}
-                              value={universityEmail}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                setUniversityEmail(v);
-                                setUniversityEmailError(
-                                  validateUniversityEmail(v)
-                                );
-                              }}
-                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
-                                universityEmailError
-                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
-                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
-                              }`}
-                              required
-                              aria-invalid={!!universityEmailError}
-                              aria-describedby={universityEmailError ? "email-error" : undefined}
-                            />
-                            {universityEmailError && (
-                              <p
-                                id="email-error"
-                                className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
-                              >
-                                {universityEmailError}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Student ID Field */}
-                        {event.requireStudentId && (
-                          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                            <Label
-                              htmlFor="studentId"
-                              className="text-sm font-semibold text-gray-700"
-                            >
-                              {t("Student ID")}
-                              <span className="text-red-500 ml-1">*</span>
-                            </Label>
-                            <input
-                              type="text"
-                              id="studentId"
-                              placeholder={t("Enter you student ID")}
-                              value={studentId}
-                              onChange={(e) => {
-                                setStudentId(e.target.value);
-                                setStudentIdError(null);
-                              }}
-                              className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${
-                                studentIdError
-                                  ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
-                                  : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
-                              }`}
-                              required
-                              aria-invalid={!!studentIdError}
-                              aria-describedby={studentIdError ? "student-id-error" : undefined}
-                            />
-                            {studentIdError && (
-                              <p
-                                id="student-id-error"
-                                className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
-                              >
-                                {studentIdError}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Registration Reason */}
-                        <div className="space-y-2">
-                          <Label
-                            htmlFor="reason"
-                            className="text-sm font-semibold text-gray-700"
-                          >
-                            {t("eventDetails.whyInterested")}
-                            <span className="text-gray-400 ml-1 font-normal">(Optional)</span>
-                          </Label>
-                          <Textarea
-                            id="reason"
-                            placeholder={t("eventDetails.whyPlaceholder")}
-                            value={registrationReason}
-                            onChange={(e) =>
-                              setRegistrationReason(e.target.value)
-                            }
-                            rows={4}
-                            className="resize-none border-2 focus:ring-2 focus:ring-offset-1 transition-all duration-200 hover:border-gray-400 text-base"
-                          />
-                        </div>
-
-                        {/* Register Button */}
-                        <Button
-                          onClick={handleRegister}
-                          disabled={
-                            registering ||
-                            ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
-                          }
-                          className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
-                        >
-                          {registering ? (
-                            <span className="flex items-center justify-center gap-2">
-                              <LoadingSpinner size="sm" variant="white" />
-                              <span>{t("eventDetails.registering")}</span>
-                            </span>
-                          ) : (
-                            t("eventDetails.registerButton")
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+              </Card>
             </div>
+
+            {/* Registration Card - Full Width Below */}
+            <Card className="border-0 shadow-xl hover:shadow-2xl transition-shadow duration-300 mt-6 md:mt-8 mb-8">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-semibold">
+                  {t("eventDetails.registrationTitle")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {error && (
+                  <Alert variant="destructive" className="mb-4 border-l-4 animate-in slide-in-from-top-2 duration-300">
+                    <AlertDescription className="text-sm">{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {!user ? (
+                  <div className="text-center space-y-4 py-4">
+                    <p className="text-gray-600 text-base">
+                      {t("eventDetails.pleaseSignIn")}
+                    </p>
+                    <Button
+                      onClick={() => router.push("/login")}
+                      className="w-full min-h-[44px] font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                    >
+                      {t("eventDetails.signIn")}
+                    </Button>
+                  </div>
+                ) : userRegistration ? (
+                  <div className="text-center space-y-4 py-4 animate-in fade-in zoom-in duration-500">
+                    <div className="flex items-center justify-center gap-2 p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                      <CheckCircle className="h-6 w-6 text-green-600 animate-in zoom-in duration-300" />
+                      <span className="text-green-700 font-semibold text-lg">
+                        {t("eventDetails.alreadyRegistered")}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {t("eventDetails.youRegisteredOn", {
+                        date: formatDate(userRegistration.registrationTime),
+                      })}
+                    </p>
+                    {userRegistration.reason && (
+                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          <span className="font-medium">
+                            {t("eventDetails.reasonLabel", { reason: "" }).split(":")[0]}:
+                          </span>{" "}
+                          {userRegistration.reason}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : event.status !== "active" ? (
+                  <div className="text-center py-4">
+                    <div className="p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                      <p className="text-gray-700 font-medium">
+                        {t("eventDetails.eventStatusNotAccepting", {
+                          status: event.status,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ) : isEventFull ? (
+                  <div className="text-center space-y-3 py-4">
+                    <div className="p-4 bg-red-50 rounded-xl border-2 border-red-200">
+                      <p className="text-red-700 font-semibold text-lg mb-2">
+                        {t("eventDetails.eventFull")}
+                      </p>
+                      <p className="text-sm text-red-600">
+                        {t("eventDetails.eventFullSubtitle")}
+                      </p>
+                    </div>
+                  </div>
+                ) : event.isTeamEvent ? (
+                  // Team Registration Wizard
+                  <TeamRegistrationWizard
+                    event={event}
+                    isSubmitting={registering}
+                    onSubmit={async (teamData) => {
+                      if (!user || !userProfile) return;
+                      try {
+                        setRegistering(true);
+                        setError(null);
+
+                        await registrationsApi.registerForEvent(
+                          event.id,
+                          user.uid,
+                          userProfile.displayName,
+                          userProfile.email,
+                          undefined, // reason
+                          false, // isFromUniversity
+                          undefined, // universityEmail
+                          undefined, // studentId
+                          undefined, // responses (use teamResponses instead)
+                          teamData.teamSize,
+                          teamData.teamResponses,
+                          teamData.memberResponses
+                        );
+
+                        logEventRegistration(event.id, event.title);
+
+                        // Refresh registration status to show "Already Registered"
+                        const registration = await registrationsApi.getUserEventRegistration(
+                          user.uid,
+                          event.id
+                        );
+                        setUserRegistration(registration);
+
+                        await loadEvent();
+                      } catch (err: any) {
+                        console.error("Registration error:", err);
+                        setError(err.message || "Failed to register. Please try again.");
+                      } finally {
+                        setRegistering(false);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="space-y-5">
+                    {/* KFUPM Email Field - Only show if requireStudentId is enabled */}
+                    {event.requireStudentId && (
+                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                        <Label
+                          htmlFor="universityEmail"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          KFUPM Email
+                          <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <input
+                          type="email"
+                          id="universityEmail"
+                          placeholder={t(
+                            "eventDetails.universityEmailPlaceholder"
+                          )}
+                          value={universityEmail}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setUniversityEmail(v);
+                            setUniversityEmailError(
+                              validateUniversityEmail(v)
+                            );
+                          }}
+                          className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${universityEmailError
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                            }`}
+                          required
+                          aria-invalid={!!universityEmailError}
+                          aria-describedby={universityEmailError ? "email-error" : undefined}
+                        />
+                        {universityEmailError && (
+                          <p
+                            id="email-error"
+                            className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
+                          >
+                            {universityEmailError}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Student ID Field */}
+                    {event.requireStudentId && (
+                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                        <Label
+                          htmlFor="studentId"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          KFUPM ID
+                          <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <input
+                          type="text"
+                          id="studentId"
+                          placeholder="Enter your KFUPM ID"
+                          value={studentId}
+                          onChange={(e) => {
+                            setStudentId(e.target.value);
+                            setStudentIdError(null);
+                          }}
+                          className={`w-full px-4 py-3 border-2 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200 text-base ${studentIdError
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50"
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-400"
+                            }`}
+                          required
+                          aria-invalid={!!studentIdError}
+                          aria-describedby={studentIdError ? "student-id-error" : undefined}
+                        />
+                        {studentIdError && (
+                          <p
+                            id="student-id-error"
+                            className="text-sm text-red-600 font-medium animate-in slide-in-from-top-1 duration-200"
+                          >
+                            {studentIdError}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Registration Reason */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="reason"
+                        className="text-sm font-semibold text-gray-700"
+                      >
+                        {t("eventDetails.whyInterested")}
+                        <span className="text-gray-400 ml-1 font-normal">(Optional)</span>
+                      </Label>
+                      <Textarea
+                        id="reason"
+                        placeholder={t("eventDetails.whyPlaceholder")}
+                        value={registrationReason}
+                        onChange={(e) =>
+                          setRegistrationReason(e.target.value)
+                        }
+                        rows={4}
+                        className="resize-none border-2 focus:ring-2 focus:ring-offset-1 transition-all duration-200 hover:border-gray-400 text-base"
+                      />
+                    </div>
+
+                    {/* Dynamic Registration Questions */}
+                    {event.questions && event.questions.length > 0 && (
+                      <DynamicRegistrationForm
+                        questions={event.questions}
+                        onResponsesChange={setDynamicResponses}
+                        onValidationChange={setDynamicFormValid}
+                      />
+                    )}
+
+                    {/* Register Button */}
+                    <Button
+                      onClick={handleRegister}
+                      disabled={
+                        registering ||
+                        !dynamicFormValid ||
+                        ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
+                      }
+                      className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                    >
+                      {registering ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <LoadingSpinner size="sm" variant="white" />
+                          <span>{t("eventDetails.registering")}</span>
+                        </span>
+                      ) : (
+                        t("eventDetails.registerButton")
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

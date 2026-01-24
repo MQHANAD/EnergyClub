@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi, registrationsApi } from "@/lib/firestore";
-import { Event, Registration } from "@/types";
+import { Event, Registration, EventQuestion } from "@/types";
 import Navigation from "@/components/Navigation";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import {
   Upload,
   Clock,
   MapPin,
+  Download,
 } from "lucide-react";
 import { useI18n, getLocale } from "@/i18n/index";
 import Input from "@/components/ui/input";
@@ -55,6 +56,9 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
+import { exportResponsesToExcel, exportMultiAreaToExcel } from "@/lib/exportResponses";
+import ResponsesTable from "@/components/admin/ResponsesTable";
+import QuestionBuilder from "@/components/admin/QuestionBuilder";
 
 export default function AdminDashboard() {
   const {
@@ -94,6 +98,9 @@ export default function AdminDashboard() {
     status: "active" as Event["status"],
     imageUrls: [] as string[],
     requireStudentId: false,
+    questions: [] as EventQuestion[],
+    memberQuestions: [] as EventQuestion[],
+    isTeamEvent: false,
   });
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -211,6 +218,9 @@ export default function AdminDashboard() {
       status: event.status,
       imageUrls: event.imageUrls || [],
       requireStudentId: event.requireStudentId || false,
+      questions: event.questions || [],
+      memberQuestions: event.memberQuestions || [],
+      isTeamEvent: event.isTeamEvent || false,
     });
     setEditModalOpen(true);
   };
@@ -286,6 +296,9 @@ export default function AdminDashboard() {
         status: editForm.status,
         imageUrls: editForm.imageUrls,
         requireStudentId: editForm.requireStudentId,
+        questions: editForm.questions,
+        memberQuestions: editForm.memberQuestions,
+        isTeamEvent: editForm.isTeamEvent,
       });
 
       // Refresh events
@@ -340,29 +353,29 @@ export default function AdminDashboard() {
     }
   };
 
- const formatDate = (date: Date) => {
-  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
-
- 
+  const formatDate = (date: Date) => {
+    const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
 
 
-  // Add "at" between date and time (for English locales)
-  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
-  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
-};
 
- const getDuration = (start: Date, end: Date) => {
-  const diffMs = (end.getTime() - start.getTime())+1;
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  return diffDays === 1 ? "1 day" : `${diffDays} days`;
-};
+
+    // Add "at" between date and time (for English locales)
+    const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+    return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+  };
+
+  const getDuration = (start: Date, end: Date) => {
+    const diffMs = (end.getTime() - start.getTime()) + 1;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays === 1 ? "1 day" : `${diffDays} days`;
+  };
 
 
 
@@ -424,22 +437,20 @@ export default function AdminDashboard() {
             <nav className="flex space-x-4">
               <button
                 onClick={() => setView("events")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  view === "events"
-                    ? "bg-blue-100 text-blue-700"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${view === "events"
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {t("admin.eventsTab", { count: events.length })}
               </button>
               {selectedEvent && (
                 <button
                   onClick={() => setView("registrations")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    view === "registrations"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${view === "registrations"
+                    ? "bg-blue-100 text-blue-700"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   {t("admin.registrationsTab", {
                     title: selectedEvent.title,
@@ -594,6 +605,71 @@ export default function AdminDashboard() {
                       plural: filteredRegistrations.length !== 1 ? "s" : "",
                     })}
                   </p>
+                  {/* Export Button */}
+                  {filteredRegistrations.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={async () => {
+                        if (!selectedEvent) return;
+
+                        const eventTitle = selectedEvent.title.toLowerCase();
+                        const isHackathon = eventTitle.includes('hackathon');
+                        const isDebate = eventTitle.includes('debate');
+
+                        // For Hackathons and Debates, export all areas
+                        if (isHackathon || isDebate) {
+                          const baseEventName = isHackathon ? 'Hackathon' : 'Debate';
+
+                          // Find all related events (all hackathons or all debates)
+                          const relatedEvents = events.filter(event =>
+                            event.title.toLowerCase().includes(baseEventName.toLowerCase())
+                          );
+
+                          // Fetch registrations for each area
+                          const areaDataPromises = relatedEvents.map(async (event) => {
+                            const regs = await registrationsApi.getEventRegistrations(event.id);
+
+                            // Extract area name from event title
+                            let areaName = 'Unknown';
+                            if (event.title.toLowerCase().includes('eastern')) {
+                              areaName = 'Eastern Region';
+                            } else if (event.title.toLowerCase().includes('western')) {
+                              areaName = 'Western Region';
+                            } else if (event.title.toLowerCase().includes('central') || event.title.toLowerCase().includes('riyadh')) {
+                              areaName = 'Riyadh Region';
+                            }
+
+                            return {
+                              areaName,
+                              registrations: regs,
+                              questions: event.questions || [],
+                              memberQuestions: event.memberQuestions || [],
+                            };
+                          });
+
+                          const areaData = await Promise.all(areaDataPromises);
+
+                          exportMultiAreaToExcel({
+                            areaData,
+                            baseEventName,
+                          });
+                        } else {
+                          // Regular single-event export
+                          exportResponsesToExcel({
+                            registrations: filteredRegistrations,
+                            questions: selectedEvent.questions || [],
+                            memberQuestions: selectedEvent.memberQuestions || [],
+                            eventTitle: selectedEvent.title,
+                          });
+                        }
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export to Excel
+                    </Button>
+                  )}
                   <div className="mt-4 max-w-md">
                     <Input
                       placeholder={t("admin.registrations.searchPlaceholder")}
@@ -616,142 +692,21 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {statusOrder.map((status) => {
-                    const group = groupedRegistrations[status];
-                    if (group.length === 0) return null;
-                    const isExpanded = !!showMore[status];
-                    const visible = isExpanded
-                      ? group
-                      : group.slice(0, DEFAULT_GROUP_LIMIT);
-                    return (
-                      <Card key={status} className="shadow overflow-hidden">
-                        <CardHeader className="bg-gray-50 border-b">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                  status
-                                )}`}
-                              >
-                                {status.charAt(0).toUpperCase() +
-                                  status.slice(1)}
-                              </span>
-                              <span className="text-sm text-gray-600">
-                                ({group.length})
-                              </span>
-                            </div>
-                            {group.length > DEFAULT_GROUP_LIMIT && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  setShowMore((prev) => ({
-                                    ...prev,
-                                    [status]: !isExpanded,
-                                  }))
-                                }
-                              >
-                                {isExpanded ? "Show Less" : "Show More"}
-                              </Button>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                          <ul className="divide-y divide-gray-200">
-                            {visible.map((registration) => (
-                              <li key={registration.id} className="px-6 py-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <h3 className="text-lg font-medium text-gray-900">
-                                          {registration.userName}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">
-                                          {registration.userEmail}
-                                        </p>
-                                        {registration.isFromUniversity &&
-                                          registration.universityEmail && (
-                                            <p className="text-sm text-blue-700 mt-1">
-                                              {t(
-                                                "eventDetails.universityEmail"
-                                              )}
-                                              : {registration.universityEmail}
-                                            </p>
-                                          )}
-                                        {registration.reason && (
-                                          <p className="text-sm text-gray-500 mt-1">
-                                            {t("eventDetails.reasonLabel", {
-                                              reason: registration.reason,
-                                            })}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="text-right">
-                                        <p className="text-sm text-gray-600">
-                                          {t("eventDetails.youRegisteredOn", {
-                                            date: formatDate(
-                                              registration.registrationTime
-                                            ),
-                                          })}
-                                        </p>
-                                        <span
-                                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                            registration.status
-                                          )}`}
-                                        >
-                                          {registration.status}
-                                        </span>
-                                        <div className="mt-2 flex justify-end space-x-2">
-                                          <Button
-                                            onClick={() =>
-                                              handleApproveRegistration(
-                                                registration
-                                              )
-                                            }
-                                            variant="outline2"
-                                            size="sm"
-                                            disabled={
-                                              processingId ===
-                                                registration.id ||
-                                              registration.status ===
-                                                "confirmed"
-                                            }
-                                            title="Approve"
-                                          >
-                                            <Check className="h-4 w-4 text-green-600" />
-                                          </Button>
-                                          <Button
-                                            onClick={() =>
-                                              handleRejectRegistration(
-                                                registration
-                                              )
-                                            }
-                                            variant="outline2"
-                                            size="sm"
-                                            disabled={
-                                              processingId ===
-                                                registration.id ||
-                                              registration.status ===
-                                                "cancelled"
-                                            }
-                                            title="Reject"
-                                          >
-                                            <X className="h-4 w-4 text-red-600" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <div className="bg-white rounded-lg shadow p-4">
+                  <ResponsesTable
+                    registrations={filteredRegistrations}
+                    questions={selectedEvent?.questions || []}
+                    memberQuestions={selectedEvent?.memberQuestions || []}
+                    onApprove={(id) => {
+                      const reg = registrations.find(r => r.id === id);
+                      if (reg) handleApproveRegistration(reg);
+                    }}
+                    onReject={(id) => {
+                      const reg = registrations.find(r => r.id === id);
+                      if (reg) handleRejectRegistration(reg);
+                    }}
+                    processingId={processingId}
+                  />
                 </div>
               )}
             </>
@@ -903,6 +858,49 @@ export default function AdminDashboard() {
                 Require Student ID for registration
               </Label>
             </div>
+
+            {/* Team Event Toggle */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isTeamEvent"
+                checked={editForm.isTeamEvent}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    isTeamEvent: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <Label htmlFor="isTeamEvent" className="text-sm font-medium text-gray-700">
+                Team Registration Event
+              </Label>
+            </div>
+
+            {/* Questions */}
+            <div className="border-t pt-4 mt-4">
+              <QuestionBuilder
+                title={editForm.isTeamEvent ? "Team Questions" : "Registration Questions"}
+                questions={editForm.questions}
+                onChange={(questions) =>
+                  setEditForm((prev) => ({ ...prev, questions }))
+                }
+              />
+            </div>
+
+            {/* Member Questions (only for team events) */}
+            {editForm.isTeamEvent && (
+              <div className="border-t pt-4 mt-4">
+                <QuestionBuilder
+                  title="Member Questions (asked per team member)"
+                  questions={editForm.memberQuestions}
+                  onChange={(memberQuestions) =>
+                    setEditForm((prev) => ({ ...prev, memberQuestions }))
+                  }
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
