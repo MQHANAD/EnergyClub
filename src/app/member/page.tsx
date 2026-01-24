@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import Navigation from '@/components/Navigation';
-import { Card } from '@/components/ui/card';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
@@ -17,21 +16,66 @@ interface MemberData {
     fullName: string;
     role: string;
     committeeName?: string;
+    region?: string;
 }
 
 const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, variant: 'view' | 'export' }>(({ memberData, variant }, ref) => {
-    const isLeader = memberData.role.toLowerCase().includes('leader');
-    const hasNoCommittee = !memberData.committeeName;
-    const bgImage = (isLeader || hasNoCommittee) ? '/leaders.svg' : '/members.svg';
+    // 1. Determine "Leader" status
+    const roleLower = memberData.role.toLowerCase();
+    const isLeader = roleLower.includes('leader') || roleLower.includes('head') || roleLower.includes('president');
+
+    // 2. Identify specific special roles
+    const isPresident = roleLower === 'president';
+    const isVicePresident = roleLower === 'vice president';
+
+    // 3. Determine Region (default to Eastern if missing/unknown)
+    const regionLower = (memberData.region || '').toLowerCase();
+    let regionKey = 'eastern';
+    if (regionLower.includes('riyadh')) regionKey = 'riyadh';
+    else if (regionLower.includes('western') || regionLower.includes('jeddah')) regionKey = 'western';
+
+    // 4. Select Background Image
+    let bgImage = '/card-eastern-member.jpg'; // Default fallback
+
+    if (isPresident) {
+        bgImage = '/card-president.jpg';
+    } else if (isVicePresident) {
+        bgImage = '/card-vp.jpg';
+    } else {
+        // Construct filename: card-[region]-[leader|member].jpg
+        // e.g. card-riyadh-leader.jpg
+        const suffix = isLeader ? 'leader' : 'member';
+        bgImage = `/card-${regionKey}-${suffix}.jpg`;
+    }
 
     let displayText = memberData.committeeName || memberData.role;
     const isRole = !memberData.committeeName;
 
-    if (memberData.committeeName && memberData.role.toLowerCase().includes('leader')) {
-        displayText = `Leader of ${displayText}`;
+    // Fix "Leader of Leader of..." issue if committee name includes 'Team' etc.
+    // The previous logic adding "Leader of" text:
+    if (memberData.committeeName && isLeader && !isPresident && !isVicePresident) {
+        // Handle "Vice Leader" exception
+        if (roleLower.includes('vice leader')) {
+            displayText = `Vice Leader of ${displayText}`;
+        } else {
+            // Only add "Leader of" if it's a committee leader
+            displayText = `Leader of ${displayText}`;
+        }
     }
 
     const getStyle = () => {
+        // Special Roles (President/VP) - Use Gold
+        if (isPresident || isVicePresident) {
+            const color = '#f9bc00'; // Gold
+            return {
+                color,
+                textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
+                fontSize: variant === 'export' ? '24px' : '5cqw', // Slightly bigger for single roles
+                fontFamily: 'DGSahabah, sans-serif'
+            };
+        }
+
+        // If it's just a Role with no committee (e.g. some admin role)
         if (isRole) {
             const color = '#f9bc00';
             return {
@@ -74,9 +118,13 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
         ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto aspect-[595/842] overflow-hidden [container-type:size] md:mt-20 mt-8"
         : "relative w-[595px] h-[842px] overflow-hidden bg-[#181818]"; // Fixed size for export
 
+    // Text Positioning Validation
+    // President/VP usually have centered text, Members have it potentially lower?
+    // The previous code had `mt-[35%]` for the role. We'll stick to that unless instructed otherwise.
+
     return (
         <div ref={ref} className={containerClasses}>
-            {/* For export, usage standard img tag to avoid next/image optimization issues on mobile capture */}
+            {/* For export, use standard img tag to avoid next/image optimization issues on mobile capture */}
             {variant === 'export' ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -93,22 +141,25 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
                     priority
                 />
             )}
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-[8%] mt-[0%]">
-                <h1 className="text-white font-bold drop-shadow-md"
-                    style={{
-                        fontSize: variant === 'export' ? '24px' : '5cqw', // approx 5cqw of 842px height is ~42px? No, 5cqw is based on width usually if container-type is inline-size. 
-                        // If container-type: size, cqw is based on width. 595 * 0.05 = 29.75px. 
-                        // Let's use 30px for committee (which was 5cqw) and maybe same for name?
-                        // Original code had name at 5cqw too.
-                        fontFamily: 'DGSahabah, sans-serif'
-                    }}>
-                    {memberData.fullName}
-                </h1>
+            <div className="absolute inset-0 z-10">
+                <div className="absolute top-[33%] inset-x-0 flex justify-center items-center px-[8%]">
+                    <h1 className="text-white font-bold drop-shadow-md text-center"
+                        style={{
+                            fontSize: variant === 'export' ? '32px' : '6cqw',
+                            fontFamily: 'DGSahabah, sans-serif'
+                        }}>
+                        {memberData.fullName}
+                    </h1>
+                </div>
 
-                <p className="font-medium mt-[35%]"
-                    style={style}>
-                    {displayText}
-                </p>
+                {!isPresident && !isVicePresident && (
+                    <div className="absolute top-[64%] inset-x-0 flex justify-center items-center px-[8%]">
+                        <p className="font-medium text-center"
+                            style={style}>
+                            {displayText}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -148,10 +199,16 @@ function MemberContent() {
                         }
                     }
 
+                    // Fetch user region from database or derive if not present
+                    // Usually region is in 'members' collection or 'users'.
+                    // Checking data.region:
+                    const region = data.region || 'Eastern'; // Default to Eastern if missing
+
                     setMemberData({
                         fullName: data.fullName,
                         role: data.role,
-                        committeeName: committeeName
+                        committeeName: committeeName,
+                        region: region
                     });
                 } else {
                     setError('Member profile not found.');
@@ -176,14 +233,14 @@ function MemberContent() {
         if (!exportCardRef.current) return;
         try {
             const canvas = await html2canvas(exportCardRef.current, {
-                scale: 1, // Reduced scale to avoid "too big" issues
+                scale: 2, // Check scale for better quality
                 backgroundColor: null,
                 useCORS: true,
                 x: 0,
                 y: 0,
                 scrollX: 0,
                 scrollY: 0,
-                windowWidth: 1080 // Force desktop rendering context
+                windowWidth: 1080
             });
             const image = canvas.toDataURL("image/png");
             const link = document.createElement("a");
@@ -238,13 +295,13 @@ function MemberContent() {
                     {/* View Version (Responsive) */}
                     <MemberCard memberData={memberData} variant="view" />
 
-                    {/* <button
+                    <button
                         onClick={handleDownload}
                         className="mt-8 flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all duration-300 border border-white/20 group mb-16 cursor-pointer"
                     >
                         <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         <span>Download Card</span>
-                    </button> */}
+                    </button>
                 </motion.div>
 
                 {/* Export Version (Hidden, Fixed Size, Outside Flow) */}

@@ -112,8 +112,9 @@ try {
 export { db, storage };
 
 // Initialize Analytics (client-side only)
+// Initialize Analytics (client-side only, production only)
 let analytics: Analytics | null = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   isSupported().then(yes => {
     if (yes) {
       analytics = getAnalytics(app);
