@@ -27,16 +27,16 @@ const getCommitteeStyle = (committeeName: string) => {
       buttonText: 'text-blue-700'
     },
     'Tech Team': {
-      gradient: 'from-purple-500 to-purple-600',
-      bgGradient: 'from-purple-50 to-purple-100',
-      border: 'border-purple-200',
-      textColor: 'text-purple-900',
-      hoverTextColor: 'group-hover:text-purple-700',
-      iconColor: 'text-purple-600',
-      hoverIconColor: 'group-hover:text-purple-800',
-      buttonBg: 'bg-purple-100',
-      buttonHover: 'hover:bg-purple-200',
-      buttonText: 'text-purple-700'
+      gradient: 'from-red-500 to-red-600',
+      bgGradient: 'from-red-50 to-red-100',
+      border: 'border-red-200',
+      textColor: 'text-red-900',
+      hoverTextColor: 'group-hover:text-red-700',
+      iconColor: 'text-red-600',
+      hoverIconColor: 'group-hover:text-red-800',
+      buttonBg: 'bg-red-100',
+      buttonHover: 'hover:bg-red-200',
+      buttonText: 'text-red-700'
     },
     'Event Planning Team': {
       gradient: 'from-green-500 to-green-600',
@@ -51,18 +51,30 @@ const getCommitteeStyle = (committeeName: string) => {
       buttonText: 'text-green-700'
     },
     'Project Management Team': {
-      gradient: 'from-blue-500 to-blue-600',
-      bgGradient: 'from-blue-50 to-blue-100',
-      border: 'border-blue-200',
-      textColor: 'text-blue-900',
-      hoverTextColor: 'group-hover:text-blue-700',
-      iconColor: 'text-blue-600',
-      hoverIconColor: 'group-hover:text-blue-800',
-      buttonBg: 'bg-blue-100',
-      buttonHover: 'hover:bg-blue-200',
-      buttonText: 'text-blue-700'
+      gradient: 'from-gray-800 to-gray-600',
+      bgGradient: 'from-gray-50 to-gray-100',
+      border: 'border-gray-200',
+      textColor: 'text-gray-900',
+      hoverTextColor: 'group-hover:text-gray-700',
+      iconColor: 'text-gray-600',
+      hoverIconColor: 'group-hover:text-gray-800',
+      buttonBg: 'bg-gray-100',
+      buttonHover: 'hover:bg-gray-200',
+      buttonText: 'text-gray-700'
     },
     'Public Relations Team': {
+      gradient: 'from-purple-500 to-purple-600',
+      bgGradient: 'from-purple-50 to-purple-100',
+      border: 'border-purple-200',
+      textColor: 'text-purple-900',
+      hoverTextColor: 'group-hover:text-purple-700',
+      iconColor: 'text-purple-600',
+      hoverIconColor: 'group-hover:text-purple-800',
+      buttonBg: 'bg-purple-100',
+      buttonHover: 'hover:bg-purple-200',
+      buttonText: 'text-purple-700'
+    },
+    'Marketing Team': {
       gradient: 'from-pink-500 to-pink-600',
       bgGradient: 'from-pink-50 to-pink-100',
       border: 'border-pink-200',
@@ -74,29 +86,17 @@ const getCommitteeStyle = (committeeName: string) => {
       buttonHover: 'hover:bg-pink-200',
       buttonText: 'text-pink-700'
     },
-    'Marketing Team': {
-      gradient: 'from-orange-500 to-orange-600',
-      bgGradient: 'from-orange-50 to-orange-100',
-      border: 'border-orange-200',
-      textColor: 'text-orange-900',
-      hoverTextColor: 'group-hover:text-orange-700',
-      iconColor: 'text-orange-600',
-      hoverIconColor: 'group-hover:text-orange-800',
-      buttonBg: 'bg-orange-100',
-      buttonHover: 'hover:bg-orange-200',
-      buttonText: 'text-orange-700'
-    },
     'Operations & Logistics Team': {
-      gradient: 'from-indigo-500 to-indigo-600',
-      bgGradient: 'from-indigo-50 to-indigo-100',
-      border: 'border-indigo-200',
-      textColor: 'text-indigo-900',
-      hoverTextColor: 'group-hover:text-indigo-700',
-      iconColor: 'text-indigo-600',
-      hoverIconColor: 'group-hover:text-indigo-800',
-      buttonBg: 'bg-indigo-100',
-      buttonHover: 'hover:bg-indigo-200',
-      buttonText: 'text-indigo-700'
+      gradient: 'from-yellow-500 to-yellow-600',
+      bgGradient: 'from-yellow-50 to-yellow-100',
+      border: 'border-yellow-200',
+      textColor: 'text-yellow-900',
+      hoverTextColor: 'group-hover:text-yellow-700',
+      iconColor: 'text-yellow-600',
+      hoverIconColor: 'group-hover:text-yellow-800',
+      buttonBg: 'bg-yellow-100',
+      buttonHover: 'hover:bg-yellow-200',
+      buttonText: 'text-yellow-700'
     }
   };
 
