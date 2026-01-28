@@ -34,17 +34,26 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
     else if (regionLower.includes('western') || regionLower.includes('jeddah')) regionKey = 'western';
 
     // 4. Select Background Image
-    let bgImage = '/card-eastern-member.jpg'; // Default fallback
+    let bgImage = '/cards/easter-member.svg'; // Default fallback
 
     if (isPresident) {
-        bgImage = '/card-president.jpg';
+        bgImage = '/cards/president.svg';
     } else if (isVicePresident) {
-        bgImage = '/card-vp.jpg';
+        bgImage = '/cards/vice-president.svg';
     } else {
         // Construct filename: card-[region]-[leader|member].jpg
         // e.g. card-riyadh-leader.jpg
         const suffix = isLeader ? 'leader' : 'member';
-        bgImage = `/card-${regionKey}-${suffix}.jpg`;
+
+        // Handle the typo in the filename for eastern member if necessary, 
+        // or just construct carefully.
+        // Files: eastern-leader.svg, easter-member.svg (typo), riyadh-leader.svg, etc.
+
+        if (regionKey === 'eastern' && !isLeader) {
+            bgImage = '/cards/easter-member.svg';
+        } else {
+            bgImage = `/cards/${regionKey}-${suffix}.svg`;
+        }
     }
 
     let displayText = memberData.committeeName || memberData.role;
