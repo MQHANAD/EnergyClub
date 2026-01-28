@@ -161,6 +161,10 @@ export function TicketPageClient({ registrationId }: TicketPageClientProps) {
           maxAttendees: eventData.maxAttendees || 0,
           imageUrls: eventData.imageUrls || [],
           requireStudentId: eventData.requireStudentId,
+          organizerId: eventData.organizerId || '',
+          organizerName: eventData.organizerName || '',
+          createdAt: eventData.createdAt?.toDate?.() || new Date(),
+          updatedAt: eventData.updatedAt?.toDate?.() || new Date(),
         };
 
         setEvent(evt);
