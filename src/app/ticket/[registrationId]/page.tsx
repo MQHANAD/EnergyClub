@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { TicketPageClient } from './TicketPageClient';
+import Navigation from '@/components/Navigation';
 
 interface TicketPageProps {
     params: Promise<{ registrationId: string }>;
@@ -18,6 +19,10 @@ export default async function TicketPage({ params }: TicketPageProps) {
     const { registrationId } = await params;
 
     // Pass the registration ID to the client component which will fetch from Firestore
-    return <TicketPageClient registrationId={registrationId} />;
+    return (
+        <>
+            <Navigation colorScheme="dark" />
+            <TicketPageClient registrationId={registrationId} />
+        </>
+    );
 }
-

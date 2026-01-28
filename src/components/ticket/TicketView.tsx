@@ -29,6 +29,80 @@ function formatEventDate(date: string | Date | undefined): string {
 }
 
 /**
+ * Format date for Google Calendar URL (YYYYMMDDTHHmmssZ)
+ */
+function formatGoogleCalendarDate(date: string | Date | undefined): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/**
+ * Format date for ICS file (YYYYMMDDTHHmmssZ)
+ */
+function formatICSDate(date: string | Date | undefined): string {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/**
+ * Generate Google Calendar URL
+ */
+function getGoogleCalendarUrl(event: Event, registration: Registration): string {
+  const startDate = event.startDate || event.date;
+  const endDate = event.endDate || startDate;
+
+  const start = formatGoogleCalendarDate(startDate);
+  const end = formatGoogleCalendarDate(endDate);
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${start}/${end}`,
+    details: `Ticket ID: ${registration.id}\nAttendee: ${registration.userName}\n\n${event.description || ''}`,
+    location: event.location || '',
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/**
+ * Generate ICS file content and trigger download
+ */
+function downloadICSFile(event: Event, registration: Registration): void {
+  const startDate = event.startDate || event.date;
+  const endDate = event.endDate || startDate;
+
+  const start = formatICSDate(startDate);
+  const end = formatICSDate(endDate);
+
+  const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Energy Hub//Ticket//EN
+BEGIN:VEVENT
+UID:${registration.id}@energyhub
+DTSTAMP:${formatICSDate(new Date())}
+DTSTART:${start}
+DTEND:${end}
+SUMMARY:${event.title}
+DESCRIPTION:Ticket ID: ${registration.id}\\nAttendee: ${registration.userName}
+LOCATION:${event.location || ''}
+END:VEVENT
+END:VCALENDAR`;
+
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${event.title.replace(/[^a-zA-Z0-9]/g, '_')}_ticket.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Get status badge color and text
  */
 function getStatusBadge(status: Registration['status']): { bg: string; text: string; label: string } {
@@ -48,7 +122,6 @@ function getStatusBadge(status: Registration['status']): { bg: string; text: str
 export function TicketView({ registration, event }: TicketViewProps) {
   const eventDate = formatEventDate(event.startDate || event.date);
   const statusBadge = getStatusBadge(registration.status);
-  const walletBaseUrl = process.env.NEXT_PUBLIC_FUNCTIONS_URL || '';
 
   return (
     <div className="ticket-container">
@@ -95,26 +168,28 @@ export function TicketView({ registration, event }: TicketViewProps) {
             <span className="ticket-id">Ticket ID: {registration.id}</span>
           </div>
 
-          {/* Wallet Buttons */}
-          <div className="ticket-wallet-buttons">
+          {/* Calendar Buttons */}
+          <div className="ticket-calendar-buttons">
             <a
-              href={`${walletBaseUrl}/wallet/apple/${registration.id}`}
-              className="wallet-button apple-wallet"
+              href={getGoogleCalendarUrl(event, registration)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="calendar-button google-calendar"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="wallet-icon">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+              <svg viewBox="0 0 24 24" fill="currentColor" className="calendar-icon">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z" />
               </svg>
-              Add to Apple Wallet
+              Add to Google Calendar
             </a>
-            <a
-              href={`${walletBaseUrl}/wallet/google/${registration.id}`}
-              className="wallet-button google-wallet"
+            <button
+              onClick={() => downloadICSFile(event, registration)}
+              className="calendar-button apple-calendar"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="wallet-icon">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              <svg viewBox="0 0 24 24" fill="currentColor" className="calendar-icon">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z" />
               </svg>
-              Add to Google Wallet
-            </a>
+              Add to Apple Calendar
+            </button>
           </div>
         </div>
 
@@ -132,12 +207,12 @@ export function TicketView({ registration, event }: TicketViewProps) {
       <style jsx>{`
         .ticket-container {
           min-height: 100vh;
-          padding: 24px 16px;
+          padding: 100px 16px 24px 16px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, ${BRAND_PRIMARY} 0%, #1a5f66 100%);
+          background: linear-gradient(135deg, #1a5e66dd, #1a5f66bb 100%);
         }
 
         .ticket-card {
@@ -261,14 +336,14 @@ export function TicketView({ registration, event }: TicketViewProps) {
           font-family: monospace;
         }
 
-        .ticket-wallet-buttons {
+        .ticket-calendar-buttons {
           display: flex;
           flex-direction: column;
           gap: 12px;
           margin-top: 24px;
         }
 
-        .wallet-button {
+        .calendar-button {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -279,25 +354,27 @@ export function TicketView({ registration, event }: TicketViewProps) {
           font-weight: 600;
           text-decoration: none;
           transition: transform 0.2s, box-shadow 0.2s;
+          border: none;
+          cursor: pointer;
         }
 
-        .wallet-button:hover {
+        .calendar-button:hover {
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
-        .wallet-icon {
+        .calendar-icon {
           width: 20px;
           height: 20px;
         }
 
-        .apple-wallet {
-          background: #000000;
+        .google-calendar {
+          background: #4285f4;
           color: #ffffff;
         }
 
-        .google-wallet {
-          background: #4285f4;
+        .apple-calendar {
+          background: #000000;
           color: #ffffff;
         }
 

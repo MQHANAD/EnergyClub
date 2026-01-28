@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, X, LayoutDashboard } from "lucide-react";
+import { LogOut, User, Menu, X, LayoutDashboard, Ticket } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -227,6 +227,7 @@ function UserDropdown({ user, userProfile, isMember, adminLinks, onLogout }: any
               </div>
 
               <DropdownLink href="/profile" icon={User} label="My Profile" onClick={() => setIsOpen(false)} />
+              <DropdownLink href="/my-tickets" icon={Ticket} label="My Tickets" onClick={() => setIsOpen(false)} />
               {isMember && <DropdownLink href="/member" icon={LayoutDashboard} label="Member Card" onClick={() => setIsOpen(false)} />}
 
               {adminLinks.length > 0 && (
@@ -325,6 +326,7 @@ function MobileMenu({ isOpen, onClose, navLinks, user, userProfile, isMember, ad
                   </div>
 
                   <MobileLink href="/profile" icon={User} label="My Profile" onClick={onClose} />
+                  <MobileLink href="/my-tickets" icon={Ticket} label="My Tickets" onClick={onClose} />
                   {isMember && <MobileLink href="/member" icon={LayoutDashboard} label="Member Card" onClick={onClose} />}
 
                   {adminLinks.length > 0 && (
