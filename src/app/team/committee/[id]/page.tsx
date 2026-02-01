@@ -73,11 +73,21 @@ export default function CommitteePage() {
             } as HybridMember);
           }
 
+          // 1. Regional matching helper
+          const matchesRegion = (memberRegion: string | null | undefined, targetRegion: string) => {
+            if (targetRegion === 'Eastern Province') {
+              return !memberRegion || memberRegion.toLowerCase().includes('eastern') || memberRegion === 'Eastern Province';
+            }
+            // Normal matching for Riyadh/Western
+            return memberRegion === targetRegion;
+          };
+
           const committeeLeaders = allMembers.filter((member: HybridMember) => {
             const role = member.role?.trim().toLowerCase();
             const matchesRole = role === "leader" || role === "team leader" || role === "committee leader";
-            const matchesRegion = !region || member.region === region;
-            return matchesRole && matchesRegion;
+            // Use relaxed matching if region is provided, otherwise default to Eastern Province logic
+            const matchesRegionResult = region ? matchesRegion(member.region, region) : matchesRegion(member.region, 'Eastern Province');
+            return matchesRole && matchesRegionResult;
           });
 
           const uniqueCommitteeLeaders = committeeLeaders.filter((l: HybridMember) =>
@@ -96,11 +106,19 @@ export default function CommitteePage() {
           if (committeeData) {
             setCommittee(committeeData);
 
+            // 1. Regional matching helper
+            const matchesRegion = (memberRegion: string | null | undefined, targetRegion: string) => {
+              if (targetRegion === 'Eastern Province') {
+                return !memberRegion || memberRegion.toLowerCase().includes('eastern') || memberRegion === 'Eastern Province';
+              }
+              return memberRegion === targetRegion;
+            };
+
             // Apply fuzzy filtering client-side for consistency with main page
             const filteredMembers = allMembers.filter(m => {
-              // 1. Filter by region first if provided
-              if (region && m.region !== region) return false;
-              if (!region && m.region && !m.region.toLowerCase().includes('eastern')) return false;
+              // 1. Filter by region first
+              const targetRegion = region || 'Eastern Province';
+              if (!matchesRegion(m.region, targetRegion)) return false;
 
               // 2. Fuzzy match committee name
               if (!m.committeeName) return false;
