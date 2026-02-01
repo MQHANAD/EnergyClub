@@ -26,11 +26,11 @@ const item = {
 };
 
 const stats = [
-  { key: "attendees", value: 2000 },
+  { key: "attendees", value: 4000 },
   { key: "workingMembers", value: 280 },
-  { key: "universities", value: 8 },
-  { key: "panels", value: 4 },
-  { key: "majorEvents", value: 7 },
+  { key: "universities", value: 20 },
+  { key: "panels", value: 6 },
+  { key: "majorEvents", value: 15 },
 ];
 
 export default function ImpactNumbers() {

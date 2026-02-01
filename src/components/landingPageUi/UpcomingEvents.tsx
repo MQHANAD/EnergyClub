@@ -133,7 +133,7 @@ export default function UpcomingEvents() {
         <Events events={upcomingEvents} title={t("events.title1")} />
       )}
       {pastEvents.length > 0 && (
-        <Events events={pastEvents} title={t("events.title")} />
+        <Events events={pastEvents} title={t("events.title")} showMoreLess={true} />
       )}
     </>
   );

@@ -60,7 +60,7 @@ const messages: Record<Lang, MessageTree> = {
       logo: "Logo {i}",
     },
     events: {
-      title1: "Upcoming Events",
+      title1: "Energy Week Events",
       title: "Past Events",
       ctaRegister: "Register for Energy Events",
       ctaJoin: "Join Us",
@@ -135,7 +135,7 @@ const messages: Record<Lang, MessageTree> = {
       tos: "By signing in, you agree to our terms of service and privacy policy.",
     },
     eventsPage: {
-      title: "Upcoming Events ⚡️",
+      title: "All Events",
       subtitle: "Discover and register for energy week events",
       loadingEvents: "Loading events...",
       noEventsFound: "No events found",

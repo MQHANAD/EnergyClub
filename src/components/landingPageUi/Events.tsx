@@ -21,11 +21,13 @@ export default function Events({
   primary = "#25818a",
   accent = "#f8cd5c",
   title,
+  showMoreLess = false,
 }: {
   events: EventItem[];
   primary?: string;
   accent?: string;
   title?: string;
+  showMoreLess?: boolean;
 }) {
   const [active, setActive] = useState<EventItem | null>(null);
   const [slideIdx, setSlideIdx] = useState(0);
@@ -33,7 +35,7 @@ export default function Events({
   const [mounted, setMounted] = useState(false);
   const { t } = useI18n();
 
-  const displayedEvents = events.slice(0, showAll ? events.length : 3);
+  const displayedEvents = showMoreLess ? events.slice(0, showAll ? events.length : 3) : events;
   const titleText = title || t("events.title");
 
   // Set mounted to true after component mounts
@@ -273,7 +275,7 @@ export default function Events({
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={showAll ? "all" : "limited"}
+          key={showMoreLess ? (showAll ? "all" : "limited") : "events"}
           variants={container}
           initial="hidden"
           animate="show"
@@ -317,30 +319,30 @@ export default function Events({
       </AnimatePresence>
 
       {/* CTA Buttons */}
-      {events.length > 3 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-12 sm:mt-16 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className={showMoreLess && events.length > 3 ? "mt-12 sm:mt-16 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center" : "mt-12 sm:mt-16 flex justify-center"}
+      >
+        <Link
+          href="/events"
+          className="px-6 sm:px-8 py-3 font-bold text-white tracking-wide transition-all hover:opacity-90 text-center rounded-lg"
+          style={{ backgroundColor: primary }}
         >
-          <Link
-            href="/events"
-            className="w-full sm:w-auto px-6 sm:px-8 py-3 font-bold text-white tracking-wide transition-all hover:opacity-90 text-center rounded-lg"
-            style={{ backgroundColor: primary }}
-          >
-            {t("events.ctaRegister")}
-          </Link>
+          {t("events.ctaRegister")}
+        </Link>
 
+        {showMoreLess && events.length > 3 && (
           <button
             onClick={() => setShowAll(!showAll)}
             className="w-full sm:w-auto px-6 sm:px-8 py-3 font-bold text-gray-700 border border-gray-300 tracking-wide transition-all hover:border-gray-400 hover:text-gray-900 rounded-lg cursor-pointer"
           >
             {showAll ? t("events.showLess") : t("events.showMore")}
           </button>
-        </motion.div>
-      )}
+        )}
+      </motion.div>
 
       {/* Modal rendered via portal */}
       {renderModal()}
