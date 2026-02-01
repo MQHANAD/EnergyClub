@@ -105,7 +105,7 @@ export default function TeamPage() {
             <div className="text-center">
               <div className="flex items-center justify-center">
                 <Image
-                  src="/ksa-energy-week-logo.png"
+                  src="/EW 2.svg"
                   alt="KSA Energy Week"
                   width={350}
                   height={175}
@@ -131,7 +131,7 @@ export default function TeamPage() {
         <div
           className="w-full h-12 md:h-16 relative my-8"
           style={{
-            backgroundImage: 'url(/energy-week-banner.png?v=2)',
+            backgroundImage: 'url(/VisualIdentity4.svg?v=2)',
             backgroundRepeat: 'repeat-x',
             backgroundSize: 'auto 100%',
             backgroundPosition: 'center'
@@ -157,7 +157,7 @@ export default function TeamPage() {
         <div
           className="w-full h-12 md:h-16 relative my-8"
           style={{
-            backgroundImage: 'url(/energy-week-banner.png?v=3)',
+            backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
             backgroundRepeat: 'repeat-x',
             backgroundSize: 'auto 100%',
             backgroundPosition: 'center'
@@ -215,7 +215,7 @@ export default function TeamPage() {
         <div
           className="w-full h-12 md:h-16 relative my-8"
           style={{
-            backgroundImage: 'url(/energy-week-banner.png?v=3)',
+            backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
             backgroundRepeat: 'repeat-x',
             backgroundSize: 'auto 100%',
             backgroundPosition: 'center'
