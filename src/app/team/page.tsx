@@ -139,13 +139,15 @@ export default function TeamPage() {
         />
 
 
-        {/* Regional Sections */}
-        {/* Eastern Province (Default) */}
         <Suspense fallback={<LoadingSpinner />}>
           <CommitteesSection
             committees={committees}
-            hybridMembers={hybridMembers}
+            hybridMembers={hybridMembers.filter(m => {
+              const isGlobalLeader = m.fullName === 'Omar Alsaigh' || m.fullName.toLowerCase().includes('ahmad alshamrani');
+              return !isGlobalLeader && (!m.region || m.region.toLowerCase().includes('eastern') || m.region === 'Eastern Province');
+            })}
             title="Eastern Province"
+            region="Eastern Province"
             sectionLogo="/eastern-logo.png"
           />
         </Suspense>
@@ -164,12 +166,49 @@ export default function TeamPage() {
 
         {/* Riyadh Region */}
         <Suspense fallback={<LoadingSpinner />}>
-          <CommitteesSection
-            committees={[]}
-            hybridMembers={hybridMembers}
-            title="Riyadh Region"
-            sectionLogo="/riyadh-logo.png"
-          />
+          {(() => {
+            const riyadhMembers = hybridMembers.filter(m => m.region === 'Riyadh Regional Team');
+            const riyadhManagers = riyadhMembers.filter(m => !m.committeeId || m.committeeId === '');
+
+            return (
+              <div className="py-20">
+                {/* Regional Header */}
+                <div className="text-center mb-16 px-4">
+                  <div className="flex flex-col items-center justify-center mb-4">
+                    <div className="relative w-48 h-24 mb-4">
+                      <Image
+                        src="/riyadh-logo.png"
+                        alt="Riyadh Region"
+                        fill
+                        className="object-contain mix-blend-multiply"
+                      />
+                    </div>
+                    <h2 className="text-4xl font-light text-gray-900">
+                      Riyadh Region
+                    </h2>
+                  </div>
+                </div>
+
+                {riyadhManagers.length > 0 && (
+                  <LeadershipSection
+                    leadershipPositions={[]}
+                    committees={[]}
+                    hybridMembers={[]}
+                    customLeaders={riyadhManagers}
+                    customTitle="Leaders"
+                    className="pb-0"
+                  />
+                )}
+                <CommitteesSection
+                  committees={committees}
+                  hybridMembers={riyadhMembers}
+                  region="Riyadh Regional Team"
+                  hideHeader={true}
+                  className={riyadhManagers.length > 0 ? "pt-10" : ""}
+                />
+              </div>
+            );
+          })()}
         </Suspense>
 
         {/* Decorative Banner */}
@@ -185,12 +224,51 @@ export default function TeamPage() {
 
         {/* Western Region */}
         <Suspense fallback={<LoadingSpinner />}>
-          <CommitteesSection
-            committees={[]}
-            hybridMembers={hybridMembers}
-            title="Western Region"
-            sectionLogo="/western-logo.png"
-          />
+          {(() => {
+            const westernMembers = hybridMembers.filter(m =>
+              m.region && m.region.toLowerCase().includes('western')
+            );
+            const westernManagers = westernMembers.filter(m => !m.committeeId || m.committeeId === '');
+
+            return (
+              <div className="py-20">
+                {/* Regional Header */}
+                <div className="text-center mb-16 px-4">
+                  <div className="flex flex-col items-center justify-center mb-4">
+                    <div className="relative w-48 h-24 mb-4">
+                      <Image
+                        src="/western-logo.png"
+                        alt="Western Region"
+                        fill
+                        className="object-contain mix-blend-multiply"
+                      />
+                    </div>
+                    <h2 className="text-4xl font-light text-gray-900">
+                      Western Region
+                    </h2>
+                  </div>
+                </div>
+
+                {westernManagers.length > 0 && (
+                  <LeadershipSection
+                    leadershipPositions={[]}
+                    committees={[]}
+                    hybridMembers={[]}
+                    customLeaders={westernManagers}
+                    customTitle="Leaders"
+                    className="pb-0"
+                  />
+                )}
+                <CommitteesSection
+                  committees={committees}
+                  hybridMembers={westernMembers}
+                  region={westernMembers[0]?.region || "Western Regional Team"}
+                  hideHeader={true}
+                  className={westernManagers.length > 0 ? "pt-10" : ""}
+                />
+              </div>
+            );
+          })()}
         </Suspense>
 
         {/* Footer Spacing */}

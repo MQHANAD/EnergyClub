@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from './firebase';
+import { capitalizeName } from './utils';
 import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse, TeamMemberResponse } from '@/types';
 
 // Convert Firestore timestamp-like value to Date
@@ -100,7 +101,7 @@ const docToMember = (doc: QueryDocumentSnapshot): Member => {
   return {
     id: doc.id,
     email: data.email || '',
-    fullName: data.fullName,
+    fullName: capitalizeName(data.fullName),
     role: data.role,
     profilePicture: data.profilePicture,
     linkedInUrl: data.linkedInUrl,

@@ -7,6 +7,7 @@ import AuthGuard from '@/components/AuthGuard';
 import Navigation from '@/components/Navigation';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { capitalizeName } from '@/lib/utils';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
 import { AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -214,7 +215,7 @@ function MemberContent() {
                     const region = data.region || 'Eastern'; // Default to Eastern if missing
 
                     setMemberData({
-                        fullName: data.fullName,
+                        fullName: capitalizeName(data.fullName),
                         role: data.role,
                         committeeName: committeeName,
                         region: region

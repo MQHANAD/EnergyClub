@@ -97,6 +97,18 @@ const getCommitteeStyle = (committeeName: string) => {
       buttonBg: 'bg-yellow-100',
       buttonHover: 'hover:bg-yellow-200',
       buttonText: 'text-yellow-700'
+    },
+    'Media Team': {
+      gradient: 'from-indigo-500 to-indigo-600',
+      bgGradient: 'from-indigo-50 to-indigo-100',
+      border: 'border-indigo-200',
+      textColor: 'text-indigo-900',
+      hoverTextColor: 'group-hover:text-indigo-700',
+      iconColor: 'text-indigo-600',
+      hoverIconColor: 'group-hover:text-indigo-800',
+      buttonBg: 'bg-indigo-100',
+      buttonHover: 'hover:bg-indigo-200',
+      buttonText: 'text-indigo-700'
     }
   };
 
@@ -120,25 +132,33 @@ const getCommitteeStyle = (committeeName: string) => {
 interface CommitteeCardProps {
   committee: Committee;
   hybridMembers: HybridMember[];
+  region?: string;
   className?: string;
 }
 
 export const CommitteeCard: React.FC<CommitteeCardProps> = ({
   committee,
   hybridMembers,
+  region,
   className = ''
 }) => {
   const { t, lang } = useI18n();
   const router = useRouter();
   const style = getCommitteeStyle(committee.name);
 
-  // Count hybrid members for this committee
-  const memberCount = hybridMembers.filter(member =>
-    member.committeeName === committee.name
-  ).length;
+  // Count hybrid members for this committee using fuzzy matching
+  const memberCount = hybridMembers.filter(member => {
+    if (!member.committeeName) return false;
+    const mComm = member.committeeName.toLowerCase();
+    const cName = committee.name.toLowerCase();
+    return mComm === cName || mComm.includes(cName) || cName.includes(mComm);
+  }).length;
 
   const handleViewCommittee = () => {
-    router.push(`/team/committee/${committee.id}`);
+    const url = region
+      ? `/team/committee/${committee.id}?region=${encodeURIComponent(region)}`
+      : `/team/committee/${committee.id}`;
+    router.push(url);
   };
 
   const isArabic = lang === 'ar';
@@ -238,7 +258,9 @@ interface CommitteesSectionProps {
   hybridMembers: HybridMember[];
   className?: string;
   title?: string;
+  region?: string;
   sectionLogo?: string;
+  hideHeader?: boolean;
 }
 
 export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
@@ -246,7 +268,9 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
   hybridMembers,
   className = '',
   title,
-  sectionLogo
+  region,
+  sectionLogo,
+  hideHeader = false
 }) => {
   const { t } = useI18n();
 
@@ -266,13 +290,30 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
 
   // Filter out committees with no members
   const committeesWithMembers = sortedCommittees.filter(committee => {
-    const memberCount = hybridMembers.filter(member =>
-      member.committeeName === committee.name
-    ).length;
+    const memberCount = hybridMembers.filter(member => {
+      if (!member.committeeName) return false;
+
+      const mComm = member.committeeName.toLowerCase();
+      const cName = committee.name.toLowerCase();
+
+      // Exact match
+      if (mComm === cName) return true;
+
+      // Partial match: "Marketing" matches "Marketing Team"
+      return mComm.includes(cName) || cName.includes(mComm);
+    }).length;
     return memberCount > 0;
   });
 
+  // Debug output
+  console.log(`CommitteesSection [${title}]:`, {
+    totalMembers: hybridMembers.length,
+    committeesWithMembers: committeesWithMembers.length,
+    sampleMember: hybridMembers[0] ? { name: hybridMembers[0].fullName, comm: hybridMembers[0].committeeName } : 'none'
+  });
+
   if (committeesWithMembers.length === 0) {
+    if (hideHeader) return null;
     return (
       <section className={`py-16 ${className}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -305,26 +346,27 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
     <section className={`py-20 bg-white ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="flex flex-col items-center justify-center mb-4">
-            {sectionLogo ? (
-              <div className="relative w-48 h-24 mb-4">
-                <Image
-                  src={sectionLogo}
-                  alt={title || "Section Logo"}
-                  fill
-                  className="object-contain mix-blend-multiply"
-                />
-              </div>
-            ) : (
-              <Building2 className="w-8 h-8 text-gray-600 mb-3" />
-            )}
-            <h2 className="text-4xl font-light text-gray-900">
-              {title || t('team.committees.title')}
-            </h2>
+        {!hideHeader && (
+          <div className="text-center mb-16">
+            <div className="flex flex-col items-center justify-center mb-4">
+              {sectionLogo ? (
+                <div className="relative w-48 h-24 mb-4">
+                  <Image
+                    src={sectionLogo}
+                    alt={title || "Section Logo"}
+                    fill
+                    className="object-contain mix-blend-multiply"
+                  />
+                </div>
+              ) : (
+                <Building2 className="w-8 h-8 text-gray-600 mb-3" />
+              )}
+              <h2 className="text-4xl font-light text-gray-900">
+                {title || t('team.committees.title')}
+              </h2>
+            </div>
           </div>
-
-        </div>
+        )}
 
         {/* Committees Grid */}
         <div className={`gap-8 ${committeesWithMembers.length === 1
@@ -336,6 +378,7 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
               key={committee.id}
               committee={committee}
               hybridMembers={hybridMembers}
+              region={region}
               className={committeesWithMembers.length === 1 ? 'w-full max-w-md' : ''}
             />
           ))}

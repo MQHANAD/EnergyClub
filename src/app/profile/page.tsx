@@ -11,14 +11,14 @@ import Input from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { 
-  User, 
-  Edit3, 
-  Save, 
-  X, 
-  Camera, 
-  Mail, 
-  Users, 
+import {
+  User,
+  Edit3,
+  Save,
+  X,
+  Camera,
+  Mail,
+  Users,
   ExternalLink,
   AlertCircle,
   CheckCircle
@@ -26,6 +26,7 @@ import {
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { doc, updateDoc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { capitalizeName } from '@/lib/utils';
 
 interface MemberData {
   id: string;
@@ -43,7 +44,7 @@ interface MemberData {
 function ProfileContent() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { t } = useI18n();
-  
+
   // State management
   const [memberData, setMemberData] = useState<MemberData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +52,7 @@ function ProfileContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     displayName: '',
@@ -59,7 +60,7 @@ function ProfileContent() {
     portfolioUrl: '',
     profilePicture: ''
   });
-  
+
   // File upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -84,7 +85,7 @@ function ProfileContent() {
       // Get user profile data by UID (avoid duplicate user docs keyed by email)
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
-      
+
       let userData;
       if (!userDoc.exists()) {
         // Create user profile if it doesn't exist (keyed by UID)
@@ -98,17 +99,17 @@ function ProfileContent() {
           createdAt: new Date(),
           updatedAt: new Date()
         };
-        
+
         await setDoc(userRef, userData);
       } else {
         userData = userDoc.data();
       }
-      
+
       // Get member data from members collection by email (doc id may not be email)
       const membersColl = collection(db, 'members');
       const memberQuery = query(membersColl, where('email', '==', user.email));
       const memberSnap = await getDocs(memberQuery);
-      
+
       let memberInfo: MemberData = {
         id: user.email,
         fullName: userData.displayName || user.email.split('@')[0],
@@ -148,6 +149,7 @@ function ProfileContent() {
         }
       }
 
+      memberInfo.fullName = capitalizeName(memberInfo.fullName);
       setMemberData(memberInfo);
       setFormData({
         displayName: memberInfo.fullName,
@@ -193,13 +195,13 @@ function ProfileContent() {
         setError('Please select an image file');
         return;
       }
-      
+
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setError('File size must be less than 5MB');
         return;
       }
-      
+
       setSelectedFile(file);
       setError(null);
     }
@@ -209,10 +211,10 @@ function ProfileContent() {
     const storage = getStorage();
     const fileName = `profile-pictures/${user?.email}/${Date.now()}-${file.name}`;
     const storageRef = ref(storage, fileName);
-    
+
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
-    
+
     return downloadURL;
   };
 
@@ -243,10 +245,12 @@ function ProfileContent() {
         }
       }
 
+      const capitalizedName = capitalizeName(formData.displayName);
+
       // Update user document (keyed by UID)
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
-        displayName: formData.displayName,
+        displayName: capitalizedName,
         photoURL: newProfilePicture,
         linkedIn: formData.linkedInUrl,
         portfolioUrl: formData.portfolioUrl || null,
@@ -259,7 +263,7 @@ function ProfileContent() {
       if (!memberSnapForUpdate.empty) {
         const memberRef = doc(db, 'members', memberSnapForUpdate.docs[0].id);
         await updateDoc(memberRef, {
-          fullName: formData.displayName,
+          fullName: capitalizedName,
           profilePicture: newProfilePicture,
           linkedInUrl: formData.linkedInUrl,
           portfolioUrl: formData.portfolioUrl || null,
@@ -270,16 +274,21 @@ function ProfileContent() {
       // Update local state immediately
       setMemberData(prev => prev ? {
         ...prev,
-        fullName: formData.displayName,
+        fullName: capitalizedName,
         profilePicture: newProfilePicture,
         linkedInUrl: formData.linkedInUrl,
         portfolioUrl: formData.portfolioUrl
       } : null);
 
+      setFormData(prev => ({
+        ...prev,
+        displayName: capitalizedName
+      }));
+
       setIsEditing(false);
       setSelectedFile(null);
       setSuccess('Profile updated successfully! Changes will appear on the team page shortly.');
-      
+
       // Clear success message after 5 seconds
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
@@ -379,7 +388,7 @@ function ProfileContent() {
                     </button>
                   )}
                 </div>
-                
+
                 {isEditing && (
                   <div className="mt-4">
                     <input
@@ -524,16 +533,16 @@ function ProfileContent() {
                     </Button>
                   ) : (
                     <>
-                      <Button 
-                        onClick={handleSave} 
+                      <Button
+                        onClick={handleSave}
                         disabled={isSaving || isUploading}
                         className="flex items-center bg-blue-600 hover:bg-blue-700"
                       >
                         <Save className="w-4 h-4 mr-2" />
                         {isSaving || isUploading ? 'Saving...' : 'Save Changes'}
                       </Button>
-                      <Button 
-                        onClick={handleCancel} 
+                      <Button
+                        onClick={handleCancel}
                         variant="outline"
                         className="flex items-center"
                       >

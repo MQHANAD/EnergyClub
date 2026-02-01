@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Committee, Member } from '@/types';
 import { HybridMember, getCommitteeMembersDirect, getMembersUltraOptimized } from '@/lib/hybridMembers';
 import { useI18n } from '@/i18n';
@@ -18,7 +18,9 @@ export default function CommitteePage() {
   const { t } = useI18n();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const committeeId = params.id as string;
+  const region = searchParams.get('region');
 
   const [committee, setCommittee] = useState<Committee | null>(null);
   const [members, setMembers] = useState<HybridMember[]>([]);
@@ -32,13 +34,12 @@ export default function CommitteePage() {
         setError(null);
 
         if (committeeId === 'leaders') {
-          // Special handling for Leaders committee
+          // ... (existing leaders logic remains same)
           const [leadershipPositions, allMembers] = await Promise.all([
             teamApi.getLeadershipPositions(),
-            getMembersUltraOptimized() // We need all members to find committee leaders
+            getMembersUltraOptimized()
           ]);
 
-          // Construct Leaders committee object
           setCommittee({
             id: 'leaders',
             name: 'Leaders',
@@ -49,13 +50,11 @@ export default function CommitteePage() {
             members: []
           });
 
-          // Filter for President, VP, and Committee Leaders
           const president = leadershipPositions.find((p: any) => p.title === 'president');
           const vicePresident = leadershipPositions.find((p: any) => p.title === 'vice_president');
 
           const leaders: HybridMember[] = [];
 
-          // Add President
           if (president && president.member) {
             leaders.push({
               ...president.member,
@@ -65,7 +64,6 @@ export default function CommitteePage() {
             } as HybridMember);
           }
 
-          // Add Vice President
           if (vicePresident && vicePresident.member) {
             leaders.push({
               ...vicePresident.member,
@@ -75,33 +73,44 @@ export default function CommitteePage() {
             } as HybridMember);
           }
 
-          // Add Committee Leaders
           const committeeLeaders = allMembers.filter((member: HybridMember) => {
             const role = member.role?.trim().toLowerCase();
-            return role === "leader" || role === "team leader" || role === "committee leader";
+            const matchesRole = role === "leader" || role === "team leader" || role === "committee leader";
+            const matchesRegion = !region || member.region === region;
+            return matchesRole && matchesRegion;
           });
 
-          // Filter out duplicates (if President/VP are also marked as leaders in their committees)
           const uniqueCommitteeLeaders = committeeLeaders.filter((l: HybridMember) =>
             !leaders.some(existing => existing.email === l.email)
           );
 
           setMembers([...leaders, ...uniqueCommitteeLeaders]);
-
-          // Log committee view
           logCommitteeView('leaders', 'Leaders');
         } else {
-          // Standard committee fetching
-          const [committeeData, membersData] = await Promise.all([
+          // Standard committee fetching with regional support and fuzzy matching
+          const [committeeData, allMembers] = await Promise.all([
             teamApi.getCommitteeLight(committeeId),
-            committeeId ? getCommitteeMembersDirect(committeeId) : Promise.resolve([])
+            getMembersUltraOptimized() // All members (cached) to use fuzzy logic
           ]);
 
           if (committeeData) {
             setCommittee(committeeData);
-            setMembers(membersData);
 
-            // Log committee view for analytics
+            // Apply fuzzy filtering client-side for consistency with main page
+            const filteredMembers = allMembers.filter(m => {
+              // 1. Filter by region first if provided
+              if (region && m.region !== region) return false;
+              if (!region && m.region && !m.region.toLowerCase().includes('eastern')) return false;
+
+              // 2. Fuzzy match committee name
+              if (!m.committeeName) return false;
+              const mComm = m.committeeName.toLowerCase();
+              const cName = committeeData.name.toLowerCase();
+
+              return mComm === cName || mComm.includes(cName) || cName.includes(mComm);
+            });
+
+            setMembers(filteredMembers);
             logCommitteeView(committeeId, committeeData.name);
           } else {
             setError('Committee not found');
@@ -118,14 +127,13 @@ export default function CommitteePage() {
     if (committeeId) {
       fetchCommittee();
     }
-  }, [committeeId]);
+  }, [committeeId, region]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner />
-
         </div>
       </div>
     );
@@ -169,13 +177,16 @@ export default function CommitteePage() {
           </div>
 
           <div className="text-center">
-            <div className="flex items-center justify-center mb-6">
-
-              <h1 className="text-4xl md:text-5xl font-light text-gray-900">
+            <div className="flex flex-col items-center justify-center mb-6">
+              <h1 className="text-4xl md:text-5xl font-light text-gray-900 mb-2">
                 {committee.name}
               </h1>
+              {region && (
+                <p className="text-xl text-blue-600 font-light tracking-wide uppercase">
+                  {region.replace(' Regional Team', '')}
+                </p>
+              )}
             </div>
-
           </div>
         </div>
       </section>

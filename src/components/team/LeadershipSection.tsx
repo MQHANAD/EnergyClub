@@ -12,13 +12,19 @@ interface LeadershipSectionProps {
   committees: Committee[];
   hybridMembers: HybridMember[];
   className?: string;
+  customLeaders?: HybridMember[];
+  customTitle?: string;
+  hideHeader?: boolean;
 }
 
 export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   leadershipPositions,
   committees,
   hybridMembers,
-  className = ''
+  className = '',
+  customLeaders,
+  customTitle,
+  hideHeader = false
 }) => {
   const { t } = useI18n();
 
@@ -76,50 +82,70 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
   // Filter to show only specific leaders in exact order
   const allowedNames = ['Layan Iseafan', 'Omar Alsaigh'];
 
-  const filteredLeadership = allLeadership.filter(pos =>
-    pos.member && allowedNames.some(name =>
-      pos.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
-      name.toLowerCase().includes(pos.member.fullName.toLowerCase())
-    )
-  );
+  let finalLeadership = allLeadership;
 
-  // Sort in the exact order specified
-  const sortedLeadership = filteredLeadership.sort((a, b) => {
-    const aIndex = allowedNames.findIndex(name =>
-      a.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
-      name.toLowerCase().includes(a.member.fullName.toLowerCase())
+  if (customLeaders && customLeaders.length > 0) {
+    // If custom leaders are provided, use them directly
+    finalLeadership = customLeaders.map(leader => ({
+      id: `leader-${leader.id}`,
+      title: 'leader' as any,
+      memberId: leader.id,
+      member: {
+        ...convertHybridToMember(leader),
+        committeeName: leader.committeeName
+      },
+      committeeName: leader.committeeName,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isFormalLeadership: false
+    }));
+  } else {
+    // Default filtering logic: Show accepted leaders
+    const filteredLeadership = allLeadership.filter(pos =>
+      pos.member && allowedNames.some(name =>
+        pos.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(pos.member.fullName.toLowerCase())
+      )
     );
-    const bIndex = allowedNames.findIndex(name =>
-      b.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
-      name.toLowerCase().includes(b.member.fullName.toLowerCase())
-    );
-    return aIndex - bIndex;
-  });
 
-  if (sortedLeadership.length === 0) {
-    return null;
+    // Sort in the exact order specified
+    finalLeadership = filteredLeadership.sort((a, b) => {
+      const aIndex = allowedNames.findIndex(name =>
+        a.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(a.member.fullName.toLowerCase())
+      );
+      const bIndex = allowedNames.findIndex(name =>
+        b.member.fullName.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(b.member.fullName.toLowerCase())
+      );
+      return aIndex - bIndex;
+    });
   }
 
   return (
-    <section className={`py-10 bg-white ${className}`}>
+    <section className={`py-6 bg-white ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-4">
-            <Crown className="w-8 h-8 text-gray-600 mr-3" />
-            <h2 className="text-4xl font-light text-gray-900">
-              {t('team.leadership.title')}
-            </h2>
+        {!hideHeader && (
+          <div className="text-center mb-16">
+            <div className="flex items-center justify-center mb-4">
+              <Crown className="w-8 h-8 text-gray-600 mr-3" />
+              <h2 className="text-4xl font-light text-gray-900">
+                {customTitle || t('team.leadership.title')}
+              </h2>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Leadership Cards - Only filtered 4 members */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {sortedLeadership.map((position, index) => (
+        {/* Leadership Cards */}
+        <div className={`grid grid-cols-1 ${finalLeadership.length === 1 ? 'place-items-center' : 'md:grid-cols-2'} gap-8 max-w-4xl mx-auto`}>
+          {finalLeadership.map((position) => (
             <MemberCard
               key={position.id}
               member={position.member}
-              isLeadership={false}
+              isLeadership={true}
+              className={finalLeadership.length === 1 ? 'w-full max-w-sm' : ''}
             />
           ))}
         </div>
