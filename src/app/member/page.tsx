@@ -234,35 +234,10 @@ function MemberContent() {
         );
     }
 
-    // TEMPORARILY DISABLED - Member cards under maintenance
     return (
         <div className="h-[100dvh]">
             <Navigation colorScheme="dark" />
             <div className="min-h-screen flex items-center justify-center bg-[#181818] px-4">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center"
-                >
-                    <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-light text-white mb-2">
-                        Member Cards Temporarily Unavailable
-                    </h1>
-                    <p className="text-gray-400">
-                        We're currently updating this feature. Please check back soon!
-                    </p>
-                </motion.div>
-            </div>
-        </div>
-    );
-
-    /* ORIGINAL CODE - Uncomment to re-enable member cards
-    return (
-        <div className="h-[100dvh]">
-            <Navigation colorScheme="dark" />
-            <div className="min-h-screen flex items-center justify-center bg-[#181818] px-4">
-
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -271,11 +246,9 @@ function MemberContent() {
                 >
                     <MemberCard memberData={memberData} variant="view" />
                 </motion.div>
-
             </div>
         </div>
     );
-    */
 }
 
 export default function MemberPage() {
