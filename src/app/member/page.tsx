@@ -20,156 +20,126 @@ interface MemberData {
 }
 
 const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, variant: 'view' | 'export' }>(({ memberData, variant }, ref) => {
-    // 1. Determine "Leader" status
-    const roleLower = memberData.role.toLowerCase();
-    const isLeader = roleLower.includes('leader') || roleLower.includes('head') || roleLower.includes('president');
-
-    // 2. Identify specific special roles
+    // 1. Roles & Status
+    const roleLower = memberData.role.toLowerCase().trim();
     const isPresident = roleLower === 'president';
-    const isVicePresident = roleLower === 'vice president';
+    const isVicePresident = roleLower === 'vice president' || roleLower === 'vice_president';
+    const isMember = roleLower === 'member';
 
-    // 3. Determine Region (default to Eastern if missing/unknown)
+    // 2. Region Logic
     const regionLower = (memberData.region || '').toLowerCase();
     let regionKey = 'eastern';
     if (regionLower.includes('riyadh')) regionKey = 'riyadh';
     else if (regionLower.includes('western') || regionLower.includes('jeddah')) regionKey = 'western';
 
-    // 4. Select Background Image
-    let bgImage = '/cards/easter-member.svg'; // Default fallback
+    // 3. Background Mapping
+    let bgImage = '/cards/easter-member.svg';
+    const suffix = isMember ? 'member' : 'leader';
 
-    if (isPresident) {
-        bgImage = '/cards/president.svg';
-    } else if (isVicePresident) {
-        bgImage = '/cards/vice-president.svg';
-    } else {
-        // Construct filename: card-[region]-[leader|member].jpg
-        // e.g. card-riyadh-leader.jpg
-        const suffix = isLeader ? 'leader' : 'member';
+    if (isPresident) bgImage = '/cards/president.svg';
+    else if (isVicePresident) bgImage = '/cards/vice-president.svg';
+    else if (regionKey === 'eastern' && isMember) bgImage = '/cards/easter-member.svg';
+    else bgImage = `/cards/${regionKey}-${suffix}.svg`;
 
-        // Handle the typo in the filename for eastern member if necessary, 
-        // or just construct carefully.
-        // Files: eastern-leader.svg, easter-member.svg (typo), riyadh-leader.svg, etc.
+    // 4. Construct Display Text (One clean line)
+    let displayText = '';
+    if (isPresident) displayText = 'President';
+    else if (isVicePresident) displayText = 'Vice President';
+    else if (isMember) displayText = memberData.committeeName || 'Member';
+    else {
+        const committee = memberData.committeeName || '';
+        const role = memberData.role || '';
 
-        if (regionKey === 'eastern' && !isLeader) {
-            bgImage = '/cards/easter-member.svg';
+        // SPECIFIC RULE: Eastern Event Planning Custom Roles
+        const isEasternEventPlanning = regionKey === 'eastern' && committee.toLowerCase().includes('event planning');
+        const isStandardRole = roleLower === 'leader' || roleLower === 'vice leader' || roleLower === 'team leader' || roleLower === 'committee leader';
+
+        if (isEasternEventPlanning && !isStandardRole) {
+            displayText = role;
         } else {
-            bgImage = `/cards/${regionKey}-${suffix}.svg`;
+            const cleanCommittee = committee.replace(/\s*team\s*/gi, '').trim();
+            const capitalizedCommittee = capitalizeName(cleanCommittee);
+            if (capitalizedCommittee) {
+                const roleHasCommittee = role.toLowerCase().includes(capitalizedCommittee.toLowerCase());
+                displayText = roleHasCommittee ? role : `${capitalizedCommittee} ${role}`;
+            } else {
+                displayText = role;
+            }
         }
     }
 
-    let displayText = memberData.committeeName || memberData.role;
-    const isRole = !memberData.committeeName;
-
-    // Fix "Leader of Leader of..." issue if committee name includes 'Team' etc.
-    // The previous logic adding "Leader of" text:
-    if (memberData.committeeName && isLeader && !isPresident && !isVicePresident) {
-        // Handle "Vice Leader" exception
-        if (roleLower.includes('vice leader')) {
-            displayText = `Vice Leader ${displayText}`;
-        } else {
-            // Only add "Leader of" if it's a committee leader
-            displayText = `Leader ${displayText}`;
-        }
-    }
-
+    // 5. Get Color Style & Role Scaling
     const getStyle = () => {
-        // Special Roles (President/VP) - Use Gold
-        if (isPresident || isVicePresident) {
-            const color = '#f9bc00'; // Gold
-            return {
-                color,
-                textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-                fontSize: variant === 'export' ? '24px' : 'min(4.5vw, 1.5rem)', // Slightly bigger for single roles
-                fontFamily: 'DGSahabah, sans-serif'
-            };
-        }
-
-        // If it's just a Role with no committee (e.g. some admin role)
-        if (isRole) {
+        if (isPresident || isVicePresident || !memberData.committeeName) {
             const color = '#f9bc00';
             return {
                 color,
-                textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-                fontSize: variant === 'export' ? '20px' : 'min(3.5vw, 1.2rem)',
-                fontFamily: 'DGSahabah, sans-serif'
+                textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}`,
+                fontSize: variant === 'export' ? '30px' : 'min(5vw, 1.8rem)'
             };
         }
 
-        const lowerName = displayText.toLowerCase();
+        const lower = displayText.toLowerCase();
+        let color = '#22d3ee';
+        if (lower.includes('pmo')) color = '#a6a6a6';
+        else if (lower.includes('pr')) color = '#6f23c7';
+        else if (lower.includes('tech')) color = '#ff3131';
+        else if (lower.includes('operation') || lower.includes('logistic')) color = '#cc8d57';
+        else if (lower.includes('event') || lower.includes('planning')) color = '#26928e';
+        else if (lower.includes('market')) color = '#ff66c4';
 
-        let color = '#22d3ee'; // Default cyan
-
-        if (lowerName.includes('pmo')) {
-            color = '#a6a6a6';
-        } else if (lowerName.includes('pr')) {
-            color = '#6f23c7';
-        } else if (lowerName.includes('tech')) {
-            color = '#ff3131';
-        } else if (lowerName.includes('operation') || lowerName.includes('logistic')) {
-            color = '#cc8d57';
-        } else if (lowerName.includes('event') || lowerName.includes('planing') || lowerName.includes('planning')) {
-            color = '#26928e';
-        } else if (lowerName.includes('market') || lowerName.includes('markting')) {
-            color = '#ff66c4';
+        // Scale Role Font for long strings
+        const len = displayText.length;
+        let fontSize = variant === 'export' ? '26px' : 'min(5vw, 1.5rem)';
+        if (len > 18) {
+            const scale = 18 / len;
+            fontSize = variant === 'export' ? `${Math.floor(26 * scale)}px` : `min(5vw, ${1.5 * scale}rem)`;
         }
 
         return {
             color,
-            textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}, 0 0 20px ${color}`,
-            fontSize: variant === 'export' ? '20px' : 'min(3.5vw, 1.2rem)',
-            fontFamily: 'DGSahabah, sans-serif'
+            textShadow: `0 0 1.5px ${color}, 0 0 10px ${color}`,
+            fontSize
         };
     };
 
     const style = getStyle();
 
+    // 6. Name Scaling
+    const getNameFontSize = () => {
+        const len = memberData.fullName.length;
+        if (len <= 15) return variant === 'export' ? '32px' : 'min(5vw, 1.6rem)';
+        const scale = 15 / len;
+        return variant === 'export' ? `${Math.floor(32 * scale)}px` : `min(5vw, ${1.6 * scale}rem)`;
+    };
+
     const containerClasses = variant === 'view'
         ? "relative w-[min(90vw,calc((90vh-6rem)*595/842))] h-auto overflow-hidden md:mt-20 mt-8"
-        : "relative w-[595px] h-[842px] overflow-hidden bg-[#181818]"; // Fixed size for export
-
-    // Text Positioning Validation
-    // President/VP usually have centered text, Members have it potentially lower?
-    // The previous code had `mt-[35%]` for the role. We'll stick to that unless instructed otherwise.
+        : "relative w-[595px] h-[842px] overflow-hidden bg-[#181818]";
 
     return (
         <div ref={ref} className={containerClasses}>
-            {/* For export, use standard img tag to avoid next/image optimization issues on mobile capture */}
             {variant === 'export' ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                    src={bgImage}
-                    alt="Membership Card"
-                    className="object-cover w-full h-full absolute inset-0"
-                />
+                <img src={bgImage} alt="Membership Card" className="object-cover w-full h-full absolute inset-0" />
             ) : (
-                <Image
-                    src={bgImage}
-                    alt="Membership Card"
-                    width={595}
-                    height={842}
-                    className="w-full h-auto object-cover"
-                    priority
-                />
+                <Image src={bgImage} alt="Membership Card" width={595} height={842} className="w-full h-auto object-cover" priority />
             )}
-            <div className="absolute inset-0 z-10">
-                <div className="absolute top-[33%] inset-x-0 flex justify-center items-center px-[8%]">
-                    <h1 className="text-white font-bold drop-shadow-md text-center"
-                        style={{
-                            fontSize: variant === 'export' ? '28px' : 'min(4vw, 1.4rem)',
-                            fontFamily: 'DGSahabah, sans-serif'
-                        }}>
+
+            <div className="absolute inset-0 z-10 font-dgsahabah" style={{ fontFamily: 'DGSahabah, sans-serif' }}>
+                {/* Name */}
+                <div className="absolute top-[34.5%] inset-x-0 flex justify-center items-center px-[8%]">
+                    <h1 className="text-white font-bold text-center" style={{ fontSize: getNameFontSize() }}>
                         {memberData.fullName}
                     </h1>
                 </div>
 
-                {!isPresident && !isVicePresident && (
-                    <div className="absolute top-[64%] inset-x-0 flex justify-center items-center px-[8%]">
-                        <p className="font-medium text-center"
-                            style={style}>
-                            {displayText}
-                        </p>
-                    </div>
-                )}
+                {/* Role/Committee Text (Single Line, positioned for the card space) */}
+                <div className="absolute top-[64.5%] inset-x-0 flex justify-center items-center px-[8%]">
+                    <p className="font-bold text-center leading-tight drop-shadow-lg" style={style}>
+                        {displayText}
+                    </p>
+                </div>
             </div>
         </div>
     );
@@ -209,10 +179,8 @@ function MemberContent() {
                         }
                     }
 
-                    // Fetch user region from database or derive if not present
-                    // Usually region is in 'members' collection or 'users'.
-                    // Checking data.region:
-                    const region = data.region || 'Eastern'; // Default to Eastern if missing
+                    // Default to 'Eastern Province' if missing/undefined
+                    const region = data.region || 'Eastern Province';
 
                     setMemberData({
                         fullName: capitalizeName(data.fullName),
