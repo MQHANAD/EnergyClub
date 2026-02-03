@@ -350,7 +350,7 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
           <div className="text-center mb-16">
             <div className="flex flex-col items-center justify-center mb-4">
               {sectionLogo ? (
-                <div className="relative w-48 h-24 mb-4">
+                <div className="relative w-56 h-32 mb-4">
                   <Image
                     src={sectionLogo}
                     alt={title || "Section Logo"}

@@ -681,26 +681,7 @@ export default function EventDetailsPage() {
                       </div>
                     )}
 
-                    {/* Registration Reason */}
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="reason"
-                        className="text-sm font-semibold text-gray-700"
-                      >
-                        {t("eventDetails.whyInterested")}
-                        <span className="text-gray-400 ml-1 font-normal">(Optional)</span>
-                      </Label>
-                      <Textarea
-                        id="reason"
-                        placeholder={t("eventDetails.whyPlaceholder")}
-                        value={registrationReason}
-                        onChange={(e) =>
-                          setRegistrationReason(e.target.value)
-                        }
-                        rows={4}
-                        className="resize-none border-2 focus:ring-2 focus:ring-offset-1 transition-all duration-200 hover:border-gray-400 text-base"
-                      />
-                    </div>
+
 
                     {/* Dynamic Registration Questions */}
                     {event.questions && event.questions.length > 0 && (
@@ -719,7 +700,8 @@ export default function EventDetailsPage() {
                         !dynamicFormValid ||
                         ((isFromUniversity || event.requireStudentId) && !!universityEmailError)
                       }
-                      className="w-full min-h-[48px] font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
+                      className="w-full min-h-[48px] font-semibold text-base shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: '#25818a', color: 'white' }}
                     >
                       {registering ? (
                         <span className="flex items-center justify-center gap-2">

@@ -251,6 +251,22 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Regions collection (new for unified data model)
+    match /regions/{regionId} {
+      // Allow public read access to regions
+      allow read: if true;
+      // Write only by admins
+      allow write: if isAdmin();
+    }
+
+    // Leadership positions collection
+    match /leadership/{positionId} {
+      // Allow public read access to leadership
+      allow read: if true;
+      // Write only by admins
+      allow write: if isAdmin();
+    }
+
     // Subcollections
 
     // Subcollections
