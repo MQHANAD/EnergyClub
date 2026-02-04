@@ -234,6 +234,7 @@ function MemberContent() {
         );
     }
 
+    // TEMPORARILY DISABLED - Member cards under maintenance (Redeploy trigger)
     return (
         <div className="h-[100dvh]">
             <Navigation colorScheme="dark" />

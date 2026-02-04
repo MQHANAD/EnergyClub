@@ -234,7 +234,7 @@ const messages: Record<Lang, MessageTree> = {
       subtitle:
         "Meet the dedicated members who make our energy initiatives possible",
       leadership: {
-        title: "Leaders",
+        title: "Presidents",
         subtitle: "Leading the way in energy innovation and sustainability",
         president: "President",
         vicePresident: "Vice President",

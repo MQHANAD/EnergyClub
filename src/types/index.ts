@@ -181,18 +181,42 @@ export interface Application {
   adminNotes: string | null;
 }
 
+// ============================================
+// Team Data Model Types
+// ============================================
+
+/**
+ * Authoritative role type for team members
+ */
+export type RoleType = 'global_leader' | 'regional_leader' | 'member';
+
+/**
+ * Regional grouping for team organization
+ */
+export interface Region {
+  id: string;
+  name: string;
+  order: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Member {
   id: string;
   email: string;
   fullName: string;
-  role: string;
+  role: string;                    // Display role (e.g., "Designer", "Manager")
+  roleType: RoleType;              // Authoritative role classification
+  regionId: string;                // Required, references Region.id
   profilePicture?: string;
   linkedInUrl?: string;
   portfolioUrl?: string;
-  committeeId: string;
+  committeeId?: string | null;     // Optional for leaders
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Legacy fields (kept for backwards compatibility during migration)
   region?: string;
   university?: string;
 }
@@ -201,6 +225,7 @@ export interface Committee {
   id: string;
   name: string;
   description?: string;
+  regionId: string;                // Required, references Region.id
   order: number;
   isActive: boolean;
   createdAt: Date;
@@ -222,14 +247,22 @@ export interface TeamFormData {
   email?: string;
   fullName: string;
   role: string;
+  roleType: RoleType;
+  regionId: string;
   profilePicture?: string;
   linkedInUrl?: string;
   portfolioUrl?: string;
-  committeeId: string;
+  committeeId?: string | null;
 }
 
 export interface CommitteeFormData {
   name: string;
   description?: string;
+  regionId: string;
+  order: number;
+}
+
+export interface RegionFormData {
+  name: string;
   order: number;
 }

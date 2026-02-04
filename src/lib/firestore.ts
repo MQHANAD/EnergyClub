@@ -21,7 +21,7 @@ import {
 
 import { db } from './firebase';
 import { capitalizeName } from './utils';
-import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse, TeamMemberResponse } from '@/types';
+import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse, TeamMemberResponse, Region, RoleType } from '@/types';
 
 // Convert Firestore timestamp-like value to Date
 function hasToDate(v: unknown): v is { toDate: () => Date } {
@@ -95,6 +95,29 @@ const docToRegistration = (doc: QueryDocumentSnapshot): Registration => {
   };
 };
 
+// Normalize region string to regionId
+const normalizeRegionId = (region?: string): string => {
+  if (!region) return 'eastern_province';
+  const lower = region.toLowerCase();
+  if (lower.includes('riyadh')) return 'riyadh_region';
+  if (lower.includes('western') || lower.includes('jeddah')) return 'western_region';
+  if (lower.includes('eastern') || lower === 'eastern province') return 'eastern_province';
+  return 'eastern_province'; // Default
+};
+
+// Infer roleType from existing data (used during migration period)
+const inferRoleType = (data: DocumentData): RoleType => {
+  // If roleType is already set in the document, use it
+  if (data.roleType && ['global_leader', 'regional_leader', 'member'].includes(data.roleType)) {
+    return data.roleType as RoleType;
+  }
+  // Inference: no committeeId means likely a leader
+  if (!data.committeeId || data.committeeId === '' || data.committeeId === null) {
+    return 'regional_leader';
+  }
+  return 'member';
+};
+
 // Convert Member document to Member object
 const docToMember = (doc: QueryDocumentSnapshot): Member => {
   const data = doc.data();
@@ -102,14 +125,19 @@ const docToMember = (doc: QueryDocumentSnapshot): Member => {
     id: doc.id,
     email: data.email || '',
     fullName: capitalizeName(data.fullName),
-    role: data.role,
+    role: data.role || 'Member',
+    roleType: inferRoleType(data),
+    regionId: data.regionId || normalizeRegionId(data.region),
     profilePicture: data.profilePicture,
     linkedInUrl: data.linkedInUrl,
     portfolioUrl: data.portfolioUrl,
-    committeeId: data.committeeId,
-    isActive: data.isActive,
+    committeeId: data.committeeId || null,
+    isActive: data.isActive ?? true,
     createdAt: timestampToDate(data.createdAt),
-    updatedAt: timestampToDate(data.updatedAt)
+    updatedAt: timestampToDate(data.updatedAt),
+    // Legacy fields
+    region: data.region,
+    university: data.university
   };
 };
 
@@ -120,11 +148,25 @@ const docToCommittee = (doc: QueryDocumentSnapshot): Committee => {
     id: doc.id,
     name: data.name,
     description: data.description,
-    order: data.order,
-    isActive: data.isActive,
+    regionId: data.regionId || 'eastern_province', // Default to eastern for migration
+    order: data.order ?? 0,
+    isActive: data.isActive ?? true,
     createdAt: timestampToDate(data.createdAt),
     updatedAt: timestampToDate(data.updatedAt),
     members: [] // Will be populated separately
+  };
+};
+
+// Convert Region document to Region object
+const docToRegion = (doc: QueryDocumentSnapshot): Region => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    name: data.name,
+    order: data.order ?? 0,
+    isActive: data.isActive ?? true,
+    createdAt: timestampToDate(data.createdAt),
+    updatedAt: timestampToDate(data.updatedAt)
   };
 };
 
@@ -809,6 +851,100 @@ export const teamApi = {
     } catch (error) {
       console.error('Error deleting leadership position:', error);
       throw error;
+    }
+  }
+};
+
+// Regions API
+export const regionsApi = {
+  // Get all active regions
+  async getRegions(): Promise<Region[]> {
+    try {
+      const q = query(
+        collection(db, 'regions'),
+        where('isActive', '==', true),
+        orderBy('order', 'asc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(docToRegion);
+    } catch (error) {
+      console.error('Error fetching regions:', error);
+      throw error;
+    }
+  },
+
+  // Get single region by ID
+  async getRegion(regionId: string): Promise<Region | null> {
+    try {
+      const regionDoc = await getDoc(doc(db, 'regions', regionId));
+      if (regionDoc.exists()) {
+        return docToRegion(regionDoc as QueryDocumentSnapshot);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching region:', error);
+      throw error;
+    }
+  },
+
+  // Create new region with specific ID
+  async createRegion(regionId: string, regionData: Omit<Region, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      const now = Timestamp.now();
+      await setDoc(doc(db, 'regions', regionId), {
+        ...regionData,
+        createdAt: now,
+        updatedAt: now
+      });
+      return regionId;
+    } catch (error) {
+      console.error('Error creating region:', error);
+      throw error;
+    }
+  },
+
+  // Update region
+  async updateRegion(regionId: string, updates: Partial<Region>): Promise<void> {
+    try {
+      const updateData: Record<string, unknown> = { ...updates, updatedAt: Timestamp.now() };
+      await updateDoc(doc(db, 'regions', regionId), updateData);
+    } catch (error) {
+      console.error('Error updating region:', error);
+      throw error;
+    }
+  },
+
+  // Delete region (soft delete by setting isActive to false)
+  async deleteRegion(regionId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'regions', regionId), {
+        isActive: false,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error deleting region:', error);
+      throw error;
+    }
+  },
+
+  // Initialize default regions (for migration)
+  async initializeDefaultRegions(): Promise<void> {
+    const defaultRegions = [
+      { id: 'eastern_province', name: 'Eastern Province', order: 0 },
+      { id: 'riyadh_region', name: 'Riyadh Region', order: 1 },
+      { id: 'western_region', name: 'Western Region', order: 2 }
+    ];
+
+    for (const region of defaultRegions) {
+      const existing = await this.getRegion(region.id);
+      if (!existing) {
+        await this.createRegion(region.id, {
+          name: region.name,
+          order: region.order,
+          isActive: true
+        });
+        console.log(`Created region: ${region.name}`);
+      }
     }
   }
 };

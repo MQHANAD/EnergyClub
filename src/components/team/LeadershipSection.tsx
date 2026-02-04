@@ -127,25 +127,15 @@ export const LeadershipSection: React.FC<LeadershipSectionProps> = ({
     <section className={`py-6 bg-white ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        {!hideHeader && (
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center mb-4">
-              <Crown className="w-8 h-8 text-gray-600 mr-3" />
-              <h2 className="text-4xl font-light text-gray-900">
-                {customTitle || t('team.leadership.title')}
-              </h2>
-            </div>
-          </div>
-        )}
 
         {/* Leadership Cards */}
-        <div className={`grid grid-cols-1 ${finalLeadership.length === 1 ? 'place-items-center' : 'md:grid-cols-2'} gap-8 max-w-4xl mx-auto`}>
+        <div className={`grid grid-cols-1 ${finalLeadership.length === 1 ? 'place-items-center' : 'md:grid-cols-2'} gap-8 max-w-2xl mx-auto`}>
           {finalLeadership.map((position) => (
             <MemberCard
               key={position.id}
               member={position.member}
               isLeadership={true}
-              className={finalLeadership.length === 1 ? 'w-full max-w-sm' : ''}
+              className={`max-w-xs ${finalLeadership.length === 1 ? 'w-full' : ''}`}
             />
           ))}
         </div>

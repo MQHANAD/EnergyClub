@@ -39,6 +39,8 @@ export interface HybridMember {
   email: string;
   fullName: string;
   role: string;
+  roleType: 'global_leader' | 'regional_leader' | 'member'; // NEW: Authoritative role type
+  regionId: string;                                          // NEW: Required region reference
   committeeId: string;
   committeeName?: string;
   profilePicture: string | null;
@@ -46,7 +48,20 @@ export interface HybridMember {
   portfolioUrl?: string | null;
   status: string;
   program?: string;
-  region?: string;
+  region?: string; // Legacy field for backwards compatibility
+}
+
+/**
+ * Helper function to normalize region string to regionId
+ * Mirrors the normalizeRegionId function in firestore.ts
+ */
+function normalizeRegionIdLocal(region?: string): string {
+  if (!region) return 'eastern_province';
+  const lower = region.toLowerCase();
+  if (lower.includes('riyadh')) return 'riyadh_region';
+  if (lower.includes('western') || lower.includes('jeddah')) return 'western_region';
+  if (lower.includes('eastern') || lower === 'eastern province') return 'eastern_province';
+  return 'eastern_province';
 }
 
 /**
@@ -197,11 +212,17 @@ export async function createHybridMember(application: Application): Promise<Hybr
     // Determine role based on committee or application data
     const role = application.role || 'Member';
 
+    // Infer roleType and regionId (will be overwritten by actual data when available)
+    const roleType = !committee.id ? 'regional_leader' : 'member';
+    const regionId = 'eastern_province'; // Default for applications
+
     return {
       id: application.email,
       email: application.email,
       fullName: user.displayName || application.fullName,
       role: role,
+      roleType: roleType,
+      regionId: regionId,
       committeeId: committee.id,
       committeeName: committee.name,
       profilePicture: user.photoURL,
@@ -340,6 +361,8 @@ export async function getMembersHybrid(): Promise<HybridMember[]> {
         email: email,
         fullName: user.displayName || memberData.fullName || 'Unknown',
         role: memberData.role || 'Member',
+        roleType: memberData.roleType || (!memberData.committeeId ? 'regional_leader' : 'member'),
+        regionId: memberData.regionId || normalizeRegionIdLocal(memberData.region),
         committeeId: memberData.committeeId,
         committeeName: committee.name,
         profilePicture: user.photoURL || memberData.profilePicture || null,
@@ -434,6 +457,8 @@ export async function getCommitteeMembersDirect(committeeId: string, region?: st
         email: email,
         fullName: memberData.fullName || 'Unknown',
         role: memberData.role || 'Member',
+        roleType: memberData.roleType || 'member',
+        regionId: memberData.regionId || normalizeRegionIdLocal(memberData.region),
         committeeId: memberData.committeeId,
         committeeName: committee.name,
         profilePicture: memberData.profilePicture || null,
@@ -576,6 +601,8 @@ export async function getMembersUltraOptimized(): Promise<HybridMember[]> {
         email: email,
         fullName: capitalizeName(memberData.fullName || 'Unknown'),
         role: memberData.role || 'Member',
+        roleType: memberData.roleType || (!memberData.committeeId ? 'regional_leader' : 'member'),
+        regionId: memberData.regionId || normalizeRegionIdLocal(memberData.region),
         committeeId: memberData.committeeId,
         committeeName: committeeName,
         profilePicture: memberData.profilePicture || null,
