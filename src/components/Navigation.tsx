@@ -102,7 +102,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex justify-between items-center rounded-full border transition-all duration-300 ${isScrolled || isMobileMenuOpen
+        className={`ml-auto w-fit max-w-none px-2 py-2 flex justify-end items-center rounded-full border transition-all duration-300 md:mx-auto md:w-full md:max-w-7xl md:px-4 md:sm:px-6 md:lg:px-8 md:py-2.5 md:justify-between ${isScrolled || isMobileMenuOpen
           ? "bg-white/80 backdrop-blur-lg border-white/40 shadow-lg"
           : "bg-white/10 backdrop-blur-md border-white/20"
           }`}
@@ -339,7 +339,7 @@ function MobileMenu({ isOpen, onClose, navLinks, user, userProfile, isMember, ad
                   )}
 
                   <div className="mt-2 p-2">
-                    <Button onClick={onLogout} variant="destructive" className="w-full justify-center rounded-xl h-11">
+                    <Button onClick={onLogout} variant="ghost" className="w-full justify-center rounded-xl h-11 text-red-600 hover:bg-red-50">
                       <LogOut className="h-4 w-4 mr-2" />
                       {t("nav.logout")}
                     </Button>
