@@ -16,6 +16,23 @@ import LoadingSpinner from '@/components/register/LoadingSpinner';
 import AuthGuard from '@/components/AuthGuard';
 import Navigation from '@/components/Navigation';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   Plus,
   Edit,
   Trash2,
@@ -24,8 +41,79 @@ import {
   Crown,
   Save,
   X,
-  AlertCircle
+  AlertCircle,
+  GripVertical
 } from 'lucide-react';
+
+// Sortable Member Card Component
+interface SortableMemberCardProps {
+  member: Member;
+  onEdit: (member: Member) => void;
+  onDelete: (memberId: string) => void;
+}
+
+function SortableMemberCard({ member, onEdit, onDelete }: SortableMemberCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: member.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto'
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-4 bg-gray-50 rounded-lg border border-gray-200 ${isDragging ? 'shadow-lg' : ''}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <button
+            className="cursor-grab active:cursor-grabbing mr-2 text-gray-400 hover:text-gray-600 touch-none"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+          <div>
+            <h3 className="font-light text-gray-900">
+              {member.fullName}
+            </h3>
+            <p className="text-gray-600 text-sm font-light">
+              {member.role}
+            </p>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            onClick={() => onEdit(member)}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => onDelete(member.id)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function TeamAdminContent() {
   const { t } = useI18n();
@@ -59,7 +147,8 @@ function TeamAdminContent() {
     profilePicture: '',
     linkedInUrl: '',
     portfolioUrl: '',
-    committeeId: NO_COMMITTEE
+    committeeId: NO_COMMITTEE,
+    order: 0
   });
   const [committeeForm, setCommitteeForm] = useState<CommitteeFormData>({
     name: '',
@@ -72,9 +161,74 @@ function TeamAdminContent() {
     memberId: ''
   });
 
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end for reordering members
+  const handleDragEnd = async (event: DragEndEvent, committeeId: string) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      // Find the committee
+      const committeeIndex = committees.findIndex(c => c.id === committeeId);
+      if (committeeIndex === -1) return;
+
+      const committee = committees[committeeIndex];
+      const members = [...committee.members].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      const oldIndex = members.findIndex(m => m.id === active.id);
+      const newIndex = members.findIndex(m => m.id === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      // Reorder locally
+      const reorderedMembers = arrayMove(members, oldIndex, newIndex);
+
+      // Update order values
+      const updatedMembers = reorderedMembers.map((m, idx) => ({
+        ...m,
+        order: idx
+      }));
+
+      // Update state immediately for responsive UI
+      const updatedCommittees = [...committees];
+      updatedCommittees[committeeIndex] = {
+        ...committee,
+        members: updatedMembers
+      };
+      setCommittees(updatedCommittees);
+
+      // Persist to Firestore
+      try {
+        await Promise.all(
+          updatedMembers.map((member, idx) =>
+            teamApi.updateMember(member.id, { order: idx })
+          )
+        );
+      } catch (err) {
+        console.error('Error updating member order:', err);
+        setError('Failed to save member order. Please try again.');
+        // Revert on error
+        await fetchTeamData();
+      }
+    }
+  };
+
   useEffect(() => {
-    fetchTeamData();
-  }, []);
+    // Only fetch data when auth is ready
+    if (userProfile) {
+      fetchTeamData();
+    }
+  }, [userProfile]);
 
   const fetchTeamData = async () => {
     try {
@@ -123,7 +277,8 @@ function TeamAdminContent() {
       profilePicture: '',
       linkedInUrl: '',
       portfolioUrl: '',
-      committeeId: NO_COMMITTEE
+      committeeId: NO_COMMITTEE,
+      order: 0
     });
     setEditingMember(null);
     setShowMemberForm(true);
@@ -139,7 +294,8 @@ function TeamAdminContent() {
       profilePicture: member.profilePicture || '',
       linkedInUrl: member.linkedInUrl || '',
       portfolioUrl: member.portfolioUrl || '',
-      committeeId: member.committeeId || NO_COMMITTEE
+      committeeId: member.committeeId || NO_COMMITTEE,
+      order: member.order ?? 0
     });
     setEditingMember(member);
     setShowMemberForm(true);
@@ -492,39 +648,31 @@ function TeamAdminContent() {
                 </div>
 
                 {/* Members */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {committee.members.map((member) => (
-                    <div key={member.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-light text-gray-900">
-                            {member.fullName}
-                          </h3>
-                          <p className="text-gray-600 text-sm font-light">
-                            {member.role}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                            onClick={() => handleEditMember(member)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteMember(member.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event) => handleDragEnd(event, committee.id)}
+                >
+                  <SortableContext
+                    items={[...committee.members]
+                      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                      .map(m => m.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {[...committee.members]
+                        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                        .map((member) => (
+                          <SortableMemberCard
+                            key={member.id}
+                            member={member}
+                            onEdit={handleEditMember}
+                            onDelete={handleDeleteMember}
+                          />
+                        ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
 
                 {committee.members.length === 0 && (
                   <p className="text-gray-500 text-center py-8 font-light">
@@ -593,184 +741,157 @@ function TeamAdminContent() {
 
           {/* Member Form Dialog */}
           <Dialog open={showMemberForm} onOpenChange={setShowMemberForm}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white border border-gray-200">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white border border-gray-200">
               <DialogHeader>
-                <DialogTitle className="text-lg font-light text-gray-900">
-                  {editingMember ? t('team.admin.editMember') : t('team.admin.addMember')}
+                <DialogTitle className="text-xl font-semibold text-gray-900">
+                  {editingMember ? 'Edit Member' : 'Add New Member'}
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
-                  <Input
-                    id="email"
-                    value={memberForm.email || ''}
-                    onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
-                    placeholder="member@example.com"
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    disabled={!!editingMember}
-                  />
+              <div className="space-y-6 py-4">
+                {/* Basic Info Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Basic Information</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="fullName" className="text-gray-700 font-medium">Full Name *</Label>
+                      <Input
+                        id="fullName"
+                        value={memberForm.fullName}
+                        onChange={(e) => setMemberForm({ ...memberForm, fullName: e.target.value })}
+                        placeholder="John Doe"
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={memberForm.email || ''}
+                        onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
+                        placeholder="john@example.com"
+                        className="mt-1.5"
+                        disabled={!!editingMember}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="fullName" className="text-gray-700 font-medium">{t('team.admin.memberForm.fullName')}</Label>
-                  <Input
-                    id="fullName"
-                    value={memberForm.fullName}
-                    onChange={(e) => setMemberForm({ ...memberForm, fullName: e.target.value })}
-                    placeholder={t('team.admin.memberForm.fullNamePlaceholder')}
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
+                {/* Role & Assignment Section */}
+                <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide pt-2">Role & Assignment</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="role" className="text-gray-700 font-medium">Role Title *</Label>
+                      <Input
+                        id="role"
+                        value={memberForm.role || ''}
+                        onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
+                        placeholder="e.g., Designer, Developer, Leader"
+                        className="mt-1.5"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Use "Leader" for committee heads</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="regionId" className="text-gray-700 font-medium">Region</Label>
+                      <Select
+                        value={memberForm.regionId}
+                        onValueChange={(value) => setMemberForm({
+                          ...memberForm,
+                          regionId: value,
+                          // Clear committee when region changes (it might not exist in new region)
+                          committeeId: NO_COMMITTEE
+                        })}
+                      >
+                        <SelectTrigger className="mt-1.5">
+                          <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border border-gray-200">
+                          {regions.map((region) => (
+                            <SelectItem key={region.id} value={region.id}>
+                              {region.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="committee" className="text-gray-700 font-medium">Committee</Label>
+                    <Select
+                      value={memberForm.committeeId || NO_COMMITTEE}
+                      onValueChange={(value) => setMemberForm({ ...memberForm, committeeId: value })}
+                    >
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Select committee" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border border-gray-200">
+                        <SelectItem value={NO_COMMITTEE}>No Committee</SelectItem>
+                        {committees
+                          .filter(c => c.regionId === memberForm.regionId)
+                          .map((committee) => (
+                            <SelectItem key={committee.id} value={committee.id}>
+                              {committee.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    {memberForm.regionId && committees.filter(c => c.regionId === memberForm.regionId).length === 0 && (
+                      <p className="text-xs text-amber-600 mt-1">No committees in this region yet.</p>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="role" className="text-gray-700 font-medium">{t('team.admin.memberForm.role')}</Label>
-                  <Select
-                    value={(memberForm.role || '').toLowerCase() === 'leader' ? 'leader' : (memberForm.role ? (memberForm.role === 'Member' ? 'member' : (memberForm.role.toLowerCase() === 'member' ? 'member' : 'custom')) : 'member')}
-                    onValueChange={(value) => {
-                      if (value === 'leader') {
-                        setMemberForm({ ...memberForm, role: 'Leader' });
-                      } else if (value === 'member') {
-                        setMemberForm({ ...memberForm, role: 'Member' });
-                      } else {
-                        // custom: leave role as-is; user will type below
-                        setMemberForm({ ...memberForm, role: memberForm.role && memberForm.role !== 'Leader' && memberForm.role !== 'Member' ? memberForm.role : '' });
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
-                      <SelectItem value="member" className="text-gray-900 hover:bg-gray-50">Member</SelectItem>
-                      <SelectItem value="leader" className="text-gray-900 hover:bg-gray-50">Leader (Committee Leader)</SelectItem>
-                      <SelectItem value="custom" className="text-gray-900 hover:bg-gray-50">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {(!memberForm.role || (memberForm.role !== 'Leader' && memberForm.role !== 'Member')) && (
+                {/* Links Section */}
+                <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide pt-2">Profile & Links</h3>
+
+                  <div>
+                    <Label htmlFor="profilePicture" className="text-gray-700 font-medium">Profile Picture URL</Label>
                     <Input
-                      id="role"
-                      value={memberForm.role || ''}
-                      onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
-                      placeholder="Enter custom role (e.g., Designer)"
-                      className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      id="profilePicture"
+                      value={memberForm.profilePicture}
+                      onChange={(e) => setMemberForm({ ...memberForm, profilePicture: e.target.value })}
+                      placeholder="https://example.com/photo.jpg"
+                      className="mt-1.5"
                     />
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">Presidents and Vice Presidents are set in "Add Leadership Position".</p>
-                </div>
+                  </div>
 
-                {/* Role Type Selector */}
-                <div>
-                  <Label htmlFor="roleType" className="text-gray-700 font-medium">Role Type</Label>
-                  <Select
-                    value={memberForm.roleType}
-                    onValueChange={(value) => setMemberForm({
-                      ...memberForm,
-                      roleType: value as RoleType,
-                      // Auto-clear committeeId for leader roles
-                      committeeId: (value === 'global_leader' || value === 'regional_leader') ? NO_COMMITTEE : memberForm.committeeId
-                    })}
-                  >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Select role type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
-                      <SelectItem value="member" className="text-gray-900 hover:bg-gray-50">Member (Regular committee member)</SelectItem>
-                      <SelectItem value="regional_leader" className="text-gray-900 hover:bg-gray-50">Regional Leader (No committee)</SelectItem>
-                      <SelectItem value="global_leader" className="text-gray-900 hover:bg-gray-50">Global Leader (President/VP)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {memberForm.roleType === 'global_leader' && 'Global leaders are club-wide leadership (President, VP)'}
-                    {memberForm.roleType === 'regional_leader' && 'Regional leaders manage a region but not a committee'}
-                    {memberForm.roleType === 'member' && 'Members belong to a committee within a region'}
-                  </p>
-                </div>
-
-                {/* Region Selector */}
-                <div>
-                  <Label htmlFor="regionId" className="text-gray-700 font-medium">Region</Label>
-                  <Select
-                    value={memberForm.regionId}
-                    onValueChange={(value) => setMemberForm({ ...memberForm, regionId: value })}
-                  >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Select region" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
-                      {regions.map((region) => (
-                        <SelectItem key={region.id} value={region.id} className="text-gray-900 hover:bg-gray-50">
-                          {region.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="committee" className="text-gray-700 font-medium">{t('team.admin.memberForm.committee')}</Label>
-                  <Select
-                    value={memberForm.committeeId || NO_COMMITTEE}
-                    onValueChange={(value) => setMemberForm({ ...memberForm, committeeId: value })}
-                  >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Select a committee" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
-                      <SelectItem value={NO_COMMITTEE} className="text-gray-900 hover:bg-gray-50">
-                        No committee
-                      </SelectItem>
-                      {committees.map((committee) => (
-                        <SelectItem key={committee.id} value={committee.id} className="text-gray-900 hover:bg-gray-50">
-                          {committee.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="profilePicture" className="text-gray-700 font-medium">{t('team.admin.memberForm.profilePicture')}</Label>
-                  <Input
-                    id="profilePicture"
-                    value={memberForm.profilePicture}
-                    onChange={(e) => setMemberForm({ ...memberForm, profilePicture: e.target.value })}
-                    placeholder={t('team.admin.memberForm.profilePicturePlaceholder')}
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="linkedInUrl" className="text-gray-700 font-medium">{t('team.admin.memberForm.linkedInUrl')}</Label>
-                  <Input
-                    id="linkedInUrl"
-                    value={memberForm.linkedInUrl}
-                    onChange={(e) => setMemberForm({ ...memberForm, linkedInUrl: e.target.value })}
-                    placeholder={t('team.admin.memberForm.linkedInPlaceholder')}
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="portfolioUrl" className="text-gray-700 font-medium">Portfolio URL</Label>
-                  <Input
-                    id="portfolioUrl"
-                    value={memberForm.portfolioUrl || ''}
-                    onChange={(e) => setMemberForm({ ...memberForm, portfolioUrl: e.target.value })}
-                    placeholder="https://yourportfolio.com"
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="linkedInUrl" className="text-gray-700 font-medium">LinkedIn URL</Label>
+                      <Input
+                        id="linkedInUrl"
+                        value={memberForm.linkedInUrl}
+                        onChange={(e) => setMemberForm({ ...memberForm, linkedInUrl: e.target.value })}
+                        placeholder="https://linkedin.com/in/..."
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="portfolioUrl" className="text-gray-700 font-medium">Portfolio URL</Label>
+                      <Input
+                        id="portfolioUrl"
+                        value={memberForm.portfolioUrl || ''}
+                        onChange={(e) => setMemberForm({ ...memberForm, portfolioUrl: e.target.value })}
+                        placeholder="https://portfolio.com"
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <DialogFooter className="mt-6">
-                <Button variant="outline" onClick={() => setShowMemberForm(false)} className="border-gray-300 text-gray-700 hover:bg-gray-50">
-                  <X className="w-4 h-4 mr-2" />
-                  {t('team.admin.actions.cancel')}
+              <DialogFooter className="border-t border-gray-100 pt-4">
+                <Button variant="outline" onClick={() => setShowMemberForm(false)}>
+                  Cancel
                 </Button>
                 <Button onClick={handleSaveMember} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? t('team.admin.actions.saving') : t('team.admin.actions.save')}
+                  {isSaving ? 'Saving...' : (editingMember ? 'Save Changes' : 'Add Member')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -778,78 +899,63 @@ function TeamAdminContent() {
 
           {/* Committee Form Dialog */}
           <Dialog open={showCommitteeForm} onOpenChange={setShowCommitteeForm}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white border border-gray-200">
+            <DialogContent className="max-w-md bg-white border border-gray-200">
               <DialogHeader>
-                <DialogTitle className="text-lg font-light text-gray-900">
-                  {editingCommittee ? t('team.admin.editCommittee') : t('team.admin.addCommittee')}
+                <DialogTitle className="text-xl font-semibold text-gray-900">
+                  {editingCommittee ? 'Edit Committee' : 'Add New Committee'}
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="name" className="text-gray-700 font-medium">{t('team.admin.committeeForm.name')}</Label>
+                  <Label htmlFor="name" className="text-gray-700 font-medium">Committee Name *</Label>
                   <Input
                     id="name"
                     value={committeeForm.name}
                     onChange={(e) => setCommitteeForm({ ...committeeForm, name: e.target.value })}
-                    placeholder={t('team.admin.committeeForm.namePlaceholder')}
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="e.g., Technical, Marketing, Events"
+                    className="mt-1.5"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description" className="text-gray-700 font-medium">{t('team.admin.committeeForm.description')}</Label>
+                  <Label htmlFor="description" className="text-gray-700 font-medium">Description</Label>
                   <Textarea
                     id="description"
                     value={committeeForm.description}
                     onChange={(e) => setCommitteeForm({ ...committeeForm, description: e.target.value })}
-                    placeholder={t('team.admin.committeeForm.descriptionPlaceholder')}
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="What does this committee do?"
+                    className="mt-1.5"
+                    rows={3}
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="order" className="text-gray-700 font-medium">{t('team.admin.committeeForm.order')}</Label>
-                  <Input
-                    id="order"
-                    type="number"
-                    value={committeeForm.order}
-                    onChange={(e) => setCommitteeForm({ ...committeeForm, order: parseInt(e.target.value) || 0 })}
-                    placeholder={t('team.admin.committeeForm.orderPlaceholder')}
-                    className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Region Selector for Committee */}
                 <div>
                   <Label htmlFor="committeeRegionId" className="text-gray-700 font-medium">Region</Label>
                   <Select
                     value={committeeForm.regionId}
                     onValueChange={(value) => setCommitteeForm({ ...committeeForm, regionId: value })}
                   >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectTrigger className="mt-1.5">
                       <SelectValue placeholder="Select region" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200">
                       {regions.map((region) => (
-                        <SelectItem key={region.id} value={region.id} className="text-gray-900 hover:bg-gray-50">
+                        <SelectItem key={region.id} value={region.id}>
                           {region.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">Select which region this committee belongs to.</p>
                 </div>
               </div>
 
-              <DialogFooter className="mt-6">
-                <Button variant="outline" onClick={() => setShowCommitteeForm(false)} className="border-gray-300 text-gray-700 hover:bg-gray-50">
-                  <X className="w-4 h-4 mr-2" />
-                  {t('team.admin.actions.cancel')}
+              <DialogFooter className="border-t border-gray-100 pt-4">
+                <Button variant="outline" onClick={() => setShowCommitteeForm(false)}>
+                  Cancel
                 </Button>
                 <Button onClick={handleSaveCommittee} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? t('team.admin.actions.saving') : t('team.admin.actions.save')}
+                  {isSaving ? 'Saving...' : (editingCommittee ? 'Save Changes' : 'Add Committee')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -857,72 +963,67 @@ function TeamAdminContent() {
 
           {/* Leadership Form Dialog */}
           <Dialog open={showLeadershipForm} onOpenChange={setShowLeadershipForm}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white border border-gray-200">
+            <DialogContent className="max-w-md bg-white border border-gray-200">
               <DialogHeader>
-                <DialogTitle className="text-lg font-light text-gray-900">
+                <DialogTitle className="text-xl font-semibold text-gray-900">
                   {editingLeadership ? 'Edit Leadership Position' : 'Add Leadership Position'}
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="title" className="text-gray-700 font-medium">Position Title</Label>
+                  <Label htmlFor="title" className="text-gray-700 font-medium">Position *</Label>
                   <Select
                     value={leadershipForm.title}
                     onValueChange={(value: 'president' | 'vice_president' | 'leader') => setLeadershipForm({ ...leadershipForm, title: value })}
                   >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectTrigger className="mt-1.5">
                       <SelectValue placeholder="Select position" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200">
-                      <SelectItem value="president" className="text-gray-900 hover:bg-gray-50">
-                        President
-                      </SelectItem>
-                      <SelectItem value="vice_president" className="text-gray-900 hover:bg-gray-50">
-                        Vice President
-                      </SelectItem>
-                      <SelectItem value="leader" className="text-gray-900 hover:bg-gray-50">
-                        Leader
-                      </SelectItem>
+                      <SelectItem value="president">President</SelectItem>
+                      <SelectItem value="vice_president">Vice President</SelectItem>
+                      <SelectItem value="leader">Leader</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="memberId" className="text-gray-700 font-medium">Select Member</Label>
+                  <Label htmlFor="memberId" className="text-gray-700 font-medium">Select Member *</Label>
                   <Select
                     value={leadershipForm.memberId}
                     onValueChange={(value) => setLeadershipForm({ ...leadershipForm, memberId: value })}
                   >
-                    <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Select a member" />
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Choose a team member" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200">
+                    <SelectContent className="bg-white border border-gray-200 max-h-60">
                       {committees.flatMap(committee =>
                         committee.members.map(member => (
-                          <SelectItem key={member.id} value={member.id} className="text-gray-900 hover:bg-gray-50">
-                            {member.fullName} - {committee.name}
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.fullName} ({committee.name})
                           </SelectItem>
                         ))
                       )}
                       {unassignedMembers.map(member => (
-                        <SelectItem key={member.id} value={member.id} className="text-gray-900 hover:bg-gray-50">
-                          {member.fullName} - Other
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.fullName} (No Committee)
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Only existing members can be assigned leadership positions.
+                  </p>
                 </div>
               </div>
 
-              <DialogFooter className="mt-6">
-                <Button variant="outline" onClick={() => setShowLeadershipForm(false)} className="border-gray-300 text-gray-700 hover:bg-gray-50">
-                  <X className="w-4 h-4 mr-2" />
+              <DialogFooter className="border-t border-gray-100 pt-4">
+                <Button variant="outline" onClick={() => setShowLeadershipForm(false)}>
                   Cancel
                 </Button>
                 <Button onClick={handleSaveLeadership} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? 'Saving...' : 'Save'}
+                  {isSaving ? 'Saving...' : (editingLeadership ? 'Save Changes' : 'Add Position')}
                 </Button>
               </DialogFooter>
             </DialogContent>

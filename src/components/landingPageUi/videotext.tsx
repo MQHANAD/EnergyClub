@@ -28,13 +28,13 @@ export interface VideoTextProps {
   fontWeight?: string | number;
   textAnchor?: "start" | "middle" | "end";
   dominantBaseline?:
-    | "auto"
-    | "middle"
-    | "hanging"
-    | "alphabetic"
-    | "ideographic"
-    | "text-bottom"
-    | "text-top";
+  | "auto"
+  | "middle"
+  | "hanging"
+  | "alphabetic"
+  | "ideographic"
+  | "text-bottom"
+  | "text-top";
   fontFamily?: string;
   as?: ElementType;
   letterSpacing?: string | number;
@@ -288,7 +288,7 @@ export function VideoText({
         >
           <span className="text-[#989898]">#</span>
           <span className="text-[#284f93] mr-1">Lets</span>
-          <span className="text-[#209eaa] mr-1">Energize</span>
+          <span className="text-[#25818a] mr-1">Energize</span>
           <span className="text-[#f4bb12] mr-1">The</span>
           <span className="text-[#f4bb12]">Future</span>
         </div>

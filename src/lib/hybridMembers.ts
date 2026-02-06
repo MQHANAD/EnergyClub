@@ -49,6 +49,7 @@ export interface HybridMember {
   status: string;
   program?: string;
   region?: string; // Legacy field for backwards compatibility
+  order?: number;  // Display order within committee
 }
 
 /**
@@ -609,7 +610,8 @@ export async function getMembersUltraOptimized(): Promise<HybridMember[]> {
         linkedInUrl: memberData.linkedInUrl || null,
         status: 'accepted',
         program: 'energy_week_2',
-        region: memberData.region
+        region: memberData.region,
+        order: memberData.order ?? 0
       });
     }
 

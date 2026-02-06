@@ -2,17 +2,10 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date;
-  location: string;
-  maxAttendees: number;
-  currentAttendees: number;
-  organizerId: string;
-  organizerName: string;
-  status: 'active' | 'cancelled' | 'completed';  
+  status: 'active' | 'hidden' | 'completed';
   createdAt: Date;
   updatedAt: Date;
-  status: "active" | "cancelled" | "completed";
-  date?: string;
+  date?: string;  // Legacy field - use startDate instead
   startDate?: string;
   endDate?: string;
   location?: string;
@@ -20,6 +13,8 @@ export interface Event {
   currentAttendees: number;
   maxAttendees: number;
   imageUrls: string[];
+  organizerId?: string;
+  organizerName?: string;
   requireStudentId?: boolean;
   questions?: EventQuestion[];  // Dynamic registration questions (team-level)
   // Team registration settings
@@ -214,6 +209,7 @@ export interface Member {
   portfolioUrl?: string;
   committeeId?: string | null;     // Optional for leaders
   isActive: boolean;
+  order?: number;                  // Display order within committee (lower = first)
   createdAt: Date;
   updatedAt: Date;
   // Legacy fields (kept for backwards compatibility during migration)
@@ -253,6 +249,7 @@ export interface TeamFormData {
   linkedInUrl?: string;
   portfolioUrl?: string;
   committeeId?: string | null;
+  order?: number;
 }
 
 export interface CommitteeFormData {

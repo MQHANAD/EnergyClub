@@ -98,181 +98,180 @@ export default function TeamPage() {
     <div className="min-h-screen bg-white">
 
       <Navigation />
-      <ScrollRevealWrapper>
-        {/* Hero Section */}
-        <section className="bg-white pt-16 md:pt-24">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center">
-                <Image
-                  src="/EW 2.svg"
-                  alt="KSA Energy Week"
-                  width={350}
-                  height={175}
-                  className="object-contain"
-                  priority
-                />
-              </div>
+      {/* Hero Section */}
+      <section className="bg-white pt-16 md:pt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center">
+              <Image
+                src="/EW 2.svg"
+                alt="KSA Energy Week"
+                width={350}
+                height={175}
+                className="object-contain"
+                priority
+              />
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Leadership Section */}
-        <Suspense fallback={<LoadingSpinner />}>
-          <LeadershipSection
-            leadershipPositions={leadershipPositions}
-            committees={committees}
-            hybridMembers={hybridMembers}
-          />
-        </Suspense>
-
-        {/* Decorative Banner */}
-        {/* Decorative Banner */}
-        <div
-          className="w-full h-12 md:h-16 relative my-8"
-          style={{
-            backgroundImage: 'url(/VisualIdentity4.svg?v=2)',
-            backgroundRepeat: 'repeat-x',
-            backgroundSize: 'auto 100%',
-            backgroundPosition: 'center'
-          }}
+      {/* Leadership Section */}
+      <Suspense fallback={<LoadingSpinner />}>
+        <LeadershipSection
+          leadershipPositions={leadershipPositions}
+          committees={committees}
+          hybridMembers={hybridMembers}
         />
+      </Suspense>
+
+      {/* Decorative Banner */}
+      {/* Decorative Banner */}
+      <div
+        className="w-full h-12 md:h-16 relative my-8"
+        style={{
+          backgroundImage: 'url(/VisualIdentity4.svg?v=2)',
+          backgroundRepeat: 'repeat-x',
+          backgroundSize: 'auto 100%',
+          backgroundPosition: 'center'
+        }}
+      />
 
 
 
-        <Suspense fallback={<LoadingSpinner />}>
-          <CommitteesSection
-            committees={committees.filter(c => c.regionId === 'eastern_province')}
-            hybridMembers={hybridMembers.filter(m => {
-              // Use explicit roleType and regionId instead of string matching
-              const isGlobalLeader = m.roleType === 'global_leader';
-              const isEasternRegion = m.regionId === 'eastern_province';
-              return !isGlobalLeader && isEasternRegion;
-            })}
-            region="Eastern Province"
-            sectionLogo="/eastern-logo.png"
-          />
-        </Suspense>
-
-
-        {/* Decorative Banner */}
-        <div
-          className="w-full h-12 md:h-16 relative my-8"
-          style={{
-            backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
-            backgroundRepeat: 'repeat-x',
-            backgroundSize: 'auto 100%',
-            backgroundPosition: 'center'
-          }}
+      <Suspense fallback={<LoadingSpinner />}>
+        <CommitteesSection
+          committees={committees.filter(c => c.regionId === 'eastern_province')}
+          hybridMembers={hybridMembers.filter(m => {
+            // Use explicit roleType and regionId instead of string matching
+            const isGlobalLeader = m.roleType === 'global_leader';
+            const isEasternRegion = m.regionId === 'eastern_province';
+            return !isGlobalLeader && isEasternRegion;
+          })}
+          region="Eastern Province"
+          sectionLogo="/eastern-logo.png"
         />
+      </Suspense>
 
-        {/* Riyadh Region */}
-        <Suspense fallback={<LoadingSpinner />}>
-          {(() => {
-            // Use regionId instead of string matching
-            const riyadhMembers = hybridMembers.filter(m => m.regionId === 'riyadh_region');
-            // Use roleType to identify regional leaders instead of inferring from missing committeeId
-            const riyadhLeaders = riyadhMembers.filter(m => m.roleType === 'regional_leader');
-            const riyadhCommitteeMembers = riyadhMembers.filter(m => m.roleType === 'member');
 
-            return (
-              <div className="py-20">
-                {/* Regional Header */}
-                <div className="text-center mb-8 px-4">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="relative w-56 h-32">
-                      <Image
-                        src="/riyadh-logo.png"
-                        alt="Riyadh Region"
-                        fill
-                        className="object-contain mix-blend-multiply"
-                      />
-                    </div>
+      {/* Decorative Banner */}
+      <div
+        className="w-full h-12 md:h-16 relative my-8"
+        style={{
+          backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
+          backgroundRepeat: 'repeat-x',
+          backgroundSize: 'auto 100%',
+          backgroundPosition: 'center'
+        }}
+      />
+
+      {/* Riyadh Region */}
+      <Suspense fallback={<LoadingSpinner />}>
+        {(() => {
+          // Use regionId instead of string matching
+          const riyadhMembers = hybridMembers.filter(m => m.regionId === 'riyadh_region');
+          // Use roleType to identify regional leaders instead of inferring from missing committeeId
+          const riyadhLeaders = riyadhMembers.filter(m => m.roleType === 'regional_leader');
+          const riyadhCommitteeMembers = riyadhMembers.filter(m => m.roleType === 'member');
+
+          return (
+            <div className="py-20">
+              {/* Regional Header */}
+              <div className="text-center mb-8 px-4">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="relative w-56 h-32">
+                    <Image
+                      src="/riyadh-logo.png"
+                      alt="Riyadh Region"
+                      fill
+                      className="object-contain mix-blend-multiply"
+                    />
                   </div>
                 </div>
-
-                {riyadhLeaders.length > 0 && (
-                  <LeadershipSection
-                    leadershipPositions={[]}
-                    committees={[]}
-                    hybridMembers={[]}
-                    customLeaders={riyadhLeaders}
-                    customTitle="Leaders"
-                    className="pb-0"
-                  />
-                )}
-                <CommitteesSection
-                  committees={committees.filter(c => c.regionId === 'riyadh_region')}
-                  hybridMembers={riyadhCommitteeMembers}
-                  region="Riyadh Region"
-                  hideHeader={true}
-                  className={riyadhLeaders.length > 0 ? "pt-10" : ""}
-                />
               </div>
-            );
-          })()}
-        </Suspense>
 
-        {/* Decorative Banner */}
-        <div
-          className="w-full h-12 md:h-16 relative my-8"
-          style={{
-            backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
-            backgroundRepeat: 'repeat-x',
-            backgroundSize: 'auto 100%',
-            backgroundPosition: 'center'
-          }}
-        />
+              {riyadhLeaders.length > 0 && (
+                <LeadershipSection
+                  leadershipPositions={[]}
+                  committees={[]}
+                  hybridMembers={[]}
+                  customLeaders={riyadhLeaders}
+                  customTitle="Leaders"
+                  className="pb-0"
+                />
+              )}
+              <CommitteesSection
+                committees={committees.filter(c => c.regionId === 'riyadh_region')}
+                hybridMembers={riyadhCommitteeMembers}
+                region="Riyadh Region"
+                hideHeader={true}
+                className={riyadhLeaders.length > 0 ? "pt-10" : ""}
+              />
+            </div>
+          );
+        })()}
+      </Suspense>
 
-        {/* Western Region */}
-        <Suspense fallback={<LoadingSpinner />}>
-          {(() => {
-            // Use regionId instead of string matching
-            const westernMembers = hybridMembers.filter(m => m.regionId === 'western_region');
-            // Use roleType to identify regional leaders
-            const westernLeaders = westernMembers.filter(m => m.roleType === 'regional_leader');
-            const westernCommitteeMembers = westernMembers.filter(m => m.roleType === 'member');
+      {/* Decorative Banner */}
+      <div
+        className="w-full h-12 md:h-16 relative my-8"
+        style={{
+          backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
+          backgroundRepeat: 'repeat-x',
+          backgroundSize: 'auto 100%',
+          backgroundPosition: 'center'
+        }}
+      />
 
-            return (
-              <div className="py-20">
-                {/* Regional Header */}
-                <div className="text-center mb-8 px-4">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="relative w-56 h-32">
-                      <Image
-                        src="/western-logo.png"
-                        alt="Western Region"
-                        fill
-                        className="object-contain mix-blend-multiply"
-                      />
-                    </div>
+      {/* Western Region */}
+      <Suspense fallback={<LoadingSpinner />}>
+        {(() => {
+          // Use regionId instead of string matching
+          const westernMembers = hybridMembers.filter(m => m.regionId === 'western_region');
+          // Use roleType to identify regional leaders
+          const westernLeaders = westernMembers.filter(m => m.roleType === 'regional_leader');
+          const westernCommitteeMembers = westernMembers.filter(m => m.roleType === 'member');
+
+          return (
+            <div className="py-20">
+              {/* Regional Header */}
+              <div className="text-center mb-8 px-4">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="relative w-56 h-32">
+                    <Image
+                      src="/western-logo.png"
+                      alt="Western Region"
+                      fill
+                      className="object-contain mix-blend-multiply"
+                    />
                   </div>
                 </div>
-
-                {westernLeaders.length > 0 && (
-                  <LeadershipSection
-                    leadershipPositions={[]}
-                    committees={[]}
-                    hybridMembers={[]}
-                    customLeaders={westernLeaders}
-                    customTitle="Leaders"
-                    className="pb-0"
-                  />
-                )}
-                <CommitteesSection
-                  committees={committees.filter(c => c.regionId === 'western_region')}
-                  hybridMembers={westernCommitteeMembers}
-                  region="Western Region"
-                  hideHeader={true}
-                  className={westernLeaders.length > 0 ? "pt-10" : ""}
-                />
               </div>
-            );
-          })()}
-        </Suspense>
 
-        {/* Footer Spacing */}
-      </ScrollRevealWrapper>
+              {westernLeaders.length > 0 && (
+                <LeadershipSection
+                  leadershipPositions={[]}
+                  committees={[]}
+                  hybridMembers={[]}
+                  customLeaders={westernLeaders}
+                  customTitle="Leaders"
+                  className="pb-0"
+                />
+              )}
+              <CommitteesSection
+                committees={committees.filter(c => c.regionId === 'western_region')}
+                hybridMembers={westernCommitteeMembers}
+                region="Western Region"
+                hideHeader={true}
+                className={westernLeaders.length > 0 ? "pt-10" : ""}
+              />
+            </div>
+          );
+        })()}
+      </Suspense>
+
+      {/* Footer Spacing */}
+      <Footer />
     </div>
   );
 }

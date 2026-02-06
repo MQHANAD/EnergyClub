@@ -47,7 +47,8 @@ export default function CommitteePage() {
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
-            members: []
+            members: [],
+            regionId: 'all'
           });
 
           const president = leadershipPositions.find((p: any) => p.title === 'president');
@@ -73,21 +74,25 @@ export default function CommitteePage() {
             } as HybridMember);
           }
 
-          // 1. Regional matching helper
-          const matchesRegion = (memberRegion: string | null | undefined, targetRegion: string) => {
-            if (targetRegion === 'Eastern Province') {
-              return !memberRegion || memberRegion.toLowerCase().includes('eastern') || memberRegion === 'Eastern Province';
-            }
-            // Normal matching for Riyadh/Western
-            return memberRegion === targetRegion;
+          const normalizeRegionId = (regionName?: string | null) => {
+            if (!regionName) return 'eastern_province';
+            const lower = regionName.toLowerCase();
+            if (lower.includes('riyadh')) return 'riyadh_region';
+            if (lower.includes('western') || lower.includes('jeddah')) return 'western_region';
+            return 'eastern_province';
           };
+
+          const targetRegionId = normalizeRegionId(region);
 
           const committeeLeaders = allMembers.filter((member: HybridMember) => {
             const role = member.role?.trim().toLowerCase();
             const matchesRole = role === "leader" || role === "team leader" || role === "committee leader";
-            // Use relaxed matching if region is provided, otherwise default to Eastern Province logic
-            const matchesRegionResult = region ? matchesRegion(member.region, region) : matchesRegion(member.region, 'Eastern Province');
-            return matchesRole && matchesRegionResult;
+
+            // Check region match
+            const memberRegionId = member.regionId || normalizeRegionId(member.region);
+            const matchesRegion = memberRegionId === targetRegionId;
+
+            return matchesRole && matchesRegion;
           });
 
           const uniqueCommitteeLeaders = committeeLeaders.filter((l: HybridMember) =>
@@ -107,18 +112,30 @@ export default function CommitteePage() {
             setCommittee(committeeData);
 
             // 1. Regional matching helper
-            const matchesRegion = (memberRegion: string | null | undefined, targetRegion: string) => {
-              if (targetRegion === 'Eastern Province') {
-                return !memberRegion || memberRegion.toLowerCase().includes('eastern') || memberRegion === 'Eastern Province';
+            // 1. Regional matching helper
+            const normalizeRegionId = (regionName?: string | null) => {
+              if (!regionName) return 'eastern_province';
+              const lower = regionName.toLowerCase();
+              if (lower.includes('riyadh')) return 'riyadh_region';
+              if (lower.includes('western') || lower.includes('jeddah')) return 'western_region';
+              return 'eastern_province';
+            };
+
+            const targetRegionId = normalizeRegionId(region);
+
+            const matchesRegion = (member: HybridMember) => {
+              // Use regionId if available (it's populated in getMembersUltraOptimized)
+              if (member.regionId) {
+                return member.regionId === targetRegionId;
               }
-              return memberRegion === targetRegion;
+              // Fallback for members without regionId (should be rare/none with optimized fetch)
+              return normalizeRegionId(member.region) === targetRegionId;
             };
 
             // Apply fuzzy filtering client-side for consistency with main page
             const filteredMembers = allMembers.filter(m => {
-              // 1. Filter by region first
-              const targetRegion = region || 'Eastern Province';
-              if (!matchesRegion(m.region, targetRegion)) return false;
+              // 1. Filter by region
+              if (!matchesRegion(m)) return false;
 
               // 2. Fuzzy match committee name
               if (!m.committeeName) return false;
@@ -231,8 +248,8 @@ export default function CommitteePage() {
                   if (aIsLeader && !bIsLeader) return -1;
                   if (!aIsLeader && bIsLeader) return 1;
 
-                  // If both are leaders or both are not leaders, maintain original order
-                  return 0;
+                  // Within same leader status, sort by order (lower = first)
+                  return (a.order ?? 0) - (b.order ?? 0);
                 })
                 .map((member) => {
                   const isLeader = member.role?.trim().toLowerCase() === "leader" ||
@@ -251,7 +268,9 @@ export default function CommitteePage() {
                     email: member.email,
                     isActive: true,
                     createdAt: new Date(),
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    roleType: member.roleType || 'member',
+                    regionId: member.regionId || 'eastern_province'
                   };
 
                   return (

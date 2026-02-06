@@ -209,7 +209,8 @@ const EVENTS_CACHE_TTL = 30000; // 30 seconds
 // Events API
 export const eventsApi = {
   // Get all active and completed events with pagination
-  async getEvents(lastDoc?: DocumentSnapshot, pageSize: number = 10): Promise<{ events: Event[], lastDoc?: DocumentSnapshot }> {
+  // includeHidden: true for admin dashboard, false for public pages
+  async getEvents(lastDoc?: DocumentSnapshot, pageSize: number = 10, includeHidden: boolean = false): Promise<{ events: Event[], lastDoc?: DocumentSnapshot }> {
     try {
       // Check cache only for first page (no lastDoc)
       if (!lastDoc) {
@@ -220,9 +221,14 @@ export const eventsApi = {
         }
       }
 
+      // Determine which statuses to include
+      const statusFilter = includeHidden
+        ? ['active', 'hidden', 'completed']
+        : ['active', 'completed'];
+
       let eventsQuery = query(
         collection(db, 'events'),
-        where('status', 'in', ['active', 'completed']),
+        where('status', 'in', statusFilter),
         orderBy('createdAt', 'desc'),
         limit(pageSize)
       );
@@ -860,13 +866,13 @@ export const regionsApi = {
   // Get all active regions
   async getRegions(): Promise<Region[]> {
     try {
-      const q = query(
-        collection(db, 'regions'),
-        where('isActive', '==', true),
-        orderBy('order', 'asc')
-      );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(docToRegion);
+      // Fetch ALL regions without constraints to avoid permission issues
+      const querySnapshot = await getDocs(collection(db, 'regions'));
+      const allRegions = querySnapshot.docs.map(docToRegion);
+      // Filter and sort client-side
+      return allRegions
+        .filter(r => r.isActive !== false) // Keep active or undefined isActive
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     } catch (error) {
       console.error('Error fetching regions:', error);
       throw error;

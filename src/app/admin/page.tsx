@@ -101,6 +101,12 @@ export default function AdminDashboard() {
     questions: [] as EventQuestion[],
     memberQuestions: [] as EventQuestion[],
     isTeamEvent: false,
+    startDate: "",
+    endDate: "",
+    location: "",
+    maxAttendees: 100,
+    minTeamSize: 2,
+    maxTeamSize: 10,
   });
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -150,8 +156,8 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
 
-      // Load all events (including cancelled/completed for admin view)
-      const { events: allEvents } = await eventsApi.getEvents(undefined, 100);
+      // Load all events (including hidden for admin view)
+      const { events: allEvents } = await eventsApi.getEvents(undefined, 100, true);
       console.log("🔥 Admin fetched events:", allEvents); // <--- ADD THIS
       setEvents(allEvents);
     } catch (error) {
@@ -221,6 +227,12 @@ export default function AdminDashboard() {
       questions: event.questions || [],
       memberQuestions: event.memberQuestions || [],
       isTeamEvent: event.isTeamEvent || false,
+      startDate: event.startDate || "",
+      endDate: event.endDate || "",
+      location: event.location || "",
+      maxAttendees: event.maxAttendees || 100,
+      minTeamSize: event.minTeamSize || 2,
+      maxTeamSize: event.maxTeamSize || 10,
     });
     setEditModalOpen(true);
   };
@@ -299,6 +311,12 @@ export default function AdminDashboard() {
         questions: editForm.questions,
         memberQuestions: editForm.memberQuestions,
         isTeamEvent: editForm.isTeamEvent,
+        startDate: editForm.startDate,
+        endDate: editForm.endDate,
+        location: editForm.location,
+        maxAttendees: editForm.maxAttendees,
+        minTeamSize: editForm.minTeamSize,
+        maxTeamSize: editForm.maxTeamSize,
       });
 
       // Refresh events
@@ -384,6 +402,8 @@ export default function AdminDashboard() {
       // Event statuses
       case "active":
         return "bg-blue-100 text-blue-800";
+      case "hidden":
+        return "bg-gray-100 text-gray-800";
       case "completed":
         return "bg-red-100 text-red-800";
       // Registration statuses
@@ -769,10 +789,10 @@ export default function AdminDashboard() {
                     Active
                   </SelectItem>
                   <SelectItem
-                    value="cancelled"
+                    value="hidden"
                     className="cursor-pointer hover:bg-gray-100"
                   >
-                    Cancelled
+                    Hidden (not visible to public)
                   </SelectItem>
                   <SelectItem
                     value="completed"
@@ -782,6 +802,88 @@ export default function AdminDashboard() {
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Date and Location */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input
+                  id="startDate"
+                  type="datetime-local"
+                  value={editForm.startDate}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, startDate: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="endDate">End Date</Label>
+                <Input
+                  id="endDate"
+                  type="datetime-local"
+                  value={editForm.endDate}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, endDate: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                value={editForm.location}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, location: e.target.value }))
+                }
+                placeholder="Event location"
+              />
+            </div>
+
+            {/* Capacity Settings */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="maxAttendees">Max Attendees</Label>
+                <Input
+                  id="maxAttendees"
+                  type="number"
+                  min="1"
+                  value={editForm.maxAttendees}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({ ...prev, maxAttendees: parseInt(e.target.value) || 100 }))
+                  }
+                />
+              </div>
+              {editForm.isTeamEvent && (
+                <>
+                  <div>
+                    <Label htmlFor="minTeamSize">Min Team Size</Label>
+                    <Input
+                      id="minTeamSize"
+                      type="number"
+                      min="1"
+                      value={editForm.minTeamSize}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({ ...prev, minTeamSize: parseInt(e.target.value) || 2 }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="maxTeamSize">Max Team Size</Label>
+                    <Input
+                      id="maxTeamSize"
+                      type="number"
+                      min="1"
+                      value={editForm.maxTeamSize}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({ ...prev, maxTeamSize: parseInt(e.target.value) || 10 }))
+                      }
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div>

@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#F8CD5C] text-gray-900 hover:bg-[#E6B845] active:scale-95 shadow-sm",
+          "bg-[#25818a] text-white hover:bg-[#1d666d] active:scale-95 shadow-sm",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95",
         outline:
@@ -38,7 +38,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean
   animationType?: "scale" | "bounce" | "pulse" | "none"
 }
@@ -46,7 +46,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, animationType = "scale", ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
-    
+
     // Animation classes based on animationType prop
     const animationClasses = {
       scale: "hover:scale-105 active:scale-95",
@@ -54,7 +54,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       pulse: "hover:animate-pulse",
       none: "",
     }
-    
+
     return (
       <Comp
         className={cn(

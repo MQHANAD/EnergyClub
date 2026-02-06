@@ -158,7 +158,7 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-[#209EAA] hover:bg-[#209EAA]" disabled={isSigningIn}>
+                <Button type="submit" className="w-full bg-[#25818a] hover:bg-[#25818a]" disabled={isSigningIn}>
                   Send Reset Email
                 </Button>
 
@@ -218,7 +218,7 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full bg-[#209EAA] hover:bg-[#209EAA] text-white" disabled={isSigningIn}>
+                <Button type="submit" className="w-full bg-[#25818a] hover:bg-[#25818a] text-white" disabled={isSigningIn}>
                   {isSigningIn ? (
                     <span className="loading loading-infinity loading-xl"></span>
                   ) : (

@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { eventsApi } from "@/lib/firestore";
 import { Event } from "@/types";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/landingPageUi/Footer";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +54,7 @@ export default function EventsPage() {
           9 // Load 9 events at a time (3x3 grid)
         );
 
-        console.log("🔥 Public fetched events:", newEvents); // <--- ADD THIS
+      console.log("🔥 Public fetched events:", newEvents); // <--- ADD THIS
 
 
       if (loadMore) {
@@ -93,13 +94,13 @@ export default function EventsPage() {
     }
     // Sort by newest date first
     return filtered.sort((a, b) => {
-  const dateA = new Date((a.startDate || a.date) as any).getTime();
-  const dateB = new Date((b.startDate || b.date) as any).getTime();
-  return dateB - dateA;
-});
+      const dateA = new Date((a.startDate || a.date) as any).getTime();
+      const dateB = new Date((b.startDate || b.date) as any).getTime();
+      return dateB - dateA;
+    });
 
 
-}, [events, debouncedQuery]);
+  }, [events, debouncedQuery]);
 
   const handleLoadMore = () => {
     if (hasMore && !loadingMore) {
@@ -108,29 +109,29 @@ export default function EventsPage() {
   };
 
   const formatDate = (date: Date) => {
-  const formatted = new Intl.DateTimeFormat(getLocale(lang), {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
+    const formatted = new Intl.DateTimeFormat(getLocale(lang), {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
 
-  // Add "at" between date and time (for English locales)
-  const hasTime = /\d{1,2}:\d{2}/.test(formatted);
-  return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
-};
+    // Add "at" between date and time (for English locales)
+    const hasTime = /\d{1,2}:\d{2}/.test(formatted);
+    return hasTime ? formatted.replace(/(\d{4})(, )/, "$1 at ") : formatted;
+  };
 
-const getDuration = (start: Date, end: Date) => {
-  if (!start || !end) return null;
+  const getDuration = (start: Date, end: Date) => {
+    if (!start || !end) return null;
 
-  const diffMs = (end.getTime() - start.getTime())+1;
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffMs = (end.getTime() - start.getTime()) + 1;
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 1) return "1 day";
-  return `${diffDays} days`;
-};
+    if (diffDays <= 1) return "1 day";
+    return `${diffDays} days`;
+  };
 
 
 
@@ -241,26 +242,26 @@ const getDuration = (start: Date, end: Date) => {
                       </CardTitle>
 
                       <div className="flex flex-col gap-2 text-sm text-gray-600 pt-2">
-                          {/* Row 1: Date */}
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1.5" />
-                            <span>{(event.startDate || event.date) ? formatDate(new Date((event.startDate || event.date) as any)) : ""}</span>
-                          </div>
-
-                          {/* Row 2: Duration (only if end date exists) */}
-                          {event.endDate && (
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-1.5" />
-                              <span>Duration: {getDuration(new Date((event.startDate || event.date) as any), new Date(event.endDate as any))}</span>
-                            </div>
-                          )}
-
-                          {/* Row 3: Location */}
-                          <div className="flex items-center min-w-0">
-                            <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
-                            <span className="truncate">{event.location}</span>
-                          </div>
+                        {/* Row 1: Date */}
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1.5" />
+                          <span>{(event.startDate || event.date) ? formatDate(new Date((event.startDate || event.date) as any)) : ""}</span>
                         </div>
+
+                        {/* Row 2: Duration (only if end date exists) */}
+                        {event.endDate && (
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1.5" />
+                            <span>Duration: {getDuration(new Date((event.startDate || event.date) as any), new Date(event.endDate as any))}</span>
+                          </div>
+                        )}
+
+                        {/* Row 3: Location */}
+                        <div className="flex items-center min-w-0">
+                          <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                          <span className="truncate">{event.location}</span>
+                        </div>
+                      </div>
 
                     </CardHeader>
 
@@ -299,7 +300,7 @@ const getDuration = (start: Date, end: Date) => {
                           router.push(`/event/${event.id}`);
                         }}
                         // Inline style to override any internal hover/active styles from the Button component
-                        style={{ backgroundColor: "#209EAA", transition: "none", transform: "none", WebkitTapHighlightColor: "transparent" }}
+                        style={{ backgroundColor: "#25818a", transition: "none", transform: "none", WebkitTapHighlightColor: "transparent" }}
                       >
                         {t("eventsPage.viewDetails")}
                         <ChevronRight className="h-4 w-4 ml-2 text-white" />
@@ -332,6 +333,7 @@ const getDuration = (start: Date, end: Date) => {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
