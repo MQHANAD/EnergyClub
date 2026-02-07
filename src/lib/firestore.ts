@@ -58,6 +58,7 @@ const docToEvent = (doc: QueryDocumentSnapshot): Event => {
     tags: data.tags || [],
     imageUrls: data.imageUrls || [],
     requireStudentId: data.requireStudentId || false,
+    autoAcceptRegistrations: data.autoAcceptRegistrations || false,
     questions: data.questions || [],  // Team-level or general registration questions
     // Team registration fields
     isTeamEvent: data.isTeamEvent || false,
@@ -223,8 +224,8 @@ export const eventsApi = {
 
       // Determine which statuses to include
       const statusFilter = includeHidden
-        ? ['active', 'hidden', 'completed']
-        : ['active', 'completed'];
+        ? ['active', 'hidden', 'completed', 'registration_completed']
+        : ['active', 'completed', 'registration_completed'];
 
       let eventsQuery = query(
         collection(db, 'events'),
@@ -411,7 +412,8 @@ export const registrationsApi = {
     responses?: RegistrationResponse[],
     teamSize?: number,
     teamResponses?: RegistrationResponse[],
-    memberResponses?: TeamMemberResponse[]
+    memberResponses?: TeamMemberResponse[],
+    autoAccept?: boolean  // If true, registration is auto-confirmed
   ): Promise<string> {
     try {
       // Check if user is already registered
@@ -432,7 +434,8 @@ export const registrationsApi = {
         userName,
         userEmail,
         registrationTime: Timestamp.now(),
-        status: 'waitlist',
+        status: autoAccept ? 'confirmed' : 'waitlist',
+        autoAccepted: autoAccept || false,  // Flag for Cloud Functions to skip confirmation email
         reason: reason || null,
         isFromUniversity: isFromUniversity || false,
         universityEmail: universityEmail || null,
@@ -456,7 +459,17 @@ export const registrationsApi = {
 
       const docRef = await addDoc(collection(db, 'registrations'), registrationData);
 
-      // Do not update event attendee count here; it will be incremented upon approval
+      // If auto-accepted, increment the attendee count immediately
+      if (autoAccept) {
+        const eventDoc = await getDoc(doc(db, 'events', eventId));
+        if (eventDoc.exists()) {
+          const eventData = eventDoc.data() as DocumentData;
+          await updateDoc(doc(db, 'events', eventId), {
+            currentAttendees: (Number(eventData?.currentAttendees) || 0) + 1,
+            updatedAt: Timestamp.now()
+          });
+        }
+      }
 
       return docRef.id;
     } catch (error) {

@@ -98,6 +98,7 @@ export default function AdminDashboard() {
     status: "active" as Event["status"],
     imageUrls: [] as string[],
     requireStudentId: false,
+    autoAcceptRegistrations: false,
     questions: [] as EventQuestion[],
     memberQuestions: [] as EventQuestion[],
     isTeamEvent: false,
@@ -224,6 +225,7 @@ export default function AdminDashboard() {
       status: event.status,
       imageUrls: event.imageUrls || [],
       requireStudentId: event.requireStudentId || false,
+      autoAcceptRegistrations: event.autoAcceptRegistrations || false,
       questions: event.questions || [],
       memberQuestions: event.memberQuestions || [],
       isTeamEvent: event.isTeamEvent || false,
@@ -308,6 +310,7 @@ export default function AdminDashboard() {
         status: editForm.status,
         imageUrls: editForm.imageUrls,
         requireStudentId: editForm.requireStudentId,
+        autoAcceptRegistrations: editForm.autoAcceptRegistrations,
         questions: editForm.questions,
         memberQuestions: editForm.memberQuestions,
         isTeamEvent: editForm.isTeamEvent,
@@ -404,6 +407,8 @@ export default function AdminDashboard() {
         return "bg-blue-100 text-blue-800";
       case "hidden":
         return "bg-gray-100 text-gray-800";
+      case "registration_completed":
+        return "bg-amber-100 text-amber-800";
       case "completed":
         return "bg-red-100 text-red-800";
       // Registration statuses
@@ -789,6 +794,12 @@ export default function AdminDashboard() {
                     Active
                   </SelectItem>
                   <SelectItem
+                    value="registration_completed"
+                    className="cursor-pointer hover:bg-gray-100"
+                  >
+                    Registration Completed (visible, no new registrations)
+                  </SelectItem>
+                  <SelectItem
                     value="hidden"
                     className="cursor-pointer hover:bg-gray-100"
                   >
@@ -959,6 +970,30 @@ export default function AdminDashboard() {
               <Label htmlFor="requireStudentId" className="text-sm font-medium text-gray-700">
                 Require Student ID for registration
               </Label>
+            </div>
+
+            {/* Auto-Accept Registrations Toggle */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="autoAcceptRegistrations"
+                checked={editForm.autoAcceptRegistrations}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    autoAcceptRegistrations: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              />
+              <div className="flex flex-col">
+                <Label htmlFor="autoAcceptRegistrations" className="text-sm font-medium text-gray-700">
+                  Auto-Accept Registrations
+                </Label>
+                <span className="text-xs text-gray-500">
+                  When enabled, registrations are confirmed immediately and tickets sent automatically
+                </span>
+              </div>
             </div>
 
             {/* Team Event Toggle */}

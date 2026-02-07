@@ -140,11 +140,26 @@ export default function EventsPage() {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
+      case "registration_completed":
+        return "bg-amber-100 text-amber-800";
       case "cancelled":
       case "completed":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "active":
+        return "Active";
+      case "registration_completed":
+        return "Registration Closed";
+      case "completed":
+        return "Completed";
+      default:
+        return status;
     }
   };
 
@@ -232,7 +247,7 @@ export default function EventsPage() {
                           event.status
                         )}`}
                       >
-                        {event.status}
+                        {getStatusLabel(event.status)}
                       </span>
                     </div>
 

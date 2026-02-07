@@ -189,7 +189,11 @@ export default function EventDetailsPage() {
         isFromUniversity || event.requireStudentId,
         universityEmail || undefined,
         event.requireStudentId ? studentId.trim() : undefined,
-        dynamicResponses.length > 0 ? dynamicResponses : undefined
+        dynamicResponses.length > 0 ? dynamicResponses : undefined,
+        undefined, // teamSize
+        undefined, // teamResponses
+        undefined, // memberResponses
+        event.autoAcceptRegistrations // autoAccept
       );
 
       // Log registration for analytics
@@ -233,12 +237,27 @@ export default function EventDetailsPage() {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800 border-green-200";
+      case "registration_completed":
+        return "bg-amber-100 text-amber-800 border-amber-200";
       case "cancelled":
         return "bg-red-100 text-red-800 border-red-200";
       case "completed":
         return "bg-blue-100 text-blue-800 border-blue-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "active":
+        return t("eventDetails.statusActive") || "Active";
+      case "registration_completed":
+        return t("eventDetails.statusRegistrationClosed") || "Registration Closed";
+      case "completed":
+        return t("eventDetails.statusCompleted") || "Completed";
+      default:
+        return status;
     }
   };
 
@@ -391,7 +410,7 @@ export default function EventDetailsPage() {
                           event.status
                         )}`}
                       >
-                        {event.status}
+                        {getStatusLabel(event.status)}
                       </span>
                     </div>
                   </CardHeader>
@@ -535,11 +554,11 @@ export default function EventDetailsPage() {
                   </div>
                 ) : event.status !== "active" ? (
                   <div className="text-center py-4">
-                    <div className="p-4 bg-yellow-50 rounded-xl border-2 border-yellow-200">
-                      <p className="text-gray-700 font-medium">
-                        {t("eventDetails.eventStatusNotAccepting", {
-                          status: event.status,
-                        })}
+                    <div className={`p-4 rounded-xl border-2 ${event.status === 'registration_completed' ? 'bg-amber-50 border-amber-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                      <p className={`font-medium ${event.status === 'registration_completed' ? 'text-amber-800' : 'text-gray-700'}`}>
+                        {event.status === 'registration_completed'
+                          ? "Registration for this event has closed. The event is still scheduled to take place."
+                          : t("eventDetails.eventStatusNotAccepting", { status: event.status })}
                       </p>
                     </div>
                   </div>
@@ -577,7 +596,8 @@ export default function EventDetailsPage() {
                           undefined, // responses (use teamResponses instead)
                           teamData.teamSize,
                           teamData.teamResponses,
-                          teamData.memberResponses
+                          teamData.memberResponses,
+                          event.autoAcceptRegistrations // autoAccept
                         );
 
                         logEventRegistration(event.id, event.title);

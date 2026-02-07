@@ -22,12 +22,14 @@ export default function Events({
   accent = "#f8cd5c",
   title,
   showMoreLess = false,
+  initialCount = 3,
 }: {
   events: EventItem[];
   primary?: string;
   accent?: string;
   title?: string;
   showMoreLess?: boolean;
+  initialCount?: number;
 }) {
   const [active, setActive] = useState<EventItem | null>(null);
   const [slideIdx, setSlideIdx] = useState(0);
@@ -35,7 +37,7 @@ export default function Events({
   const [mounted, setMounted] = useState(false);
   const { t } = useI18n();
 
-  const displayedEvents = showMoreLess ? events.slice(0, showAll ? events.length : 3) : events;
+  const displayedEvents = showMoreLess ? events.slice(0, showAll ? events.length : initialCount) : events;
   const titleText = title || t("events.title");
 
   // Set mounted to true after component mounts
@@ -175,11 +177,10 @@ export default function Events({
                             e.stopPropagation();
                             goToSlide(index);
                           }}
-                          className={`flex-shrink-0 relative aspect-[4/3] w-20 sm:w-24 rounded-md overflow-hidden border-2 transition-all duration-200 ${
-                            index === slideIdx
-                              ? "border-gray-900 ring-2 ring-gray-900 ring-opacity-20"
-                              : "border-transparent hover:border-gray-400"
-                          }`}
+                          className={`flex-shrink-0 relative aspect-[4/3] w-20 sm:w-24 rounded-md overflow-hidden border-2 transition-all duration-200 ${index === slideIdx
+                            ? "border-gray-900 ring-2 ring-gray-900 ring-opacity-20"
+                            : "border-transparent hover:border-gray-400"
+                            }`}
                           aria-label={`View image ${index + 1}`}
                         >
                           <Image
@@ -324,7 +325,7 @@ export default function Events({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className={showMoreLess && events.length > 3 ? "mt-12 sm:mt-16 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center" : "mt-12 sm:mt-16 flex justify-center"}
+        className={showMoreLess && events.length > initialCount ? "mt-12 sm:mt-16 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center" : "mt-12 sm:mt-16 flex justify-center"}
       >
         <Link
           href="/events"
@@ -334,7 +335,7 @@ export default function Events({
           {t("events.ctaRegister")}
         </Link>
 
-        {showMoreLess && events.length > 3 && (
+        {showMoreLess && events.length > initialCount && (
           <button
             onClick={() => setShowAll(!showAll)}
             className="w-full sm:w-auto px-6 sm:px-8 py-3 font-bold text-gray-700 border border-gray-300 tracking-wide transition-all hover:border-gray-400 hover:text-gray-900 rounded-lg cursor-pointer"

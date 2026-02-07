@@ -2,7 +2,7 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  status: 'active' | 'hidden' | 'completed';
+  status: 'active' | 'hidden' | 'completed' | 'registration_completed';
   createdAt: Date;
   updatedAt: Date;
   date?: string;  // Legacy field - use startDate instead
@@ -16,6 +16,7 @@ export interface Event {
   organizerId?: string;
   organizerName?: string;
   requireStudentId?: boolean;
+  autoAcceptRegistrations?: boolean;  // If true, registrations are auto-confirmed (default: false = manual approval)
   questions?: EventQuestion[];  // Dynamic registration questions (team-level)
   // Team registration settings
   isTeamEvent?: boolean;        // Enable team registration mode
@@ -79,6 +80,7 @@ export interface Registration {
   userEmail: string;
   registrationTime: Date;
   status: 'confirmed' | 'waitlist' | 'cancelled' | 'checked_in';
+  autoAccepted?: boolean;  // True if registration was auto-confirmed (skips confirmation email)
   checkInTime?: Date;
   reason?: string;
   notes?: string;

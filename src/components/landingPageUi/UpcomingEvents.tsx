@@ -89,7 +89,7 @@ export default function UpcomingEvents() {
                 ? event.imageUrls
                 : ["/file.svg"],
           };
-          if (event.status === "active") {
+          if (event.status === "active" || event.status === "registration_completed") {
             upcoming.push(transformed);
           } else if (event.status === "completed") {
             past.push(transformed);
@@ -130,10 +130,10 @@ export default function UpcomingEvents() {
   return (
     <>
       {upcomingEvents.length > 0 && (
-        <Events events={upcomingEvents} title={t("events.title1")} />
+        <Events events={upcomingEvents} title={t("events.title1")} showMoreLess={true} initialCount={3} />
       )}
       {pastEvents.length > 0 && (
-        <Events events={pastEvents} title={t("events.title")} showMoreLess={true} />
+        <Events events={pastEvents} title={t("events.title")} showMoreLess={true} initialCount={3} />
       )}
     </>
   );
