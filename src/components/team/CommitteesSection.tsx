@@ -171,66 +171,30 @@ export const CommitteeCard: React.FC<CommitteeCardProps> = ({
       <div className="p-12 h-80 flex flex-col justify-center items-center text-center">
         {/* Centered Committee Name */}
         <div className="mb-8 flex flex-col items-center justify-center">
-          {committee.name === 'Project Management Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/pmo-logo.png"
-                alt="PMO Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Public Relations Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/pr-logo.png"
-                alt="PR Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Operations & Logistics Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/op-logo.png"
-                alt="OP Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Tech Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/tech-logo.png"
-                alt="Tech Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Marketing Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/marketing-logo.png"
-                alt="Marketing Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Event Planning Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/ep-logo.png"
-                alt="Event Planning Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
+          {(() => {
+            const committeeLogos: Record<string, string> = {
+              'Project Management Team': '/pmo-logo.png',
+              'Public Relations Team': '/pr-logo.png',
+              'Operations & Logistics Team': '/op-logo.png',
+              'Tech Team': '/tech-logo.png',
+              'Marketing Team': '/marketing-logo.png',
+              'Event Planning Team': '/ep-logo.png',
+            };
+            const logoSrc = committeeLogos[committee.name];
+
+            if (!logoSrc) return null;
+
+            return (
+              <div className="relative w-32 h-20 mb-4">
+                <Image
+                  src={logoSrc}
+                  alt={`${committee.name} Logo`}
+                  fill
+                  className="object-contain mix-blend-multiply"
+                />
+              </div>
+            );
+          })()}
           <h3 className={`text-4xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out`}>
             {committee.name}
           </h3>

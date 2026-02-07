@@ -175,11 +175,10 @@ export default function Events({
                             e.stopPropagation();
                             goToSlide(index);
                           }}
-                          className={`flex-shrink-0 relative aspect-[4/3] w-20 sm:w-24 rounded-md overflow-hidden border-2 transition-all duration-200 ${
-                            index === slideIdx
+                          className={`flex-shrink-0 relative aspect-[4/3] w-20 sm:w-24 rounded-md overflow-hidden border-2 transition-all duration-200 ${index === slideIdx
                               ? "border-gray-900 ring-2 ring-gray-900 ring-opacity-20"
                               : "border-transparent hover:border-gray-400"
-                          }`}
+                            }`}
                           aria-label={`View image ${index + 1}`}
                         >
                           <Image
