@@ -33,13 +33,13 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
     else if (regionLower.includes('western') || regionLower.includes('jeddah')) regionKey = 'western';
 
     // 3. Background Mapping
-    let bgImage = '/cards/easter-member.svg';
-    const suffix = isMember ? 'member' : 'leader';
+    let bgImage = '/cards/eastern-card.svg';
+
 
     if (isPresident) bgImage = '/cards/president.svg';
     else if (isVicePresident) bgImage = '/cards/vice-president.svg';
-    else if (regionKey === 'eastern' && isMember) bgImage = '/cards/easter-member.svg';
-    else bgImage = `/cards/${regionKey}-${suffix}.svg`;
+    else if (regionKey === 'eastern' && isMember) bgImage = '/cards/eastern-card.svg';
+    else bgImage = `/cards/${regionKey}-card.svg`;
 
     // 4. Construct Display Text (One clean line)
     let displayText = '';
