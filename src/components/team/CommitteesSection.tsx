@@ -136,6 +136,15 @@ interface CommitteeCardProps {
   className?: string;
 }
 
+const committeeLogos: Record<string, string> = {
+  'Project Management Team': '/PMO-logo.svg',
+  'Public Relations Team': '/PR-logo.svg',
+  'Operations & Logistics Team': '/OP-logo.svg',
+  'Tech Team': '/Tech-logo.svg',
+  'Marketing Team': '/Marketing-logo.svg',
+  'Event Planning Team': '/EP-logo.svg',
+};
+
 export const CommitteeCard: React.FC<CommitteeCardProps> = ({
   committee,
   hybridMembers,
@@ -166,81 +175,39 @@ export const CommitteeCard: React.FC<CommitteeCardProps> = ({
   const memberLabel = isArabic ? (memberCount === 1 ? 'عضو' : 'أعضاء') : (memberCount === 1 ? 'member' : 'members');
   const viewDetailsLabel = isArabic ? 'عرض التفاصيل' : 'View Details';
 
+  const logoSrc = committeeLogos[committee.name];
+
   return (
     <Card className={`group overflow-hidden transition-all duration-500 ease-out hover:shadow-xl hover:scale-[1.03] cursor-pointer bg-gradient-to-br ${style.bgGradient} border ${style.border} md:filter md:grayscale transition-[filter] duration-700 ease-in-out md:hover:grayscale-0 ${className}`} onClick={handleViewCommittee}>
-      <div className="p-12 h-80 flex flex-col justify-center items-center text-center">
-        {/* Centered Committee Name */}
-        <div className="mb-8 flex flex-col items-center justify-center">
-          {committee.name === 'Project Management Team' && (
-            <div className="relative w-24 h-16 mb-4">
+      <div className="p-8 h-96 flex flex-col justify-between items-center text-center">
+        {/* Header Section: Logo + Name */}
+        <div className="flex flex-col items-center justify-start w-full pt-4">
+          <div className="relative w-32 h-32 mb-6 transition-transform duration-500 group-hover:scale-110">
+            {logoSrc ? (
               <Image
-                src="/pmo-logo.png"
-                alt="PMO Logo"
+                src={logoSrc}
+                alt={`${committee.name} Logo`}
                 fill
                 className="object-contain mix-blend-multiply"
               />
-            </div>
-          )}
-          {committee.name === 'Public Relations Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/pr-logo.png"
-                alt="PR Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Operations & Logistics Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/op-logo.png"
-                alt="OP Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Tech Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/tech-logo.png"
-                alt="Tech Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Marketing Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/marketing-logo.png"
-                alt="Marketing Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          {committee.name === 'Event Planning Team' && (
-            <div className="relative w-24 h-16 mb-4">
-              <Image
-                src="/ep-logo.png"
-                alt="Event Planning Logo"
-                fill
-                className="object-contain mix-blend-multiply"
-              />
-            </div>
-          )}
-          <h3 className={`text-4xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out`}>
+            ) : (
+              // Fallback for committees without specific logos
+              <div className={`w-full h-full flex items-center justify-center rounded-lg bg-white/50 ${style.iconColor}`}>
+                <Users className="w-12 h-12 opacity-50" />
+              </div>
+            )}
+          </div>
+
+          <h3 className={`text-2xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out line-clamp-2`}>
             {committee.name}
           </h3>
         </div>
 
-        {/* Footer Section */}
-        <div className="flex items-center justify-between w-full">
+        {/* Footer Section: Members + Button */}
+        <div className="flex items-center justify-between w-full mt-auto pt-4 border-t border-gray-100/50">
           <div className={`flex items-center space-x-2 ${style.iconColor} ${style.hoverIconColor} transition-colors duration-700 ease-in-out`}>
-            <Users className="w-7 h-7" />
-            <span className="text-lg font-medium">
+            <Users className="w-5 h-5" />
+            <span className="text-base font-medium">
               {formattedCount} {memberLabel}
             </span>
           </div>
