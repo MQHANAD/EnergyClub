@@ -16,7 +16,7 @@ interface MemberData {
     fullName: string;
     role: string;
     committeeName?: string;
-    region?: string;
+    regionId?: string;
 }
 
 const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, variant: 'view' | 'export' }>(({ memberData, variant }, ref) => {
@@ -27,7 +27,7 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
     const isMember = roleLower === 'member';
 
     // 2. Region Logic
-    const regionLower = (memberData.region || '').toLowerCase();
+    const regionLower = (memberData.regionId || '').toLowerCase();
     let regionKey = 'eastern';
     if (regionLower.includes('riyadh')) regionKey = 'riyadh';
     else if (regionLower.includes('western') || regionLower.includes('jeddah')) regionKey = 'western';
@@ -180,13 +180,13 @@ function MemberContent() {
                     }
 
                     // Default to 'Eastern Province' if missing/undefined
-                    const region = data.region || 'Eastern Province';
+                    const regionId = data.regionId || 'eastern-province';
 
                     setMemberData({
                         fullName: capitalizeName(data.fullName),
                         role: data.role,
                         committeeName: committeeName,
-                        region: region
+                        regionId: regionId
                     });
                 } else {
                     setError('Member profile not found.');
