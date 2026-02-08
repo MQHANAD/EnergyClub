@@ -198,7 +198,7 @@ export const CommitteeCard: React.FC<CommitteeCardProps> = ({
             )}
           </div>
 
-          <h3 className={`text-2xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out line-clamp-2`}>
+          <h3 className={`text-3xl font-bold ${style.textColor} ${style.hoverTextColor} transition-colors duration-700 ease-in-out line-clamp-2`}>
             {committee.name}
           </h3>
         </div>
