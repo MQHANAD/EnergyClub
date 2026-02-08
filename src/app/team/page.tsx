@@ -104,7 +104,7 @@ export default function TeamPage() {
           <div className="text-center">
             <div className="flex items-center justify-center">
               <Image
-                src="/EW 2.svg"
+                src="/EW.svg"
                 alt="KSA Energy Week"
                 width={350}
                 height={175}
@@ -130,7 +130,7 @@ export default function TeamPage() {
       <div
         className="w-full h-12 md:h-16 relative my-8"
         style={{
-          backgroundImage: 'url(/VisualIdentity4.svg?v=2)',
+          backgroundImage: 'url(/Banner.svg?v=2)',
           backgroundRepeat: 'repeat-x',
           backgroundSize: 'auto 100%',
           backgroundPosition: 'center'
@@ -149,7 +149,7 @@ export default function TeamPage() {
             return !isGlobalLeader && isEasternRegion;
           })}
           region="Eastern Province"
-          sectionLogo="/eastern-logo.png"
+          sectionLogo="/east.svg"
         />
       </Suspense>
 
@@ -158,7 +158,7 @@ export default function TeamPage() {
       <div
         className="w-full h-12 md:h-16 relative my-8"
         style={{
-          backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
+          backgroundImage: 'url(/Banner.svg?v=3)',
           backgroundRepeat: 'repeat-x',
           backgroundSize: 'auto 100%',
           backgroundPosition: 'center'
@@ -181,7 +181,7 @@ export default function TeamPage() {
                 <div className="flex flex-col items-center justify-center">
                   <div className="relative w-56 h-32">
                     <Image
-                      src="/riyadh-logo.png"
+                      src="/riyadh.svg"
                       alt="Riyadh Region"
                       fill
                       className="object-contain mix-blend-multiply"
@@ -216,7 +216,7 @@ export default function TeamPage() {
       <div
         className="w-full h-12 md:h-16 relative my-8"
         style={{
-          backgroundImage: 'url(/VisualIdentity4.svg?v=3)',
+          backgroundImage: 'url(/Banner.svg?v=3)',
           backgroundRepeat: 'repeat-x',
           backgroundSize: 'auto 100%',
           backgroundPosition: 'center'
@@ -239,7 +239,7 @@ export default function TeamPage() {
                 <div className="flex flex-col items-center justify-center">
                   <div className="relative w-56 h-32">
                     <Image
-                      src="/western-logo.png"
+                      src="/west.svg"
                       alt="Western Region"
                       fill
                       className="object-contain mix-blend-multiply"

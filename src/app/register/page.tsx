@@ -169,7 +169,7 @@ export default function RegisterPage() {
           </div>
         </div>
         <motion.div
-          className="absolute bottom-[-12px] w-[110%] h-16 bg-[url('/VisualIdentity4.svg')] bg-cover bg-top bg-no-repeat right-[-10px]"
+          className="absolute bottom-[-12px] w-[110%] h-16 bg-[url('/Banner.svg')] bg-cover bg-top bg-no-repeat right-[-10px]"
         />
       </div>
 

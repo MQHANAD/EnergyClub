@@ -41,7 +41,7 @@ export default function ScrollRevealWrapper({
             3. h-full: Ensures the container fills the available space.
         */}
         <motion.div
-          className="absolute top-[-5px] w-[110%] h-23 bg-[url('/VisualIdentity4.svg')] bg-cover bg-top bg-no-repeat"
+          className="absolute top-[-5px] w-[110%] h-23 bg-[url('/Banner.svg')] bg-cover bg-top bg-no-repeat"
           style={{ scale }}
         />
 
