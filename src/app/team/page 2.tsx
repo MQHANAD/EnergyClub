@@ -130,6 +130,7 @@ export default function TeamPage() {
         <CommitteesSection 
           committees={committees}
           hybridMembers={hybridMembers}
+          hideHeader={true}
         />
       </Suspense>
 

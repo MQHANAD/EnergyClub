@@ -150,6 +150,8 @@ export default function TeamPage() {
           })}
           region="Eastern Province"
           sectionLogo="/east.svg"
+          hideHeader={false}
+          showTitle={false}
         />
       </Suspense>
 

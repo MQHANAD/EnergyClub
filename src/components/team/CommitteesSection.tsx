@@ -228,6 +228,7 @@ interface CommitteesSectionProps {
   region?: string;
   sectionLogo?: string;
   hideHeader?: boolean;
+  showTitle?: boolean;
 }
 
 export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
@@ -237,7 +238,8 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
   title,
   region,
   sectionLogo,
-  hideHeader = false
+  hideHeader = false,
+  showTitle = true
 }) => {
   const { t } = useI18n();
 
@@ -297,9 +299,11 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
             ) : (
               <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             )}
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {title || t('team.committees.title')}
-            </h2>
+            {showTitle && (
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {title || t('team.committees.title')}
+              </h2>
+            )}
             <p className="text-gray-500 dark:text-gray-400">
               {t('team.committees.noMembers')}
             </p>
@@ -328,9 +332,11 @@ export const CommitteesSection: React.FC<CommitteesSectionProps> = ({
               ) : (
                 <Building2 className="w-8 h-8 text-gray-600 mb-3" />
               )}
-              <h2 className="text-4xl font-light text-gray-900">
-                {title || t('team.committees.title')}
-              </h2>
+              {showTitle && (
+                <h2 className="text-4xl font-light text-gray-900">
+                  {title || t('team.committees.title')}
+                </h2>
+              )}
             </div>
           </div>
         )}
