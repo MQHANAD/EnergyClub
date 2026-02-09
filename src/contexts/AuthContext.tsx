@@ -20,7 +20,7 @@ interface UserProfile {
   email: string;
   displayName: string;
   photoURL: string;
-  role: 'user' | 'organizer' | 'admin';
+  role: 'user' | 'organizer' | 'admin' | 'eventManager';
   createdAt: Date;
   lastLogin: Date;
   preferences: {
@@ -41,6 +41,7 @@ interface AuthContextType {
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   isAdmin: boolean;
   isOrganizer: boolean;
+  isEventManager: boolean;
   isAnonymous: boolean;
 }
 
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('User profile updateDoc failed; proceeding with read-only data', err);
       }
 
-      const normalizedRole = (String(existingData.role || 'user').toLowerCase() as UserProfile['role']);
+      const normalizedRole = (existingData.role || 'user') as UserProfile['role'];
 
       return {
         id: firebaseUser.uid,
@@ -134,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(firebaseUser);
       const profile = await createOrUpdateUserProfile(firebaseUser);
       setUserProfile(profile);
-      
+
       // Log login event for analytics
       logUserLogin('email');
       setAnalyticsUserId(firebaseUser.uid);
@@ -151,14 +152,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = result.user;
-      
+
       // Update the user's display name
       await updateProfile(firebaseUser, { displayName });
-      
+
       setUser(firebaseUser);
       const profile = await createOrUpdateUserProfile(firebaseUser);
       setUserProfile(profile);
-      
+
       // Log signup event for analytics
       logUserSignup('email');
       setAnalyticsUserId(firebaseUser.uid);
@@ -277,6 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateUserProfile,
     isAdmin: userProfile?.role === 'admin',
     isOrganizer: userProfile?.role === 'organizer' || userProfile?.role === 'admin',
+    isEventManager: userProfile?.role === 'eventManager',
     isAnonymous: user?.isAnonymous || false
   };
 

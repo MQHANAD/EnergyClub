@@ -18,8 +18,8 @@ interface NavigationProps {
 }
 
 export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
-  const { user, userProfile, logout, loading, isOrganizer, isAdmin } = useAuth();
-  const canSeeAdmin = Boolean(isOrganizer || isAdmin);
+  const { user, userProfile, logout, loading, isOrganizer, isAdmin, isEventManager } = useAuth();
+  const canSeeAdmin = Boolean(isOrganizer || isAdmin || isEventManager);
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useI18n();
@@ -76,13 +76,20 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
     { href: "/register", label: t("navigation.joinUs") },
   ];
 
+  // Event managers see only Events Dashboard and Check-in
   const adminLinks = canSeeAdmin
-    ? [
-      { href: "/admin", label: t("nav.admin") },
-      { href: "/admin/applications", label: t("nav.applications") },
-      { href: "/admin/team", label: "Team Management" },
-      { href: "/admin/analytics", label: t("nav.analytics") },
-    ]
+    ? isEventManager && !isAdmin && !isOrganizer
+      ? [
+        { href: "/admin", label: t("nav.admin") },
+        { href: "/admin/check-in", label: t("nav.checkIn") },
+      ]
+      : [
+        { href: "/admin", label: t("nav.admin") },
+        { href: "/admin/applications", label: t("nav.applications") },
+        { href: "/admin/team", label: "Team Management" },
+        { href: "/admin/analytics", label: t("nav.analytics") },
+        { href: "/admin/check-in", label: t("nav.checkIn") },
+      ]
     : [];
 
   const isDark = colorScheme === 'dark';

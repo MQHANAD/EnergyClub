@@ -33,7 +33,7 @@ import { ArrowLeft, X, Upload } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 
 export default function CreateEventPage() {
-  const { user, userProfile, isOrganizer } = useAuth();
+  const { user, userProfile, isOrganizer, isEventManager } = useAuth();
   const router = useRouter();
   const { t } = useI18n();
 
@@ -336,7 +336,7 @@ export default function CreateEventPage() {
     }
   };
 
-  if (!user || !isOrganizer) {
+  if (!user || (!isOrganizer && !isEventManager)) {
     return null;
   }
 

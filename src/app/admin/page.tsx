@@ -66,9 +66,10 @@ export default function AdminDashboard() {
     userProfile,
     isOrganizer,
     isAdmin,
+    isEventManager,
     loading: authLoading,
   } = useAuth();
-  const canAccess = Boolean(isOrganizer || isAdmin);
+  const canAccess = Boolean(isOrganizer || isAdmin || isEventManager);
   const router = useRouter();
   const { t, lang } = useI18n();
 
@@ -143,14 +144,14 @@ export default function AdminDashboard() {
 
   // Redirect if not authorized
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && userProfile !== null) {
       if (!user) {
         router.push("/login");
       } else if (!canAccess) {
         router.push("/");
       }
     }
-  }, [user, isOrganizer, isAdmin, authLoading, router]);
+  }, [user, userProfile, canAccess, authLoading, router]);
 
   const loadEvents = async () => {
     try {
@@ -185,7 +186,7 @@ export default function AdminDashboard() {
     if (user && canAccess) {
       loadEvents();
     }
-  }, [user, isOrganizer, isAdmin]);
+  }, [user, isOrganizer, isAdmin, isEventManager]);
 
   // Debounce registrations search query
   useEffect(() => {
@@ -576,15 +577,17 @@ export default function AdminDashboard() {
                             {t("admin.attendees")}
                           </div>
                           <div className="flex flex-wrap gap-2 pt-2">
-                            <Button
-                              onClick={() => handleViewRegistrations(event)}
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              {t("admin.viewRegistrations")}
-                            </Button>
+                            {!isEventManager && (
+                              <Button
+                                onClick={() => handleViewRegistrations(event)}
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                {t("admin.viewRegistrations")}
+                              </Button>
+                            )}
                             <Button
                               onClick={() => openEditModal(event)}
                               variant="outline"
@@ -592,14 +595,16 @@ export default function AdminDashboard() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              onClick={() => handleDeleteEvent(event.id)}
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700 md:w-auto w-full h-auto"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {t("admin.delete")}
-                            </Button>
+                            {!isEventManager && (
+                              <Button
+                                onClick={() => handleDeleteEvent(event.id)}
+                                variant="outline"
+                                className="text-red-600 hover:text-red-700 md:w-auto w-full h-auto"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                {t("admin.delete")}
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
