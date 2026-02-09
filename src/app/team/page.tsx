@@ -170,8 +170,15 @@ export default function TeamPage() {
         {(() => {
           // Use regionId instead of string matching
           const riyadhMembers = hybridMembers.filter(m => m.regionId === 'riyadh_region');
-          // Use roleType to identify regional leaders instead of inferring from missing committeeId
-          const riyadhLeaders = riyadhMembers.filter(m => m.roleType === 'regional_leader');
+          // Use roleType to identify regional leaders, but exclude regional managers/organizers
+          const riyadhLeaders = riyadhMembers.filter(m => {
+            if (m.roleType !== 'regional_leader') return false;
+            const role = m.role?.trim().toLowerCase() || '';
+            // Exclude regional managers and organizers - they appear in committees only
+            return !role.includes('regional manager') && 
+                   !role.includes('regional organizer') && 
+                   !role.includes('regional leader');
+          });
           const riyadhCommitteeMembers = riyadhMembers.filter(m => m.roleType === 'member');
 
           return (
@@ -228,8 +235,15 @@ export default function TeamPage() {
         {(() => {
           // Use regionId instead of string matching
           const westernMembers = hybridMembers.filter(m => m.regionId === 'western_region');
-          // Use roleType to identify regional leaders
-          const westernLeaders = westernMembers.filter(m => m.roleType === 'regional_leader');
+          // Use roleType to identify regional leaders, but exclude regional managers/organizers
+          const westernLeaders = westernMembers.filter(m => {
+            if (m.roleType !== 'regional_leader') return false;
+            const role = m.role?.trim().toLowerCase() || '';
+            // Exclude regional managers and organizers - they appear in committees only
+            return !role.includes('regional manager') && 
+                   !role.includes('regional organizer') && 
+                   !role.includes('regional leader');
+          });
           const westernCommitteeMembers = westernMembers.filter(m => m.roleType === 'member');
 
           return (
