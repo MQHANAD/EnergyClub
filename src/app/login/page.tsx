@@ -51,7 +51,7 @@ export default function LoginPage() {
       // Redirect will happen via useEffect when user state updates
     } catch (error: any) {
       console.error('Sign in error:', error);
-      setError(error.message || 'Failed to sign in. Please try again.');
+      setError('Failed to sign in. Please try again.');
     } finally {
       setIsSigningIn(false);
     }
@@ -76,7 +76,7 @@ export default function LoginPage() {
       // Redirect will happen via useEffect when user state updates
     } catch (error: any) {
       console.error('Sign up error:', error);
-      setError(error.message || 'Failed to create account. Please try again.');
+      setError('Failed to create account. Please try again.');
     } finally {
       setIsSigningIn(false);
     }
@@ -96,7 +96,7 @@ export default function LoginPage() {
       setResetEmail('');
     } catch (error: any) {
       console.error('Password reset error:', error);
-      setError(error.message || 'Failed to send password reset email.');
+      setError('Failed to send password reset email. Please try again.');
     }
   };
 
@@ -133,8 +133,8 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+              <Alert className="bg-red-600 text-white border-red-600">
+                <AlertDescription className="text-white">{error}</AlertDescription>
               </Alert>
             )}
 

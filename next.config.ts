@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // Enable native browser scroll restoration
+  experimental: {
+    scrollRestoration: false,
+  },
 };
 
 export default nextConfig;
