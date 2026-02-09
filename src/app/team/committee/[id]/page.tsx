@@ -145,7 +145,26 @@ export default function CommitteePage() {
               return mComm === cName || mComm.includes(cName) || cName.includes(mComm);
             });
 
-            setMembers(filteredMembers);
+            // Get regional managers and organizers for this region (not tied to specific committee)
+            const regionalLeaders = allMembers.filter(m => {
+              // Must match region
+              if (!matchesRegion(m)) return false;
+
+              // Must be a regional leader (no specific committee)
+              const role = m.role?.trim().toLowerCase() || '';
+              const isRegionalManager = role.includes('regional manager') || role.includes('regional leader');
+              const isRegionalOrganizer = role.includes('regional organizer');
+              
+              // Should not be a president/VP (global leaders)
+              const isGlobalLeader = m.roleType === 'global_leader';
+              
+              return (isRegionalManager || isRegionalOrganizer) && !isGlobalLeader;
+            });
+
+            // Combine regional leaders with committee members
+            const allCommitteeMembers = [...regionalLeaders, ...filteredMembers];
+
+            setMembers(allCommitteeMembers);
             logCommitteeView(committeeId, committeeData.name);
           } else {
             setError('Committee not found');
@@ -236,25 +255,36 @@ export default function CommitteePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {members
                 .sort((a, b) => {
-                  // Check if member is a leader
-                  const aIsLeader = a.role?.trim().toLowerCase() === "leader" ||
-                    a.role?.trim().toLowerCase() === "team leader" ||
-                    a.role?.trim().toLowerCase() === "committee leader";
-                  const bIsLeader = b.role?.trim().toLowerCase() === "leader" ||
-                    b.role?.trim().toLowerCase() === "team leader" ||
-                    b.role?.trim().toLowerCase() === "committee leader";
+                  const aRole = a.role?.trim().toLowerCase() || '';
+                  const bRole = b.role?.trim().toLowerCase() || '';
 
-                  // Leaders come first
-                  if (aIsLeader && !bIsLeader) return -1;
-                  if (!aIsLeader && bIsLeader) return 1;
+                  // Define role priorities (lower = displayed first)
+                  const getRolePriority = (role: string) => {
+                    if (role.includes('regional manager') || role.includes('regional leader')) return 1;
+                    if (role.includes('regional organizer')) return 2;
+                    if (role === 'leader' || role === 'team leader' || role === 'committee leader') return 3;
+                    return 4; // Regular members
+                  };
 
-                  // Within same leader status, sort by order (lower = first)
+                  const aPriority = getRolePriority(aRole);
+                  const bPriority = getRolePriority(bRole);
+
+                  // Sort by role priority first
+                  if (aPriority !== bPriority) {
+                    return aPriority - bPriority;
+                  }
+
+                  // Within same role priority, sort by order (lower = first)
                   return (a.order ?? 0) - (b.order ?? 0);
                 })
                 .map((member) => {
-                  const isLeader = member.role?.trim().toLowerCase() === "leader" ||
-                    member.role?.trim().toLowerCase() === "team leader" ||
-                    member.role?.trim().toLowerCase() === "committee leader";
+                  const role = member.role?.trim().toLowerCase() || '';
+                  const isLeader = role === "leader" ||
+                    role === "team leader" ||
+                    role === "committee leader" ||
+                    role.includes('regional manager') ||
+                    role.includes('regional leader') ||
+                    role.includes('regional organizer');
 
                   // Convert hybrid member to Member format for MemberCard
                   const memberData = {
