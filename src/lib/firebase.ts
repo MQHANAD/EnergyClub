@@ -94,22 +94,30 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 // Initialize Cloud Firestore and get a reference to the service
 import type { FirebaseStorage } from 'firebase/storage';
 
+// Initialize Cloud Functions and get a reference to the service
+import { getFunctions } from 'firebase/functions';
+
 let db: Firestore;
 let storage: FirebaseStorage;
+let functions: any;
+
 try {
   db = getFirestore(app);
   storage = getStorage(app);
+  functions = getFunctions(app);
+
   if (process.env.NODE_ENV !== 'production') {
     console.log('Storage bucket (env-provided):', firebaseConfig.storageBucket);
     console.log('Firebase app initialized:', app.name);
     console.log('Firestore db initialized:', db ? 'Yes' : 'No');
+    console.log('Functions initialized:', functions ? 'Yes' : 'No');
   }
 } catch (error) {
-  console.error('Firestore initialization failed:', error);
+  console.error('Firebase initialization failed:', error);
   throw error;
 }
 
-export { db, storage };
+export { db, storage, functions };
 
 // Initialize Analytics (client-side only)
 // Initialize Analytics (client-side only, production only)

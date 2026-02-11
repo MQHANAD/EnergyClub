@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Registration, EventQuestion, RegistrationResponse, TeamMemberResponse } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Download, Check, X, Loader2, ChevronDown, ChevronUp, Users, User } from 'lucide-react';
+import { Download, Check, X, Loader2, ChevronDown, ChevronUp, Users, User, Mail } from 'lucide-react';
 
 interface ResponsesTableProps {
     registrations: Registration[];
@@ -12,7 +12,9 @@ interface ResponsesTableProps {
     onExport?: () => void;
     onApprove?: (id: string) => void;
     onReject?: (id: string) => void;
+    onResend?: (id: string) => void;
     processingId?: string | null;
+    resendingId?: string | null;
 }
 
 /**
@@ -26,7 +28,9 @@ export default function ResponsesTable({
     onExport,
     onApprove,
     onReject,
+    onResend,
     processingId,
+    resendingId,
 }: ResponsesTableProps) {
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -248,6 +252,25 @@ export default function ResponsesTable({
                                                     <Loader2 className="h-4 w-4 animate-spin" />
                                                 ) : (
                                                     <X className="h-4 w-4" />
+                                                )}
+                                            </Button>
+                                        )}
+                                        {onResend && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-9 w-9 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onResend(registration.id);
+                                                }}
+                                                disabled={isProcessing || resendingId === registration.id || (registration.status !== 'confirmed' && (registration.status as string) !== 'accepted')}
+                                                title="Resend Ticket Email"
+                                            >
+                                                {resendingId === registration.id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Mail className="h-4 w-4" />
                                                 )}
                                             </Button>
                                         )}

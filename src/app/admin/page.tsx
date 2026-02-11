@@ -80,6 +80,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"events" | "registrations">("events");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   // Registrations search
   const [regQuery, setRegQuery] = useState<string>("");
   const [regDebouncedQuery, setRegDebouncedQuery] = useState<string>("");
@@ -370,8 +371,29 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error rejecting registration:", error);
       setError("Failed to reject registration. Please try again.");
-    } finally {
       setProcessingId(null);
+    }
+  };
+
+  // Resend ticket email
+  const handleResendEmail = async (registrationId: string) => {
+    if (!selectedEvent) return;
+    try {
+      setResendingId(registrationId);
+
+      // Import functions dynamically or use the exported instance
+      const { functions } = await import('@/lib/firebase');
+      const { httpsCallable } = await import('firebase/functions');
+
+      const resendEmail = httpsCallable(functions, 'resendTicketEmail');
+      await resendEmail({ registrationId });
+
+      alert("Ticket email resent successfully!");
+    } catch (error) {
+      console.error("Error resending email:", error);
+      setError("Failed to resend email. Please try again.");
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -735,7 +757,9 @@ export default function AdminDashboard() {
                       const reg = registrations.find(r => r.id === id);
                       if (reg) handleRejectRegistration(reg);
                     }}
+                    onResend={handleResendEmail}
                     processingId={processingId}
+                    resendingId={resendingId}
                   />
                 </div>
               )}
