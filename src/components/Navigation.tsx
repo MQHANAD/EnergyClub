@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, X, LayoutDashboard, Ticket } from "lucide-react";
+import { LogOut, User, Menu, X, LayoutDashboard, Ticket, Megaphone } from "lucide-react";
 import { useI18n } from "@/i18n/index";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -72,6 +72,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
   const navLinks = [
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
+    { href: "/announcements", label: "Announcements" },
     { href: "/team", label: t("navigation.team") },
     { href: "/register", label: t("navigation.joinUs") },
   ];
@@ -86,6 +87,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
       : [
         { href: "/admin", label: t("nav.admin") },
         { href: "/admin/applications", label: t("nav.applications") },
+        { href: "/admin/announcements", label: "Announcements" },
         { href: "/admin/team", label: "Team Management" },
         { href: "/admin/analytics", label: t("nav.analytics") },
         { href: "/admin/check-in", label: t("nav.checkIn") },

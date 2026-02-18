@@ -21,7 +21,7 @@ import {
 
 import { db } from './firebase';
 import { capitalizeName } from './utils';
-import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse, TeamMemberResponse, Region, RoleType } from '@/types';
+import { Event, Registration, UserProfile, Committee, Member, LeadershipPosition, EventQuestion, RegistrationResponse, TeamMemberResponse, Region, RoleType, Announcement } from '@/types';
 
 // Convert Firestore timestamp-like value to Date
 function hasToDate(v: unknown): v is { toDate: () => Date } {
@@ -964,6 +964,137 @@ export const regionsApi = {
         });
         console.log(`Created region: ${region.name}`);
       }
+    }
+  }
+};
+
+// ============================================
+// Announcements API
+// ============================================
+
+const docToAnnouncement = (doc: QueryDocumentSnapshot): Announcement => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    title: data.title,
+    body: data.body,
+    audience: data.audience || 'all',
+    recipientEmails: data.recipientEmails || [],
+    status: data.status || 'draft',
+    createdAt: timestampToDate(data.createdAt),
+    publishedAt: data.publishedAt ? timestampToDate(data.publishedAt) : undefined,
+    createdBy: data.createdBy,
+    createdByName: data.createdByName || '',
+  };
+};
+
+export const announcementsApi = {
+  // Get published announcements (for user feed)
+  async getPublishedAnnouncements(publicOnly: boolean = false): Promise<Announcement[]> {
+    try {
+      let q;
+      if (publicOnly) {
+        q = query(
+          collection(db, 'announcements'),
+          where('status', '==', 'published'),
+          where('audience', '==', 'all'),
+          orderBy('publishedAt', 'desc')
+        );
+      } else {
+        q = query(
+          collection(db, 'announcements'),
+          where('status', '==', 'published'),
+          orderBy('publishedAt', 'desc')
+        );
+      }
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(docToAnnouncement);
+    } catch (error) {
+      console.error('Error fetching published announcements:', error);
+      throw error;
+    }
+  },
+
+  // Get all announcements (for admin)
+  async getAllAnnouncements(): Promise<Announcement[]> {
+    try {
+      const q = query(
+        collection(db, 'announcements'),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(docToAnnouncement);
+    } catch (error) {
+      console.error('Error fetching all announcements:', error);
+      throw error;
+    }
+  },
+
+  async createAnnouncement(data: {
+    title: string;
+    body: string;
+    audience: 'all' | 'specific';
+    recipientEmails: string[];
+    createdBy: string;
+    createdByName: string;
+    createdByEmail: string;
+  }): Promise<string> {
+    try {
+      const now = Timestamp.now();
+      const docRef = await addDoc(collection(db, 'announcements'), {
+        ...data,
+        status: 'draft',
+        createdAt: now,
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      throw error;
+    }
+  },
+
+  // Publish an announcement (triggers Cloud Function email)
+  async publishAnnouncement(announcementId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'announcements', announcementId), {
+        status: 'published',
+        publishedAt: Timestamp.now(),
+      });
+    } catch (error) {
+      console.error('Error publishing announcement:', error);
+      throw error;
+    }
+  },
+
+  // Delete an announcement
+  async deleteAnnouncement(announcementId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'announcements', announcementId));
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      throw error;
+    }
+  },
+};
+
+export const usersApi = {
+  // Search users by email (prefix search)
+  async searchUsers(term: string): Promise<string[]> {
+    if (!term || term.length < 2) return [];
+    try {
+      const q = query(
+        collection(db, 'users'),
+        where('email', '>=', term.toLowerCase()),
+        where('email', '<=', term.toLowerCase() + '\uf8ff'),
+        limit(5)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs
+        .map(doc => doc.data().email as string)
+        .filter(email => !!email);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      return [];
     }
   }
 };

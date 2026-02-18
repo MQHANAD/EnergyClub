@@ -265,3 +265,20 @@ export interface RegionFormData {
   name: string;
   order: number;
 }
+
+// ============================================
+// Announcements System Types
+// ============================================
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  audience: 'all' | 'specific';
+  recipientEmails: string[];   // populated when audience === 'specific'
+  status: 'draft' | 'published';
+  createdAt: Date;
+  publishedAt?: Date;
+  createdBy: string;           // admin uid
+  createdByName: string;       // admin display name
+}

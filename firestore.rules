@@ -267,6 +267,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Announcements collection
+    match /announcements/{announcementId} {
+      // Authenticated users can read all announcements
+      // Unauthenticated users can read announcements with audience == 'all'
+      allow read: if isAuthenticated() || resource.data.audience == 'all';
+      // Only admins can create, update, delete announcements
+      allow write: if isAdmin();
+    }
+
     // Subcollections
 
     // Subcollections
