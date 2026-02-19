@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { announcementsApi, usersApi } from "@/lib/firestore";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 import { Announcement } from "@/types";
 import Navigation from "@/components/Navigation";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
@@ -49,6 +51,29 @@ export default function AdminAnnouncementsPage() {
     const [creating, setCreating] = useState(false);
     const [searchResults, setSearchResults] = useState<string[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+
+    // SendGrid Credits State
+    const [credits, setCredits] = useState<{ remain: number; total: number; reset_date: string; error?: string } | null>(null);
+    const [loadingCredits, setLoadingCredits] = useState(false);
+
+    // Fetch SendGrid Credits
+    useEffect(() => {
+        const fetchCredits = async () => {
+            if (user && isAdmin) {
+                try {
+                    setLoadingCredits(true);
+                    const getCredits = httpsCallable(functions, 'getSendGridCredits');
+                    const result = await getCredits();
+                    setCredits(result.data as any);
+                } catch (err) {
+                    console.error("Error fetching SendGrid credits:", err);
+                } finally {
+                    setLoadingCredits(false);
+                }
+            }
+        };
+        fetchCredits();
+    }, [user, isAdmin]);
 
     // Search users when email input changes
     useEffect(() => {
@@ -241,6 +266,27 @@ export default function AdminAnnouncementsPage() {
                                 Create and manage announcements for your users
                             </p>
                         </div>
+
+                        {/* Credits Display */}
+                        {loadingCredits ? (
+                            <div className="text-sm text-gray-500">Loading credits...</div>
+                        ) : credits ? (
+                            credits.error === 'forbidden' ? (
+                                <div className="bg-yellow-50 p-2 px-3 rounded-lg border border-yellow-200 text-xs text-yellow-700 font-medium">
+                                    API Key Access Restricted
+                                </div>
+                            ) : (
+                                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex items-center gap-3">
+                                    <div className={`p-2 rounded-full ${credits.remain < 1000 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                                        <Send className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase font-semibold">Remaining Emails</p>
+                                        <p className="text-lg font-bold text-gray-900">{credits.remain?.toLocaleString() ?? '-'}</p>
+                                    </div>
+                                </div>
+                            )
+                        ) : null}
                     </div>
 
                     {error && (
