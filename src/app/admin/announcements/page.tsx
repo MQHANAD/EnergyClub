@@ -55,8 +55,9 @@ export default function AdminAnnouncementsPage() {
     // SendGrid Credits State
     const [credits, setCredits] = useState<{ remain: number; total: number; reset_date: string; error?: string } | null>(null);
     const [loadingCredits, setLoadingCredits] = useState(false);
+    const [totalUserCount, setTotalUserCount] = useState<number | null>(null);
 
-    // Fetch SendGrid Credits
+    // Fetch SendGrid Credits and User Count
     useEffect(() => {
         const fetchCredits = async () => {
             if (user && isAdmin) {
@@ -72,7 +73,16 @@ export default function AdminAnnouncementsPage() {
                 }
             }
         };
+
+        const fetchUserCount = async () => {
+            if (user && isAdmin) {
+                const count = await usersApi.getAllUsersCount();
+                setTotalUserCount(count);
+            }
+        };
+
         fetchCredits();
+        fetchUserCount();
     }, [user, isAdmin]);
 
     // Search users when email input changes
@@ -351,7 +361,7 @@ export default function AdminAnnouncementsPage() {
                                                 }`}
                                         >
                                             <Users className="h-4 w-4" />
-                                            All Users
+                                            All Users {totalUserCount !== null ? `(${totalUserCount.toLocaleString()})` : ''}
                                         </button>
                                         <button
                                             type="button"
@@ -362,7 +372,7 @@ export default function AdminAnnouncementsPage() {
                                                 }`}
                                         >
                                             <UserCheck className="h-4 w-4" />
-                                            Specific Users
+                                            Specific Users {emails.length > 0 ? `(${emails.length})` : ''}
                                         </button>
                                     </div>
                                 </div>

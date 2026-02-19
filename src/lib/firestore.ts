@@ -17,6 +17,7 @@ import {
   QueryDocumentSnapshot,
   Timestamp,
   DocumentData,
+  getCountFromServer,
 } from 'firebase/firestore';
 
 import { db } from './firebase';
@@ -1095,6 +1096,18 @@ export const usersApi = {
     } catch (error) {
       console.error('Error searching users:', error);
       return [];
+    }
+  },
+
+  // Get total count of users
+  async getAllUsersCount(): Promise<number> {
+    try {
+      const coll = collection(db, 'users');
+      const snapshot = await getCountFromServer(coll);
+      return snapshot.data().count;
+    } catch (error) {
+      console.error('Error fetching user count:', error);
+      return 0;
     }
   }
 };
