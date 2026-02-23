@@ -56,6 +56,7 @@ export default function EventDetailsPage() {
   const [studentIdError, setStudentIdError] = useState<string | null>(null);
   const [dynamicResponses, setDynamicResponses] = useState<RegistrationResponse[]>([]);
   const [dynamicFormValid, setDynamicFormValid] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const loadEvent = async () => {
     if (!id || typeof id !== "string") return;
@@ -156,6 +157,7 @@ export default function EventDetailsPage() {
     if (!event || !user || !userProfile) return;
 
     try {
+      setShowSuccess(false);
       setRegistering(true);
       setError(null);
 
@@ -180,7 +182,7 @@ export default function EventDetailsPage() {
         setStudentIdError(null);
       }
 
-      await registrationsApi.registerForEvent(
+      const registrationId = await registrationsApi.registerForEvent(
         event.id,
         user.uid,
         userProfile.displayName,
@@ -198,6 +200,16 @@ export default function EventDetailsPage() {
 
       // Log registration for analytics
       logEventRegistration(event.id, event.title);
+
+      // Update local registration state immediately using newly created ID
+      const newReg = await registrationsApi.getRegistration(registrationId);
+      if (newReg) {
+        setUserRegistration(newReg);
+      }
+
+      // Show success feedback
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
 
       // Reload event to get updated attendee count
       await loadEvent();
@@ -462,7 +474,7 @@ export default function EventDetailsPage() {
                   <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 group">
                     <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-sm md:text-base text-gray-700">
-                      {formatDate(new Date(event.startDate || event.date))}
+                      {event.startDate || event.date ? formatDate(new Date((event.startDate || event.date)!)) : ""}
                     </span>
                   </div>
 
@@ -472,8 +484,11 @@ export default function EventDetailsPage() {
                       <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
                       <span className="text-sm md:text-base text-gray-700">
                         Duration: {(() => {
-                          const start = new Date(event.startDate || event.date);
-                          const end = new Date(event.endDate);
+                          const startVal = event.startDate || event.date;
+                          const endVal = event.endDate;
+                          if (!startVal || !endVal) return "N/A";
+                          const start = new Date(startVal);
+                          const end = new Date(endVal);
                           const diffMs = (end.getTime() - start.getTime()) + 1;
                           const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
                           return diffDays === 1 ? "1 day" : `${diffDays} days`;
@@ -513,6 +528,17 @@ export default function EventDetailsPage() {
                 {error && (
                   <Alert variant="destructive" className="mb-4 border-l-4 animate-in slide-in-from-top-2 duration-300">
                     <AlertDescription className="text-sm">{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {showSuccess && (
+                  <Alert className="mb-4 border-l-4 border-l-green-500 bg-green-50 animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <AlertDescription className="text-sm text-green-700 font-medium">
+                        {t("eventDetails.registrationSuccess") || "Registration successful! You are now signed up for this event."}
+                      </AlertDescription>
+                    </div>
                   </Alert>
                 )}
 
@@ -584,7 +610,7 @@ export default function EventDetailsPage() {
                         setRegistering(true);
                         setError(null);
 
-                        await registrationsApi.registerForEvent(
+                        const registrationId = await registrationsApi.registerForEvent(
                           event.id,
                           user.uid,
                           userProfile.displayName,
@@ -602,12 +628,15 @@ export default function EventDetailsPage() {
 
                         logEventRegistration(event.id, event.title);
 
-                        // Refresh registration status to show "Already Registered"
-                        const registration = await registrationsApi.getUserEventRegistration(
-                          user.uid,
-                          event.id
-                        );
-                        setUserRegistration(registration);
+                        // Update local registration state immediately
+                        const newReg = await registrationsApi.getRegistration(registrationId);
+                        if (newReg) {
+                          setUserRegistration(newReg);
+                        }
+
+                        // Show success feedback
+                        setShowSuccess(true);
+                        setTimeout(() => setShowSuccess(false), 5000);
 
                         await loadEvent();
                       } catch (err: any) {

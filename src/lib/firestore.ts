@@ -400,6 +400,18 @@ export const registrationsApi = {
     }
   },
 
+  // Get a single registration by ID
+  async getRegistration(registrationId: string): Promise<Registration | null> {
+    try {
+      const docSnap = await getDoc(doc(db, 'registrations', registrationId));
+      if (!docSnap.exists()) return null;
+      return docToRegistration(docSnap as QueryDocumentSnapshot);
+    } catch (error) {
+      console.error('Error fetching registration:', error);
+      throw error;
+    }
+  },
+
   // Register for an event
   async registerForEvent(
     eventId: string,
@@ -457,21 +469,9 @@ export const registrationsApi = {
           responses: member.responses || [],
         }));
       }
-
       const docRef = await addDoc(collection(db, 'registrations'), registrationData);
 
-      // If auto-accepted, increment the attendee count immediately
-      if (autoAccept) {
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
-        if (eventDoc.exists()) {
-          const eventData = eventDoc.data() as DocumentData;
-          await updateDoc(doc(db, 'events', eventId), {
-            currentAttendees: (Number(eventData?.currentAttendees) || 0) + 1,
-            updatedAt: Timestamp.now()
-          });
-        }
-      }
-
+      // Note: Attendee count increment is now handled by Cloud Functions trigger
       return docRef.id;
     } catch (error) {
       console.error('Error registering for event:', error);
@@ -490,18 +490,7 @@ export const registrationsApi = {
       await updateDoc(doc(db, 'registrations', registrationId), {
         status: 'cancelled'
       });
-
-      // Only decrement attendees if this registration was previously confirmed
-      if (prevStatus === 'confirmed') {
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
-        if (eventDoc.exists()) {
-          const eventData = eventDoc.data() as DocumentData;
-          await updateDoc(doc(db, 'events', eventId), {
-            currentAttendees: Math.max(0, Number(eventData?.currentAttendees || 0) - 1),
-            updatedAt: Timestamp.now()
-          });
-        }
-      }
+      // Note: Attendee count decrement is now handled by Cloud Functions trigger
     } catch (error) {
       console.error('Error cancelling registration:', error);
       throw error;
@@ -516,16 +505,7 @@ export const registrationsApi = {
       await updateDoc(doc(db, 'registrations', registrationId), {
         status: 'confirmed'
       });
-
-      // Increment event attendee count
-      const eventDoc = await getDoc(doc(db, 'events', eventId));
-      if (eventDoc.exists()) {
-        const eventData = eventDoc.data() as DocumentData;
-        await updateDoc(doc(db, 'events', eventId), {
-          currentAttendees: Number(eventData?.currentAttendees || 0) + 1,
-          updatedAt: Timestamp.now()
-        });
-      }
+      // Note: Attendee count increment is now handled by Cloud Functions trigger
     } catch (error) {
       console.error('Error approving registration:', error);
       throw error;

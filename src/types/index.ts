@@ -5,9 +5,9 @@ export interface Event {
   status: 'active' | 'hidden' | 'completed' | 'registration_completed';
   createdAt: Date;
   updatedAt: Date;
-  date?: string;  // Legacy field - use startDate instead
-  startDate?: string;
-  endDate?: string;
+  date?: Date | string;  // Legacy field - use startDate instead
+  startDate?: Date | string;
+  endDate?: Date | string | null;
   location?: string;
   tags: string[];
   currentAttendees: number;
@@ -79,7 +79,7 @@ export interface Registration {
   userName: string;
   userEmail: string;
   registrationTime: Date;
-  status: 'confirmed' | 'waitlist' | 'cancelled' | 'checked_in';
+  status: 'confirmed' | 'accepted' | 'waitlist' | 'cancelled' | 'checked_in';
   autoAccepted?: boolean;  // True if registration was auto-confirmed (skips confirmation email)
   checkInTime?: Date;
   reason?: string;
