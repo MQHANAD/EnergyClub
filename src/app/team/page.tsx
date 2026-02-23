@@ -4,11 +4,11 @@ import React, { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
 import { Committee, LeadershipPosition } from "@/types";
 import { useI18n } from "@/i18n";
-import { teamApi } from "@/lib/firestore";
+import { teamApi, settingsApi } from "@/lib/firestore";
 import { getMembersUltraOptimized, HybridMember } from "@/lib/hybridMembers";
 import LoadingSpinner from "@/components/register/LoadingSpinner";
 import Navigation from "@/components/Navigation";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Construction } from "lucide-react";
 import Footer from "@/components/landingPageUi/Footer";
 import ScrollRevealWrapper from "@/components/landingPageUi/ScrollRevealWrapper";
 import { logTeamView } from "@/lib/analytics";
@@ -28,6 +28,7 @@ export default function TeamPage() {
   const [hybridMembers, setHybridMembers] = useState<HybridMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pageEnabled, setPageEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchTeamData = async () => {
@@ -35,12 +36,20 @@ export default function TeamPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch committees, leadership positions, and hybrid members in parallel
-        const [committeesData, leadershipData, membersData] = await Promise.all([
+        // Fetch settings and team data in parallel
+        const [committeesData, leadershipData, membersData, settings] = await Promise.all([
           teamApi.getCommitteesLight(),
           teamApi.getLeadershipPositions(),
-          getMembersUltraOptimized()
+          getMembersUltraOptimized(),
+          settingsApi.getWebsiteSettings(),
         ]);
+
+        setPageEnabled(settings.teamPageEnabled);
+
+        if (!settings.teamPageEnabled) {
+          setLoading(false);
+          return;
+        }
 
         setCommittees(committeesData);
         setLeadershipPositions(leadershipData);
@@ -68,6 +77,26 @@ export default function TeamPage() {
 
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (pageEnabled === false) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Construction className="w-10 h-10 text-gray-400" />
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-3">Page Unavailable</h1>
+            <p className="text-gray-500 leading-relaxed">
+              The Team page is currently unavailable. Please check back later.
+            </p>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -177,9 +206,9 @@ export default function TeamPage() {
             if (m.roleType !== 'regional_leader') return false;
             const role = m.role?.trim().toLowerCase() || '';
             // Exclude regional managers and organizers - they appear in committees only
-            return !role.includes('regional manager') && 
-                   !role.includes('regional organizer') && 
-                   !role.includes('regional leader');
+            return !role.includes('regional manager') &&
+              !role.includes('regional organizer') &&
+              !role.includes('regional leader');
           });
           const riyadhCommitteeMembers = riyadhMembers.filter(m => m.roleType === 'member');
 
@@ -242,9 +271,9 @@ export default function TeamPage() {
             if (m.roleType !== 'regional_leader') return false;
             const role = m.role?.trim().toLowerCase() || '';
             // Exclude regional managers and organizers - they appear in committees only
-            return !role.includes('regional manager') && 
-                   !role.includes('regional organizer') && 
-                   !role.includes('regional leader');
+            return !role.includes('regional manager') &&
+              !role.includes('regional organizer') &&
+              !role.includes('regional leader');
           });
           const westernCommitteeMembers = westernMembers.filter(m => m.roleType === 'member');
 

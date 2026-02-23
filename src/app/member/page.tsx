@@ -5,11 +5,12 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import Navigation from '@/components/Navigation';
+import { settingsApi } from '@/lib/firestore';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { capitalizeName } from '@/lib/utils';
 import LoadingSpinner from '@/components/register/LoadingSpinner';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Construction } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface MemberData {
@@ -147,10 +148,11 @@ const MemberCard = React.forwardRef<HTMLDivElement, { memberData: MemberData, va
 MemberCard.displayName = "MemberCard";
 
 function MemberContent() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isAdmin } = useAuth();
     const [memberData, setMemberData] = useState<MemberData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [pageEnabled, setPageEnabled] = useState<boolean | null>(null);
 
 
     useEffect(() => {
@@ -159,9 +161,19 @@ function MemberContent() {
 
             try {
                 setIsLoading(true);
-                const membersRef = collection(db, 'members');
-                const q = query(membersRef, where('email', '==', user.email));
-                const querySnapshot = await getDocs(q);
+
+                const [querySnapshot, settings] = await Promise.all([
+                    getDocs(query(collection(db, 'members'), where('email', '==', user.email))),
+                    settingsApi.getWebsiteSettings(),
+                ]);
+
+                setPageEnabled(settings.memberPageEnabled);
+
+                // Check if page is enabled
+                if (!settings.memberPageEnabled) {
+                    setIsLoading(false);
+                    return;
+                }
 
                 if (!querySnapshot.empty) {
                     const data = querySnapshot.docs[0].data();
@@ -202,13 +214,33 @@ function MemberContent() {
         if (!authLoading && user) {
             fetchMemberData();
         }
-    }, [user, authLoading]);
+    }, [user, authLoading, isAdmin]);
 
 
     if (authLoading || isLoading) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <LoadingSpinner />
+            </div>
+        );
+    }
+
+    // Show unavailable page if disabled
+    if (pageEnabled === false) {
+        return (
+            <div className="min-h-screen bg-white flex flex-col">
+                <Navigation />
+                <div className="flex-1 flex items-center justify-center px-4">
+                    <div className="text-center max-w-md">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Construction className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-3">Page Unavailable</h1>
+                        <p className="text-gray-500 leading-relaxed">
+                            The Member Card page is currently unavailable. Please check back later.
+                        </p>
+                    </div>
+                </div>
             </div>
         );
     }

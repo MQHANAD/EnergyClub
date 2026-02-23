@@ -230,6 +230,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Settings collection (website feature flags, etc.)
+    match /settings/{settingId} {
+      // Anyone can read settings (needed for public pages to check availability)
+      allow read: if true;
+      // Only admins can write settings
+      allow write: if isAdmin();
+    }
+
     // Applications collection
     match /applications/{document=**} {
       allow read, write: if request.auth != null;

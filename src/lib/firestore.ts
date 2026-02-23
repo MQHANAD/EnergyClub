@@ -1111,3 +1111,43 @@ export const usersApi = {
     }
   }
 };
+
+// ============================================
+// Website Settings API
+// ============================================
+
+export interface WebsiteSettings {
+  teamPageEnabled: boolean;
+  memberPageEnabled: boolean;
+}
+
+const DEFAULT_WEBSITE_SETTINGS: WebsiteSettings = {
+  teamPageEnabled: true,
+  memberPageEnabled: true,
+};
+
+export const settingsApi = {
+  async getWebsiteSettings(): Promise<WebsiteSettings> {
+    try {
+      const docRef = doc(db, 'settings', 'website');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { ...DEFAULT_WEBSITE_SETTINGS, ...docSnap.data() } as WebsiteSettings;
+      }
+      return DEFAULT_WEBSITE_SETTINGS;
+    } catch (error) {
+      console.error('Error fetching website settings:', error);
+      return DEFAULT_WEBSITE_SETTINGS;
+    }
+  },
+
+  async updateWebsiteSettings(updates: Partial<WebsiteSettings>): Promise<void> {
+    try {
+      const docRef = doc(db, 'settings', 'website');
+      await setDoc(docRef, updates, { merge: true });
+    } catch (error) {
+      console.error('Error updating website settings:', error);
+      throw error;
+    }
+  },
+};

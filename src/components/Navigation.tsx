@@ -9,6 +9,7 @@ import { LogOut, User, Menu, X, LayoutDashboard, Ticket, Megaphone } from "lucid
 import { useI18n } from "@/i18n/index";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { settingsApi, WebsiteSettings } from "@/lib/firestore";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
@@ -27,6 +28,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMember, setIsMember] = useState(false);
+  const [websiteSettings, setWebsiteSettings] = useState<WebsiteSettings | null>(null);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -60,6 +62,11 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
     checkMembership();
   }, [user]);
 
+  // Fetch Website Settings
+  useEffect(() => {
+    settingsApi.getWebsiteSettings().then(setWebsiteSettings);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -73,7 +80,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
     { href: "/", label: t("navigation.home") },
     { href: "/events", label: t("nav.events") },
     { href: "/announcements", label: "Announcements" },
-    { href: "/team", label: t("navigation.team") },
+    ...(websiteSettings?.teamPageEnabled !== false ? [{ href: "/team", label: t("navigation.team") }] : []),
     { href: "/register", label: t("navigation.joinUs") },
   ];
 
@@ -91,6 +98,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
         { href: "/admin/team", label: "Team Management" },
         { href: "/admin/analytics", label: t("nav.analytics") },
         { href: "/admin/check-in", label: t("nav.checkIn") },
+        { href: "/admin/settings", label: "Website Settings" },
       ]
     : [];
 
@@ -134,6 +142,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
               isMember={isMember}
               adminLinks={adminLinks}
               onLogout={handleLogout}
+              memberCardEnabled={websiteSettings?.memberPageEnabled !== false}
             />
           ) : (
             <LoginButton isScrolled={isScrolled} t={t} pathname={pathname} />
@@ -162,6 +171,7 @@ export default function Navigation({ colorScheme = 'light' }: NavigationProps) {
         isMember={isMember}
         adminLinks={adminLinks}
         onLogout={handleLogout}
+        memberCardEnabled={websiteSettings?.memberPageEnabled !== false}
         t={t}
         pathname={pathname}
       />
@@ -200,7 +210,7 @@ function DesktopNav({ navLinks, isScrolled, colorScheme }: { navLinks: any[], is
   );
 }
 
-function UserDropdown({ user, userProfile, isMember, adminLinks, onLogout }: any) {
+function UserDropdown({ user, userProfile, isMember, adminLinks, onLogout, memberCardEnabled }: any) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -237,7 +247,7 @@ function UserDropdown({ user, userProfile, isMember, adminLinks, onLogout }: any
 
               <DropdownLink href="/profile" icon={User} label="My Profile" onClick={() => setIsOpen(false)} />
               <DropdownLink href="/my-tickets" icon={Ticket} label="My Tickets" onClick={() => setIsOpen(false)} />
-              {isMember && <DropdownLink href="/member" icon={LayoutDashboard} label="Member Card" onClick={() => setIsOpen(false)} />}
+              {isMember && memberCardEnabled && <DropdownLink href="/member" icon={LayoutDashboard} label="Member Card" onClick={() => setIsOpen(false)} />}
 
               {adminLinks.length > 0 && (
                 <div className="pt-1 mt-1 border-t border-gray-100">
@@ -290,7 +300,7 @@ function LoginButton({ isScrolled, t, pathname }: any) {
   );
 }
 
-function MobileMenu({ isOpen, onClose, navLinks, user, userProfile, isMember, adminLinks, onLogout, t, pathname }: any) {
+function MobileMenu({ isOpen, onClose, navLinks, user, userProfile, isMember, adminLinks, onLogout, t, pathname, memberCardEnabled }: any) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -336,7 +346,7 @@ function MobileMenu({ isOpen, onClose, navLinks, user, userProfile, isMember, ad
 
                   <MobileLink href="/profile" icon={User} label="My Profile" onClick={onClose} />
                   <MobileLink href="/my-tickets" icon={Ticket} label="My Tickets" onClick={onClose} />
-                  {isMember && <MobileLink href="/member" icon={LayoutDashboard} label="Member Card" onClick={onClose} />}
+                  {isMember && memberCardEnabled && <MobileLink href="/member" icon={LayoutDashboard} label="Member Card" onClick={onClose} />}
 
                   {adminLinks.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-gray-100">
